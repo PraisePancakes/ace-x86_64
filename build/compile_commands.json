@@ -1,0 +1,8 @@
+[
+{
+  "directory": "C:/Users/aryas/OneDrive/Desktop/C++Projects/Ace/build",
+  "command": "C:\\mingw64\\bin\\g++.exe   -g -std=gnu++20 -Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter -o CMakeFiles\\ACE.dir\\main.cpp.obj -c C:\\Users\\aryas\\OneDrive\\Desktop\\C++Projects\\Ace\\main.cpp",
+  "file": "C:/Users/aryas/OneDrive/Desktop/C++Projects/Ace/main.cpp",
+  "output": "CMakeFiles/ACE.dir/main.cpp.obj"
+}
+]

@@ -1,0 +1,3 @@
+C:/Users/aryas/OneDrive/Desktop/C++Projects/Ace/build/CMakeFiles/ACE.dir
+C:/Users/aryas/OneDrive/Desktop/C++Projects/Ace/build/CMakeFiles/edit_cache.dir
+C:/Users/aryas/OneDrive/Desktop/C++Projects/Ace/build/CMakeFiles/rebuild_cache.dir
