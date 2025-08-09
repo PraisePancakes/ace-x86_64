@@ -9,7 +9,8 @@
  *
  *
  * e.g.
- * ace -Ace-dev-flags [--verbose-lexer --verbose-ast --verbose-cli ] f.ace
+ * acc --set-dev [-verbose-lexer -verbose-ast ] f.ace
+ * acc --help
  */
 namespace acc {
 
@@ -17,16 +18,18 @@ class cli {
     enum class COMMANDS : std::uint8_t {
         ACE_PROTOCOL,
         DEV_FLAGS,
+        HELP,
         VERBOSE_LEXER,
         VERBOSE_AST
     };
 
     const std::unordered_map<COMMANDS, std::string>
         m_commands{
-            {COMMANDS::ACE_PROTOCOL, "ace"},
-            {COMMANDS::DEV_FLAGS, "-Ace-dev-flags"},
-            {COMMANDS::VERBOSE_LEXER, "--verbose-lexer"},
-            {COMMANDS::VERBOSE_AST, "--verbose-ast"},
+            {COMMANDS::ACE_PROTOCOL, "acc"},
+            {COMMANDS::DEV_FLAGS, "--set-dev"},
+            {COMMANDS::HELP, "--help"},
+            {COMMANDS::VERBOSE_LEXER, "-verbose-lexer"},
+            {COMMANDS::VERBOSE_AST, "-verbose-ast"},
         };
 
     std::uint8_t m_build_flags{};
