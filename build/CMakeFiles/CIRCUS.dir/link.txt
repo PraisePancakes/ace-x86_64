@@ -1,3 +1,0 @@
-C:\Users\aryas\Downloads\cmake-3.28.0-rc5-windows-x86_64\cmake-3.28.0-rc5-windows-x86_64\bin\cmake.exe -E rm -f CMakeFiles\CIRCUS.dir/objects.a
-C:\mingw64\bin\ar.exe qc CMakeFiles\CIRCUS.dir/objects.a @CMakeFiles\CIRCUS.dir\objects1.rsp
-C:\mingw64\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\CIRCUS.dir/objects.a -Wl,--no-whole-archive -o CIRCUS.exe -Wl,--out-implib,libCIRCUS.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\CIRCUS.dir\linkLibs.rsp
