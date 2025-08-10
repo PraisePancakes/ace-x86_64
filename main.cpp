@@ -12,8 +12,9 @@ auto main(int argc, char** argv) -> int {
     } else {
         std::stringstream ss;
         for (int i = 1; i < argc; i++) {
-            ss << std::string(argv[i]);
+            ss << std::string(argv[i]) << " ";
         }
+
         acc::cli acli(std::move(ss.str()));
     };
 

@@ -40,7 +40,7 @@ class lexer {
     std::string_view m_input;
 
     [[nodiscard]] bool is_end() const noexcept {
-        return m_end == m_input.size();
+        return m_end >= m_input.size();
     };
 
     [[nodiscard]] char peek() const noexcept {
@@ -74,27 +74,28 @@ class lexer {
 
     token<TokenType> lex_identifier() {
         std::string unit = "";
-        while (!is_rsvp(peek())) {
+        while (!is_end() && !is_rsvp(peek()) && !isspace(peek())) {
             unit += advance();
         }
+
         return token<TokenType>{unit, std::make_pair(m_x, m_y), TokenType::IDENTIFIER};
     };
 
     token<TokenType> lex_number() {
         std::string unit = "";
-        while (!isalpha(peek()) && !is_rsvp(peek())) {
+        while (!is_end() && !isalpha(peek()) && !is_rsvp(peek())) {
             unit += advance();
         }
         return token<TokenType>{unit, std::make_pair(m_x, m_y), TokenType::NUMBER};
     };
 
     token<TokenType> lex_it() {
-        std::string unit = "";
-        unit += advance();
-        if (is_rsvp(unit)) {
+        if (is_rsvp(peek())) {
+            std::string unit = "";
+            unit += advance();
             return token<TokenType>{unit, std::make_pair(m_x, m_y), m_token_map[unit]};
         };
-        if (isdigit(unit[0])) {
+        if (isdigit(peek())) {
             return lex_number();
         }
         return lex_identifier();
@@ -108,8 +109,14 @@ class lexer {
                                                             };
 
     std::vector<token<TokenType>> operator()(std::string_view sv) noexcept {
+        m_input = sv;
         std::vector<token<TokenType>> ret{};
+
         while (!is_end()) {
+            if (std::isspace(peek())) {
+                (void)advance();
+                continue;
+            }
             ret.push_back(lex_it());
             m_start = m_end;
         }

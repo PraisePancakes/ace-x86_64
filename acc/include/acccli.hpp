@@ -68,6 +68,9 @@ class cli {
         static_assert(!std::is_same_v<decltype(cli_lexer)::token_type, ASSERTED_LEX_TYPE_FAILURE>);
 #endif
         auto tokens = cli_lexer(std::move(source));
+        for (auto& t : tokens) {
+            std::cout << "[TOKEN] : " << t.word << " [TYPE]     " << (int)t.type << std::endl;
+        }
     };
 };
 }  // namespace acc
