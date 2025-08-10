@@ -2,6 +2,10 @@
 #include <cstdint>
 #include <iostream>
 #include <unordered_map>
+
+#include "acclexer.hpp"
+#define LEX_TYPE_TEST_FAILURE false
+
 /**
  * Dev flags
  * -Ace-verbose-lexer
@@ -9,8 +13,14 @@
  *
  *
  * e.g.
- * acc --set-dev [-verbose-lexer -verbose-ast ] f.ace
- * acc --help
+ *
+ *
+ *
+ * (ace protocol) (dev flags)    (verbose lexer) (verbose ast)  (input file)  (output type flag (binary))     (executable name)
+ * acc             --set-dev    [-verbose-lexer -verbose-ast ]  f.ace         -o                              fexec
+ *
+ * (ace protocol)   (help)
+ * acc              --help
  */
 namespace acc {
 
@@ -23,6 +33,18 @@ class cli {
         VERBOSE_AST
     };
 
+    enum class CLI_TOKENS {
+        LBRACE,
+        RBRACE,
+        DASH,
+        IDENTIFIER,
+        NUMBER,
+        DOT
+    };
+
+#if LEX_TYPE_TEST_FAILURE
+    enum class ASSERTED_LEX_TYPE_FAILURE {};
+#endif
     const std::unordered_map<COMMANDS, std::string>
         m_commands{
             {COMMANDS::ACE_PROTOCOL, "acc"},
@@ -36,7 +58,16 @@ class cli {
 
    public:
     cli(const std::string& source) {
-        std::cout << source;
+        auto cli_lexer = acc::lexer{std::unordered_map<std::string, CLI_TOKENS>{
+            {"[", CLI_TOKENS::LBRACE},
+            {"]", CLI_TOKENS::RBRACE},
+            {"-", CLI_TOKENS::DASH},
+            {".", CLI_TOKENS::DOT}}};
+        static_assert(std::is_same_v<decltype(cli_lexer)::token_type, CLI_TOKENS>);
+#if LEX_TYPE_TEST_FAILURE
+        static_assert(!std::is_same_v<decltype(cli_lexer)::token_type, ASSERTED_LEX_TYPE_FAILURE>);
+#endif
+        auto tokens = cli_lexer(std::move(source));
     };
 };
 }  // namespace acc
