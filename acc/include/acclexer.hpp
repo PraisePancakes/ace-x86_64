@@ -55,7 +55,7 @@ class lexer {
         return m_input[m_end + 1];
     }
 
-    [[nodiscard]] char advance() noexcept {
+    char advance() noexcept {
         if (is_end()) {
             return peek();
         }
@@ -72,28 +72,33 @@ class lexer {
         return m_token_map.find(u) != m_token_map.end();
     }
 
-    token<TokenType> lex_identifier() {
-        std::string unit = "";
-        while (!is_end() && !is_delim(peek()) && !isspace(peek())) {
-            unit += advance();
-        }
+    std::string to_substr() const noexcept {
+        return std::string(m_input.substr(m_start, m_end - m_start));
+    };
 
-        return token<TokenType>{unit, std::make_pair(m_x, m_y), TokenType::IDENTIFIER};
+    std::string to_substr(std::size_t new_begin, std::size_t new_end) const noexcept {
+        return std::string(m_input.substr(new_begin, new_end));
+    };
+
+    token<TokenType> lex_identifier() {
+        while (!is_end() && !is_delim(peek()) && !isspace(peek())) {
+            advance();
+        }
+        return token<TokenType>{to_substr(), std::make_pair(m_x, m_y), TokenType::IDENTIFIER};
     };
 
     token<TokenType> lex_number() {
-        std::string unit = "";
         while (!is_end() && !isalpha(peek()) && !is_delim(peek())) {
-            unit += advance();
+            advance();
         }
-        return token<TokenType>{unit, std::make_pair(m_x, m_y), TokenType::NUMBER};
+        return token<TokenType>{to_substr(), std::make_pair(m_x, m_y), TokenType::NUMBER};
     };
 
     token<TokenType> lex_it() {
         if (is_delim(peek())) {
-            std::string unit = "";
-            unit += advance();
-            return token<TokenType>{unit, std::make_pair(m_x, m_y), m_token_map[unit]};
+            advance();
+            auto key = to_substr();
+            return token<TokenType>{key, std::make_pair(m_x, m_y), m_token_map[key]};
         };
         if (isdigit(peek())) {
             return lex_number();
@@ -114,7 +119,8 @@ class lexer {
 
         while (!is_end()) {
             if (std::isspace(peek())) {
-                (void)advance();
+                advance();
+                m_start = m_end;
                 continue;
             }
             ret.push_back(lex_it());
