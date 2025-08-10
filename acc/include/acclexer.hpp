@@ -62,11 +62,11 @@ class lexer {
         return m_input[m_end++];
     };
 
-    [[nodiscard]] bool is_rsvp(std::string unit) const noexcept {
+    [[nodiscard]] bool is_delim(std::string unit) const noexcept {
         return m_token_map.find(unit) != m_token_map.end();
     }
 
-    [[nodiscard]] bool is_rsvp(const char unit) const noexcept {
+    [[nodiscard]] bool is_delim(const char unit) const noexcept {
         std::string u = "";
         u += unit;
         return m_token_map.find(u) != m_token_map.end();
@@ -74,7 +74,7 @@ class lexer {
 
     token<TokenType> lex_identifier() {
         std::string unit = "";
-        while (!is_end() && !is_rsvp(peek()) && !isspace(peek())) {
+        while (!is_end() && !is_delim(peek()) && !isspace(peek())) {
             unit += advance();
         }
 
@@ -83,14 +83,14 @@ class lexer {
 
     token<TokenType> lex_number() {
         std::string unit = "";
-        while (!is_end() && !isalpha(peek()) && !is_rsvp(peek())) {
+        while (!is_end() && !isalpha(peek()) && !is_delim(peek())) {
             unit += advance();
         }
         return token<TokenType>{unit, std::make_pair(m_x, m_y), TokenType::NUMBER};
     };
 
     token<TokenType> lex_it() {
-        if (is_rsvp(peek())) {
+        if (is_delim(peek())) {
             std::string unit = "";
             unit += advance();
             return token<TokenType>{unit, std::make_pair(m_x, m_y), m_token_map[unit]};
