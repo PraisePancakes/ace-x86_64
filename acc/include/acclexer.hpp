@@ -97,8 +97,7 @@ class lexer {
     token<TokenType> lex_it() {
         if (is_delim(peek())) {
             advance();
-            auto key = to_substr();
-            return token<TokenType>{key, std::make_pair(m_x, m_y), m_token_map[key]};
+            return token<TokenType>{to_substr(), std::make_pair(m_x, m_y), m_token_map[to_substr()]};
         };
         if (isdigit(peek())) {
             return lex_number();
