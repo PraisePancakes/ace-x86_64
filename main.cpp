@@ -6,10 +6,8 @@
 #include "acc/include/acccli.hpp"
 #include "acc/include/acclog.hpp"
 
-
-
 auto main(int argc, char** argv) -> int {
-     if (argc <= 1) {
+    if (argc <= 1) {
         acc::logger::instance().send(acc::logger::LEVEL::FATAL, "no input files determined for Ace compilation.");
         return EXIT_FAILURE;
     } else {

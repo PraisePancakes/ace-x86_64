@@ -58,11 +58,11 @@ class cli {
 
    public:
     cli(const std::string& source) {
-        auto cli_lexer = acc::lexer{std::unordered_map<std::string, CLI_TOKENS>{
-            {"[", CLI_TOKENS::LBRACE},
-            {"]", CLI_TOKENS::RBRACE},
-            {"-", CLI_TOKENS::DASH},
-            {".", CLI_TOKENS::DOT}}};
+        auto cli_lexer = acc::lexer{std::unordered_map<unsigned char, CLI_TOKENS>{
+            {'[', CLI_TOKENS::LBRACE},
+            {']', CLI_TOKENS::RBRACE},
+            {'-', CLI_TOKENS::DASH},
+            {'.', CLI_TOKENS::DOT}}};
         static_assert(std::is_same_v<decltype(cli_lexer)::token_type, CLI_TOKENS>);
 #if LEX_TYPE_TEST_FAILURE
         static_assert(!std::is_same_v<decltype(cli_lexer)::token_type, ASSERTED_LEX_TYPE_FAILURE>);
