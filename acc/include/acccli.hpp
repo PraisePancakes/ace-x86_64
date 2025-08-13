@@ -29,30 +29,40 @@ namespace acc {
 
 class cli {
     enum class COMMANDS : std::uint8_t {
-        ACE_PROTOCOL,
-        DEV_FLAGS,
-        HELP,
-        VERBOSE_LEXER,
-        VERBOSE_AST
+        ACE_PROTOCOL = 1 << 1,
+        DEV_FLAGS = 1 << 2,
+        HELP = 1 << 3,
+        VERBOSE_LEXER = 1 << 4,
+        VERBOSE_AST = 1 << 5
     };
+    class cli_tiny_parser {
+       private:
+        std::vector<acc::token> tokens;
+        const std::unordered_map<COMMANDS, std::string>
+            m_commands{
+                {COMMANDS::ACE_PROTOCOL, "acc"},
+                {COMMANDS::DEV_FLAGS, "--set-dev"},
+                {COMMANDS::HELP, "--help"},
+                {COMMANDS::VERBOSE_LEXER, "-verbose-lexer"},
+                {COMMANDS::VERBOSE_AST, "-verbose-ast"},
+            };
 
-    const std::unordered_map<COMMANDS, std::string>
-        m_commands{
-            {COMMANDS::ACE_PROTOCOL, "acc"},
-            {COMMANDS::DEV_FLAGS, "--set-dev"},
-            {COMMANDS::HELP, "--help"},
-            {COMMANDS::VERBOSE_LEXER, "-verbose-lexer"},
-            {COMMANDS::VERBOSE_AST, "-verbose-ast"},
+       public:
+        cli_tiny_parser() : tokens{} {};
+        cli_tiny_parser(const std::vector<acc::token>& toks) : tokens{toks} {};
+        cli_tiny_parser(const cli_tiny_parser& ctp) : tokens(ctp.tokens) {};
+        cli_tiny_parser(cli_tiny_parser&& ctp) : tokens(std::move(ctp.tokens)) {};
+        ~cli_tiny_parser() {};
+
+        std::optional<std::uint8_t> get_flags() {
+            if (tokens[0].word == m_commands.at(COMMANDS::ACE_PROTOCOL)) {
+                std::uint8_t m_build_flags{};
+                // in ace protocol
+
+                return m_build_flags;
+            }
+            return std::nullopt;
         };
-
-    std::optional<std::uint8_t> cli_tiny_parser(const std::vector<acc::token>& toks) {
-        if (toks[0].word == m_commands.at(COMMANDS::ACE_PROTOCOL)) {
-            std::uint8_t m_build_flags{};
-            // in ace protocol
-            
-            return m_build_flags;
-        }
-        return std::nullopt;
     };
 
    public:
@@ -65,10 +75,16 @@ class cli {
         }};
 
         auto tokens = cli_lexer(std::move(source));
+        auto cli_parser = cli_tiny_parser(std::move(tokens));
+        auto maybe_flags = cli_parser.get_flags();
 
-        // eventually determined by build flags
-        for (auto& t : tokens) {
-            t.print_token();
+        if (maybe_flags.has_value()) {
+            auto definite_flags = maybe_flags.value();
+            if ((definite_flags & (std::uint8_t)COMMANDS::VERBOSE_LEXER) == (std::uint8_t)COMMANDS::VERBOSE_LEXER) {
+                for (auto& t : tokens) {
+                    t.print_token();
+                }
+            }
         }
     };
 };
