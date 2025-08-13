@@ -54,14 +54,13 @@ class cli {
         cli_tiny_parser(cli_tiny_parser&& ctp) : tokens(std::move(ctp.tokens)) {};
         ~cli_tiny_parser() {};
 
-        std::optional<std::uint8_t> get_flags() {
+        std::uint8_t get_flags() {
+            std::uint8_t m_build_flags{};
             if (tokens[0].word == m_commands.at(COMMANDS::ACE_PROTOCOL)) {
-                std::uint8_t m_build_flags{};
+                m_build_flags |= (std::uint8_t)COMMANDS::ACE_PROTOCOL;
                 // in ace protocol
-
-                return m_build_flags;
             }
-            return std::nullopt;
+            return m_build_flags;
         };
     };
 
@@ -76,15 +75,16 @@ class cli {
 
         auto tokens = cli_lexer(std::move(source));
         auto cli_parser = cli_tiny_parser(std::move(tokens));
-        auto maybe_flags = cli_parser.get_flags();
+        auto build_flags = cli_parser.get_flags();
 
-        if (maybe_flags.has_value()) {
-            auto definite_flags = maybe_flags.value();
-            if ((definite_flags & (std::uint8_t)COMMANDS::VERBOSE_LEXER) == (std::uint8_t)COMMANDS::VERBOSE_LEXER) {
+        if (((build_flags & (std::uint8_t)COMMANDS::ACE_PROTOCOL) == (std::uint8_t)COMMANDS::ACE_PROTOCOL)) {
+            if ((build_flags & (std::uint8_t)COMMANDS::VERBOSE_LEXER) == (std::uint8_t)COMMANDS::VERBOSE_LEXER) {
                 for (auto& t : tokens) {
                     t.print_token();
                 }
             }
+        } else {
+            // error unknown protocol
         }
     };
 };
