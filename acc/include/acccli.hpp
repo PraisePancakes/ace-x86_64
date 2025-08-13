@@ -1,6 +1,8 @@
 #pragma once
+#include <cassert>
 #include <cstdint>
 #include <iostream>
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -43,7 +45,15 @@ class cli {
             {COMMANDS::VERBOSE_AST, "-verbose-ast"},
         };
 
-    std::uint8_t m_build_flags{};
+    std::optional<std::uint8_t> cli_tiny_parser(const std::vector<acc::token>& toks) {
+        if (toks[0].word == m_commands.at(COMMANDS::ACE_PROTOCOL)) {
+            std::uint8_t m_build_flags{};
+            // in ace protocol
+            
+            return m_build_flags;
+        }
+        return std::nullopt;
+    };
 
    public:
     cli(const std::string& source) {
@@ -55,6 +65,8 @@ class cli {
         }};
 
         auto tokens = cli_lexer(std::move(source));
+
+        // eventually determined by build flags
         for (auto& t : tokens) {
             t.print_token();
         }

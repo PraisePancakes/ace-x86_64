@@ -123,19 +123,28 @@ class lexer {
         while (!is_end() && !is_delim(peek()) && !isspace(peek())) {
             advance();
         }
-        return token{to_substr(), std::make_pair(m_x, m_y), token_type_t::TK_IDENTIFIER, to_substr()};
+        return token{to_substr(),
+                     std::make_pair(m_x, m_y),
+                     token_type_t::TK_IDENTIFIER,
+                     to_substr()};
     };
 
     token lex_number() {
         while (!is_end() && !isalpha(peek()) && !is_delim(peek())) {
             advance();
         }
-        return token{to_substr(), std::make_pair(m_x, m_y), token_type_t::TK_LITERAL_INT, std::stoi(to_substr())};
+        return token{to_substr(),
+                     std::make_pair(m_x, m_y),
+                     token_type_t::TK_LITERAL_INT,
+                     std::stoi(to_substr())};
     };
 
     token lex_it() {
         if (is_delim(peek())) {
-            return token{to_substr(m_start, m_end + 1), std::make_pair(m_x, m_y), *(m_delims.find((acc::ACC_ALL_TOKEN_ENUM)advance())), peek_prev()};
+            return token{to_substr(m_start, m_end + 1),
+                         std::make_pair(m_x, m_y),
+                         *(m_delims.find((acc::ACC_ALL_TOKEN_ENUM)advance())),
+                         peek_prev()};
         };
         if (isdigit(peek())) {
             return lex_number();
