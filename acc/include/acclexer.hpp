@@ -8,7 +8,7 @@
 namespace acc {
 
 struct [[nodiscard]] token {
-    using value_type = std::variant<int, float, std::string, double, bool>;
+    using value_type = std::variant<char, int, float, std::string, double, bool>;
 
     std::string word;
     std::pair<int, int> location;
@@ -54,7 +54,7 @@ struct [[nodiscard]] token {
                        [](int i) { std::cout << "[INT] " << i << std::endl; },
                        [](float f) { std::cout << "[FLOAT] " << f << std::endl; },
                        [](double d) { std::cout << "[DOUBLE] " << d << std::endl; },
-                   },
+                       [](bool b) { std::cout << "[BOOL] " << std::boolalpha << b << std::endl; }},
                    value);
     };
 
@@ -135,7 +135,7 @@ class lexer {
 
     token lex_it() {
         if (is_delim(peek())) {
-            return token{to_substr(m_start, m_end + 1), std::make_pair(m_x, m_y), *(m_delims.find((acc::ACC_ALL_TOKEN_ENUM)advance())), to_substr()};
+            return token{to_substr(m_start, m_end + 1), std::make_pair(m_x, m_y), *(m_delims.find((acc::ACC_ALL_TOKEN_ENUM)advance())), peek_prev()};
         };
         if (isdigit(peek())) {
             return lex_number();
