@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 
-namespace acc {
+namespace acc::internal {
 
 template <typename... Fs>
 struct visitor : Fs... {

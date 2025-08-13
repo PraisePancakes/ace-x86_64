@@ -1,5 +1,7 @@
 #pragma once
 
+namespace acc {
+
 #define TOKEN_DEFs                     \
     TOKEN_DEF(TK_QUOTE_DOUBLE, '\"')   \
     TOKEN_DEF(TK_PAREN_L, '(')         \
@@ -16,6 +18,7 @@
     TOKEN_DEF(TK_SLASH, '/')           \
     TOKEN_DEF(TK_EOF, '\0')            \
     TOKEN_DEF(TK_DASH, '-')            \
+    TOKEN_DEF(TK_DOT, '.')             \
     TOKEN_DEF(TK_SPACE, ' ')           \
     TOKEN_DEF(TK_NEWLINE, '\n')        \
     TOKEN_DEF(TK_LITERAL_INT, 0xFE)    \
@@ -31,3 +34,4 @@ enum ACC_ALL_TOKEN_ENUM : unsigned char {
     TOKEN_DEFs
 };
 #undef TOKEN_DEF
+}  // namespace acc

@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <iostream>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "acclexer.hpp"
 #define LEX_TYPE_TEST_FAILURE false
@@ -33,18 +34,6 @@ class cli {
         VERBOSE_AST
     };
 
-    enum class CLI_TOKENS {
-        LBRACE,
-        RBRACE,
-        DASH,
-        IDENTIFIER,
-        NUMBER,
-        DOT
-    };
-
-#if LEX_TYPE_TEST_FAILURE
-    enum class ASSERTED_LEX_TYPE_FAILURE {};
-#endif
     const std::unordered_map<COMMANDS, std::string>
         m_commands{
             {COMMANDS::ACE_PROTOCOL, "acc"},
@@ -58,18 +47,16 @@ class cli {
 
    public:
     cli(const std::string& source) {
-        auto cli_lexer = acc::lexer{std::unordered_map<unsigned char, CLI_TOKENS>{
-            {'[', CLI_TOKENS::LBRACE},
-            {']', CLI_TOKENS::RBRACE},
-            {'-', CLI_TOKENS::DASH},
-            {'.', CLI_TOKENS::DOT}}};
-        static_assert(std::is_same_v<decltype(cli_lexer)::token_type, CLI_TOKENS>);
-#if LEX_TYPE_TEST_FAILURE
-        static_assert(!std::is_same_v<decltype(cli_lexer)::token_type, ASSERTED_LEX_TYPE_FAILURE>);
-#endif
+        auto cli_lexer = acc::lexer{std::unordered_set<acc::ACC_ALL_TOKEN_ENUM>{
+            acc::ACC_ALL_TOKEN_ENUM::TK_BRACE_L,
+            acc::ACC_ALL_TOKEN_ENUM::TK_BRACE_R,
+            acc::ACC_ALL_TOKEN_ENUM::TK_DASH,
+            acc::ACC_ALL_TOKEN_ENUM::TK_DOT,
+        }};
+
         auto tokens = cli_lexer(std::move(source));
         for (auto& t : tokens) {
-            std::cout << "[TOKEN] : " << t.word << " [TYPE]     " << (int)t.type << std::endl;
+            t.print_token();
         }
     };
 };
