@@ -14,6 +14,7 @@ namespace acc {
     TOKEN_DEF(TK_CURL_L, '{')          \
     TOKEN_DEF(TK_CURL_R, '}')          \
     TOKEN_DEF(TK_QUOTE_SINGLE, '\'')   \
+    TOKEN_DEF(TK_PLUS, '+')            \
     TOKEN_DEF(TK_STAR, '*')            \
     TOKEN_DEF(TK_SLASH, '/')           \
     TOKEN_DEF(TK_EOF, '\0')            \

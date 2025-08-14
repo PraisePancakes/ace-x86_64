@@ -1,31 +1,78 @@
 #pragma once
 #include <cassert>
 #include <cstdint>
+#include <expected>
+#include <functional>
 #include <iostream>
-#include <optional>
-#include <unordered_map>
-#include <unordered_set>
+#include <list>
 
-#include "acclexer.hpp"
-#define LEX_TYPE_TEST_FAILURE false
+#include "acclog.hpp"
 
 /**
- * Dev flags
- * -Ace-verbose-lexer
- * -Ace-verbose-ast
- *
+ * acc cli usage : [protocol]  --[major command]-[minor command]  [-[list of minor command flags], -[...]] [input file].[ace] -[output type]  [executable name]
  *
  * e.g.
  *
  *
- *
+ * two dash equals commands      one dash equals options                       output option : binary
  * (ace protocol) (dev flags)    (verbose lexer) (verbose ast)  (input file)  (output type flag (binary))     (executable name)
  * acc             --set-dev    [-verbose-lexer -verbose-ast ]  f.ace         -o                              fexec
  *
  * (ace protocol)   (help)
- * acc              --help
+ * acc              --help-all
+ * acc              --help-dev
  */
 namespace acc {
+
+template <typename T>
+using result = std::expected<T, std::string>;
+
+template <typename T>
+struct parser : std::function<result<T>(std::istream&)> {
+    using std::function<result<T>(std::istream&)>::function;
+    using value_type = T;
+    constexpr parser(parser<T> (*ptr)()) : parser(ptr()) {}
+};
+
+parser<char> char_(char t) {
+    return [=](std::istream& s) -> result<char> {
+        char v = s.get();
+        if (v == t) {
+            return v;
+        } else {
+            s.unget();
+            return std::unexpected("parser error");
+        };
+    };
+};
+
+parser<int> digit_(char t) {
+    return [=](std::istream& s) -> result<int> {
+        char v = s.get();
+        if (std::isdigit((unsigned char)v) && v == t) {
+            int x = v - '0';
+            return x;
+        } else {
+            s.unget();
+            return std::unexpected("parser error");
+        }
+    };
+};
+
+parser<int> number_() {
+    return [=](std::istream& ss) -> result<int> {
+        std::string v = "";
+        while (true) {
+            auto val = ss.get();
+            if (digit_(val) && !ss.eof()) {
+                v += val;
+            } else {
+                break;
+            }
+        }
+        return std::stoi(v);
+    };
+};
 
 class cli {
     enum class COMMANDS : std::uint8_t {
@@ -35,57 +82,10 @@ class cli {
         VERBOSE_LEXER = 1 << 4,
         VERBOSE_AST = 1 << 5
     };
-    class cli_tiny_parser {
-       private:
-        std::vector<acc::token> tokens;
-        const std::unordered_map<COMMANDS, std::string>
-            m_commands{
-                {COMMANDS::ACE_PROTOCOL, "acc"},
-                {COMMANDS::DEV_FLAGS, "--set-dev"},
-                {COMMANDS::HELP, "--help"},
-                {COMMANDS::VERBOSE_LEXER, "-verbose-lexer"},
-                {COMMANDS::VERBOSE_AST, "-verbose-ast"},
-            };
-
-       public:
-        cli_tiny_parser() : tokens{} {};
-        cli_tiny_parser(const std::vector<acc::token>& toks) : tokens{toks} {};
-        cli_tiny_parser(const cli_tiny_parser& ctp) : tokens(ctp.tokens) {};
-        cli_tiny_parser(cli_tiny_parser&& ctp) : tokens(std::move(ctp.tokens)) {};
-        ~cli_tiny_parser() {};
-
-        std::uint8_t get_flags() {
-            std::uint8_t m_build_flags{};
-            if (tokens[0].word == m_commands.at(COMMANDS::ACE_PROTOCOL)) {
-                m_build_flags |= (std::uint8_t)COMMANDS::ACE_PROTOCOL;
-                // in ace protocol
-            }
-            return m_build_flags;
-        };
-    };
 
    public:
-    cli(const std::string& source) {
-        auto cli_lexer = acc::lexer{std::unordered_set<acc::ACC_ALL_TOKEN_ENUM>{
-            acc::ACC_ALL_TOKEN_ENUM::TK_BRACE_L,
-            acc::ACC_ALL_TOKEN_ENUM::TK_BRACE_R,
-            acc::ACC_ALL_TOKEN_ENUM::TK_DASH,
-            acc::ACC_ALL_TOKEN_ENUM::TK_DOT,
-        }};
+    cli(std::stringstream& ss) {
 
-        auto tokens = cli_lexer(std::move(source));
-        auto cli_parser = cli_tiny_parser(std::move(tokens));
-        auto build_flags = cli_parser.get_flags();
-
-        if (((build_flags & (std::uint8_t)COMMANDS::ACE_PROTOCOL) == (std::uint8_t)COMMANDS::ACE_PROTOCOL)) {
-            if ((build_flags & (std::uint8_t)COMMANDS::VERBOSE_LEXER) == (std::uint8_t)COMMANDS::VERBOSE_LEXER) {
-                for (auto& t : tokens) {
-                    t.print_token();
-                }
-            }
-        } else {
-            // error unknown protocol
-        }
     };
 };
 }  // namespace acc

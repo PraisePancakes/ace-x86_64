@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
+#include <string>
 #include <unordered_set>
+#include <variant>
 #include <vector>
 
 #include "tkxmacro.hpp"
@@ -178,6 +180,7 @@ class lexer {
             ret.push_back(lex_it());
             m_start = m_end;
         }
+        ret.push_back(token{"", acc::ACC_ALL_TOKEN_ENUM::TK_EOF, '\0'});
         return ret;
     };
     ~lexer() {};
