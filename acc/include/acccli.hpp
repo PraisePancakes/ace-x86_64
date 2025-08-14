@@ -41,36 +41,40 @@ parser<char> char_(char t) {
             return v;
         } else {
             s.unget();
-            return std::unexpected("parser error");
+            return std::unexpected("char_ error");
         };
     };
 };
 
-parser<int> digit_(char t) {
-    return [=](std::istream& s) -> result<int> {
+parser<int> digit_() {
+    return [](std::istream& s) -> result<int> {
         char v = s.get();
-        if (std::isdigit((unsigned char)v) && v == t) {
+        if (std::isdigit((unsigned char)v)) {
             int x = v - '0';
             return x;
         } else {
             s.unget();
-            return std::unexpected("parser error");
+            return std::unexpected("digit_ error");
         }
     };
 };
 
-parser<int> number_() {
-    return [=](std::istream& ss) -> result<int> {
-        std::string v = "";
+parser<int> int_() {
+    return [](std::istream& ss) -> result<int> {
+        auto digit_parser = digit_();
+        std::string ret = "";
+
         while (true) {
-            auto val = ss.get();
-            if (digit_(val) && !ss.eof()) {
-                v += val;
+            auto v = digit_parser(ss);
+            if (v.has_value() && !ss.eof()) {
+                ret += ('0' + v.value());
             } else {
                 break;
             }
-        }
-        return std::stoi(v);
+        };
+
+        if (ret.empty()) return std::unexpected("number_ error");
+        return std::stoi(ret);
     };
 };
 

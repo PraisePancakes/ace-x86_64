@@ -19,10 +19,14 @@ auto main(int argc, char** argv) -> int {
     // acc::cli acli(std::move(ss));
 
     std::stringstream ss;
-    ss << "234";
-    auto np = acc::number_();
-    auto v = np(ss);
-    std::cout << v.value() << std::endl;
+    ss << "234a";
+    auto int_parser = acc::int_();
+    auto v = int_parser(ss);
+    if (!v.has_value()) {
+        std::cout << v.error();
+    } else {
+        std::cout << v.value();
+    }
 
     return EXIT_SUCCESS;
 }
