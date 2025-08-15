@@ -35,9 +35,10 @@ class cli {
     enum class COMMANDS : std::uint8_t {
         ACE_PROTOCOL = 1 << 0,
         DEV_FLAGS = 1 << 1,
-        HELP = 1 << 2,
-        VERBOSE_LEXER = 1 << 3,
-        VERBOSE_AST = 1 << 4
+        HELP_DEV = 1 << 2,
+        HELP_ALL = 1 << 3,
+        VERBOSE_LEXER = 1 << 4,
+        VERBOSE_AST = 1 << 5
     };
 
     std::uint8_t m_build_flags{0};
@@ -45,10 +46,7 @@ class cli {
     void parse_help_minor(std::stringstream& ss) {
         if (acc::match_("-")(ss)) {
             if (acc::match_("all")(ss)) {
-                acc::logger::instance().send(logger::LEVEL::INFO, "(ace protocol) (dev flags)     (verbose lexer) (verbose ast)  (input file)  (output type flag (binary))     (executable name)");
-                acc::logger::instance().send(logger::LEVEL::INFO, " acc              --set-dev    [-verbose-lexer -verbose-ast ]  f.ace         -o                              fexec");
-                acc::logger::instance().send(logger::LEVEL::INFO, " acc              --help-all");
-                acc::logger::instance().send(logger::LEVEL::INFO, " acc              --help-dev");
+                m_build_flags |= (std::uint8_t)COMMANDS::HELP_ALL;
             }
         }
     }
@@ -65,7 +63,6 @@ class cli {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         if (acc::match_("--")(ss).has_value()) {
             if (acc::match_("help")(ss).has_value()) {
-                m_build_flags |= (std::uint8_t)COMMANDS::HELP;
                 parse_help_minor(ss);
                 return;
             }
@@ -84,12 +81,25 @@ class cli {
         }
     };
 
+    void print_usage_all() {
+        acc::logger::instance().send(logger::LEVEL::INFO, "(ace protocol) (dev flags)     (verbose lexer) (verbose ast)  (input file)  (output type flag (binary))     (executable name)");
+        acc::logger::instance().send(logger::LEVEL::INFO, " acc              --set-dev    [-verbose-lexer -verbose-ast ]  f.ace         -o                              fexec");
+        acc::logger::instance().send(logger::LEVEL::INFO, " acc              --help-all");
+        acc::logger::instance().send(logger::LEVEL::INFO, " acc              --help-dev");
+    };
+
+    [[nodiscard]] bool is_set(COMMANDS flag) {
+        return ((m_build_flags & std::underlying_type_t<COMMANDS>(flag)) == std::underlying_type_t<COMMANDS>(flag));
+    };
+
    public:
     cli(std::stringstream&& ss) {
         parse(ss);
 
-        if (!((m_build_flags & (std::uint8_t)COMMANDS::ACE_PROTOCOL) == (std::uint8_t)COMMANDS::ACE_PROTOCOL)) {
-            // error
+        if (is_set(COMMANDS::ACE_PROTOCOL)) {
+            if (is_set(COMMANDS::HELP_ALL)) {
+                print_usage_all();
+            }
         }
     };
 };
