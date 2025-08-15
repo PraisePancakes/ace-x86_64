@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 
-
 namespace acc {
 
 template <typename T>
@@ -17,7 +16,7 @@ struct parser : std::function<result<T>(std::istream&)> {
     constexpr parser(parser<T> (*ptr)()) : parser(ptr()) {}
 };
 
-parser<char> char_(const char c) {
+parser<char> match_(const char c) {
     return [=](std::istream& s) -> result<char> {
         char v = s.get();
         if (v == c) {
@@ -95,7 +94,7 @@ parser<std::string> match_(std::string s) {
         std::string ret = "";
         for (std::size_t i = 0; i < s.size(); i++) {
             auto sv = s[i];
-            auto char_parser = char_(sv);
+            auto char_parser = match_(sv);
             auto v = char_parser(ss);
             if (v.has_value()) {
                 ret += v.value();
@@ -126,4 +125,5 @@ template <typename Ts>
         return parsed;
     };
 };
+
 }  // namespace acc
