@@ -43,7 +43,6 @@ class cli {
     std::uint8_t m_build_flags{0};
 
     void parse_help_minor(std::stringstream& ss) {
-        // TO DO create ignore
         if (acc::match_("-")(ss)) {
             if (acc::match_("all")(ss)) {
                 acc::logger::instance().send(logger::LEVEL::INFO, "(ace protocol) (dev flags)     (verbose lexer) (verbose ast)  (input file)  (output type flag (binary))     (executable name)");
@@ -55,10 +54,7 @@ class cli {
     }
 
     void parse_set_minor(std::stringstream& ss) {
-        // TO DO create ignore
-        while ((unsigned char)ss.peek() == ' ') {
-            ss.get();
-        }
+        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         if (acc::match_("-")(ss).has_value()) {
             if (acc::match_("dev")(ss)) {
             };
@@ -66,10 +62,7 @@ class cli {
     };
 
     void parse_major(std::stringstream& ss) {
-        // TO DO create ignore
-        while ((unsigned char)ss.peek() == ' ') {
-            ss.get();
-        }
+        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         if (acc::match_("--")(ss).has_value()) {
             if (acc::match_("help")(ss).has_value()) {
                 m_build_flags |= (std::uint8_t)COMMANDS::HELP;

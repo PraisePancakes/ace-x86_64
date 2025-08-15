@@ -13,6 +13,8 @@ endforeach()
 add_executable(${PROJECT_NAME} 
     main.cpp
 )
+add_compile_options(-fsanitize=address,undefined -fsanitize-undefined-trap-on-error)
+add_link_options(-fsanitize=address,undefined -fsanitize-undefined-trap-on-error)
 
 message("INFO :")
 message("  C: '${CMAKE_C_COMPILER}'")
@@ -29,7 +31,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if(MSVC)
   target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
 else()
-  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter )
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter  )
 endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
