@@ -136,7 +136,22 @@ parser<std::string> match_(std::string s) {
     };
 };
 
-
+// many_match_parser = many_(match_("hello"));
+template <typename Ts>
+[[nodiscard]] parser<std::vector<Ts>> many_(const parser<Ts>& ps) {
+    return [ps](std::istream& ss) -> result<std::vector<Ts>> {
+        std::vector<Ts> parsed;
+        while (true) {
+            auto ir = ps(ss);
+            if (!ir.has_value()) {
+                break;
+            }
+            parsed.push_back(ir.value());
+        }
+        
+        return parsed;
+    };
+};
 
 class cli {
     enum class COMMANDS : std::uint8_t {

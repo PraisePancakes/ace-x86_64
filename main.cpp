@@ -20,10 +20,13 @@ auto main(int argc, char** argv) -> int {
 
     std::stringstream ss;
     ss << "matchmatchmatch";
-    auto matcher = acc::match_("match");
+    auto matcher = acc::many_(acc::match_("match"));
     auto v = matcher(ss);
-
-    std::cout << v.value_or("error");
+    if (v.has_value()) {
+        for (auto& s : v.value()) {
+            std::cout << s << std::endl;
+        }
+    }
 
     return EXIT_SUCCESS;
 }
