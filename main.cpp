@@ -19,14 +19,11 @@ auto main(int argc, char** argv) -> int {
     // acc::cli acli(std::move(ss));
 
     std::stringstream ss;
-    ss << "234a";
-    auto int_parser = acc::int_();
-    auto v = int_parser(ss);
-    if (!v.has_value()) {
-        std::cout << v.error();
-    } else {
-        std::cout << v.value();
-    }
+    ss << "matchmatchmatch";
+    auto matcher = acc::match_("match");
+    auto v = matcher(ss);
+
+    std::cout << v.value_or("error");
 
     return EXIT_SUCCESS;
 }
