@@ -3,8 +3,8 @@
 #include <sstream>
 #include <variant>
 
-#include "acc/include/acccli.hpp"
 #include "acc/include/acclog.hpp"
+#include "acc/include/cli/acccli.hpp"
 
 auto main(int argc, char** argv) -> int {
     // if (argc <= 1) {
@@ -19,7 +19,7 @@ auto main(int argc, char** argv) -> int {
     // acc::cli acli(std::move(ss));
 
     std::stringstream ss;
-    ss << "matchmatchmatch";
+    ss << "mar";
     auto matcher = acc::many_(acc::match_("match"));
     auto v = matcher(ss);
     if (v.has_value()) {
