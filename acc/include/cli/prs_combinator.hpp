@@ -169,4 +169,27 @@ parser<std::tuple<>> ignore_(const parser<T>& ps) {
     return ignore_(ps, "ignore_ parser error : ignored none");
 }
 
+// create any_ which will take a variadic parser<Ts>... and convert them to parsers, result will be any parser that succeeds else return unexpected.
+template <typename T>
+[[nodiscard]] parser<T> any_(const parser<T>& first) {
+    return [=](std::istream& ss) -> result<T> {
+        auto matcher = first(ss);
+        if (matcher.has_value()) {
+            return matcher.value();
+        }
+        return std::unexpected("any_ error : parser failed");
+    };
+};
+
+template <typename T, typename... Ts>
+[[nodiscard]] parser<T> any_(const parser<T>& first, Ts&&... rest) {
+    return [=](std::istream& ss) -> result<T> {
+        auto f = any_(first)(ss);
+        if (f.has_value()) {
+            return f.value();
+        }
+        return any_(rest...)(ss);
+    };
+};
+
 }  // namespace acc

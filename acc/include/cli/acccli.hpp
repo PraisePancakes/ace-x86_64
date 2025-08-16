@@ -55,10 +55,21 @@ class cli {
         }
     }
 
+    void parse_dev_options(std::stringstream& ss) {
+        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+        auto enclose_matcher = acc::match_('[', "dev options must be enclosed in []")(ss);
+        if (enclose_matcher.has_value()) {
+            // acc::any_(acc::match("-verbose-lexer"), acc::match("-verbose-ast"));
+        } else {
+            std::cout << enclose_matcher.error();
+        };
+    }
+
     void parse_set_minor(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-        if (acc::match_("-")(ss).has_value()) {
+        if (acc::match_('-')(ss).has_value()) {
             if (acc::match_("dev")(ss)) {
+                parse_dev_options(ss);
             };
         }
     };
@@ -88,7 +99,7 @@ class cli {
     void print_usage_devs() {
         acc::logger::instance().send(logger::LEVEL::INFO,
                                      R"(FLAGS 
-            [--set-dev] 
+            --set-dev [-verbose-lexer , -verbose-ast]
                 -verbose-lexer : prints the lexed result of each input file.
                 -verbose-ast : prints the abstract-syntax-tree of each input file.
                                                                 )");
