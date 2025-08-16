@@ -34,21 +34,17 @@ parser<char> match_(const char c) {
 
 parser<std::string> match_(std::string s, const std::string& error_message) {
     return [=](std::istream& ss) -> result<std::string> {
-        std::string ret = "";
-        for (std::size_t i = 0; i < s.size(); i++) {
-            auto sv = s[i];
-            auto char_parser = match_(sv);
-            auto v = char_parser(ss);
-            if (v.has_value()) {
-                ret += v.value();
-            }
-            if (ret == s) {
-                break;
+        for (size_t index = 0; index < s.size(); ++index) {
+            if (ss.peek() == s[index]) {
+                ss.get();
+            } else {
+                while (index--) {
+                    ss.unget();
+                }
+                return std::unexpected{s};
             }
         }
-
-        if (ret != s) return std::unexpected(error_message);
-        return ret;
+        return s;
     };
 };
 
@@ -169,27 +165,15 @@ parser<std::tuple<>> ignore_(const parser<T>& ps) {
     return ignore_(ps, "ignore_ parser error : ignored none");
 }
 
-// create any_ which will take a variadic parser<Ts>... and convert them to parsers, result will be any parser that succeeds else return unexpected.
-template <typename T>
-[[nodiscard]] parser<T> any_(const parser<T>& first) {
-    return [=](std::istream& ss) -> result<T> {
-        auto matcher = first(ss);
-        if (matcher.has_value()) {
-            return matcher.value();
-        }
-        return std::unexpected("any_ error : parser failed");
-    };
-};
+template <typename A>
+auto constexpr operator|(result<A> const& lhs, result<A> const& rhs) {
+    if (bool(lhs)) {
+        return lhs;
+    }
 
-template <typename T, typename... Ts>
-[[nodiscard]] parser<T> any_(const parser<T>& first, Ts&&... rest) {
-    return [=](std::istream& ss) -> result<T> {
-        auto f = any_(first)(ss);
-        if (f.has_value()) {
-            return f.value();
-        }
-        return any_(rest...)(ss);
-    };
-};
+    return rhs;
+}
+
+// create any_ which will take a variadic parser<Ts>... and convert them to parsers, result will be any parser that succeeds else return unexpected.
 
 }  // namespace acc

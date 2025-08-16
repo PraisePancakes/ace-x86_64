@@ -59,7 +59,17 @@ class cli {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         auto enclose_matcher = acc::match_('[', "dev options must be enclosed in []")(ss);
         if (enclose_matcher.has_value()) {
-            // acc::any_(acc::match("-verbose-lexer"), acc::match("-verbose-ast"));
+            auto v = (acc::match_("-verbose-ast")(ss) | acc::match_("-verbose-lexer")(ss));
+            if (v.has_value()) {
+                if (v.value() == "-verbose-lexer") {
+                    m_build_flags |= (std::uint8_t)COMMANDS::VERBOSE_LEXER;
+                }
+                if (v.value() == "-verbose-ast") {
+                    m_build_flags |= (std::uint8_t)COMMANDS::VERBOSE_AST;
+                }
+            } else {
+                std::cout << v.error() << std::endl;
+            };
         } else {
             std::cout << enclose_matcher.error();
         };
@@ -69,6 +79,7 @@ class cli {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         if (acc::match_('-')(ss).has_value()) {
             if (acc::match_("dev")(ss)) {
+                m_build_flags |= (std::uint8_t)COMMANDS::DEV_FLAGS;
                 parse_dev_options(ss);
             };
         }
@@ -124,6 +135,14 @@ class cli {
                 print_usage_all();
             } else if (is_set(COMMANDS::HELP_DEV)) {
                 print_usage_devs();
+            }
+            if (is_set(COMMANDS::DEV_FLAGS)) {
+                if (is_set(COMMANDS::VERBOSE_AST)) {
+                    acc::logger::instance().send(logger::LEVEL::INFO, "-verbose-ast is set");
+                }
+                if (is_set(COMMANDS::VERBOSE_LEXER)) {
+                    acc::logger::instance().send(logger::LEVEL::INFO, "-verbose-lexer is set");
+                }
             }
         }
     };
