@@ -34,14 +34,14 @@ parser<char> match_(const char c) {
 
 parser<std::string> match_(std::string s, const std::string& error_message) {
     return [=](std::istream& ss) -> result<std::string> {
-        for (size_t index = 0; index < s.size(); ++index) {
-            if (ss.peek() == s[index]) {
+        for (std::size_t i = 0; i < s.size(); i++) {
+            if (ss.peek() == s[i]) {
                 ss.get();
             } else {
-                while (index--) {
+                while (i--) {
                     ss.unget();
                 }
-                return std::unexpected{s};
+                return std::unexpected("match_ error");
             }
         }
         return s;
