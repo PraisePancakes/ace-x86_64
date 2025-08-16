@@ -86,7 +86,13 @@ class cli {
     };
 
     void print_usage_devs() {
-        acc::logger::instance().send(logger::LEVEL::INFO, "FLAGS\n\t[--set-dev] \n\t-verbose-lexer : prints the lexed result of each input file.\n\t-verbose-ast : prints the abstract-syntax-tree of each input file.\n");
+        acc::logger::instance().send(logger::LEVEL::INFO, 
+            R"(
+            FLAGS 
+            [--set-dev] 
+                -verbose-lexer : prints the lexed result of each input file.
+                -verbose-ast : prints the abstract-syntax-tree of each input file.
+                                                                )");
     }
 
     void print_usage_all() {
