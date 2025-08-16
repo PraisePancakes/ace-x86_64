@@ -48,6 +48,10 @@ class cli {
             if (acc::match_("all")(ss)) {
                 m_build_flags |= (std::uint8_t)COMMANDS::HELP_ALL;
             }
+
+            if (acc::match_("dev")(ss)) {
+                m_build_flags |= (std::uint8_t)COMMANDS::HELP_DEV;
+            }
         }
     }
 
@@ -81,11 +85,14 @@ class cli {
         }
     };
 
+    void print_usage_devs() {
+        acc::logger::instance().send(logger::LEVEL::INFO, "FLAGS\n\t[--set-dev] \n\t-verbose-lexer : prints the lexed result of each input file.\n\t-verbose-ast : prints the abstract-syntax-tree of each input file.\n");
+    }
+
     void print_usage_all() {
-        acc::logger::instance().send(logger::LEVEL::INFO, "(ace protocol) (dev flags)     (verbose lexer) (verbose ast)  (input file)  (output type flag (binary))     (executable name)");
-        acc::logger::instance().send(logger::LEVEL::INFO, " acc              --set-dev    [-verbose-lexer -verbose-ast ]  f.ace         -o                              fexec");
-        acc::logger::instance().send(logger::LEVEL::INFO, " acc              --help-all");
-        acc::logger::instance().send(logger::LEVEL::INFO, " acc              --help-dev");
+        print_usage_devs();
+        acc::logger::instance().send(logger::LEVEL::INFO, "e.g.            acc                                                     foo.ace         -o                              fexec");
+        acc::logger::instance().send(logger::LEVEL::INFO, "         (ace protocol)  <optional flags> [optional flag options]    (input file)  (output type flag (binary))     (executable name)");
     };
 
     [[nodiscard]] bool is_set(COMMANDS flag) {
@@ -99,6 +106,8 @@ class cli {
         if (is_set(COMMANDS::ACE_PROTOCOL)) {
             if (is_set(COMMANDS::HELP_ALL)) {
                 print_usage_all();
+            } else if (is_set(COMMANDS::HELP_DEV)) {
+                print_usage_devs();
             }
         }
     };
