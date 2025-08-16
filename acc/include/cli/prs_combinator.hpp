@@ -167,12 +167,18 @@ parser<std::tuple<>> ignore_(const parser<T>& ps) {
 
 template <typename A>
 auto constexpr operator|(result<A> const& lhs, result<A> const& rhs) {
-    if (bool(lhs)) {
-        return lhs;
-    }
-
-    return rhs;
+    return lhs ? lhs : rhs;
 }
+
+template <typename T>
+constexpr auto either_(result<T> const& lhs, result<T> const& rhs) {
+    return lhs ? lhs : rhs;
+};
+
+template <typename T, typename... Ts>
+constexpr auto any_(result<T> const& ps, Ts... ts) {
+    return ps | any_(ts...);
+};
 
 // create any_ which will take a variadic parser<Ts>... and convert them to parsers, result will be any parser that succeeds else return unexpected.
 
