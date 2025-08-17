@@ -32,9 +32,9 @@ parser<char> match_(const char c) {
     return match_(c, "match_ parser error");
 }
 
-parser<std::string> match_(std::string s, const std::string& error_message) {
+parser<std::string> match_(const std::string& s, const std::string& error_message) {
     return [=](std::istream& ss) -> result<std::string> {
-        for (std::size_t i = 0; i < s.size(); i++) {
+        for (std::size_t i = 0; i < s.size(); ++i) {
             if (ss.peek() == s[i]) {
                 ss.get();
             } else {
@@ -44,6 +44,7 @@ parser<std::string> match_(std::string s, const std::string& error_message) {
                 return std::unexpected("match_ error");
             }
         }
+
         return s;
     };
 };
@@ -175,9 +176,14 @@ constexpr auto either_(result<T> const& lhs, result<T> const& rhs) {
     return lhs ? lhs : rhs;
 };
 
+template <typename T, typename U>
+constexpr auto any_(result<T> const& ps, result<U> const& qs) {
+    return ps | qs;
+};
+
 template <typename T, typename... Ts>
 constexpr auto any_(result<T> const& ps, Ts... ts) {
-    return ps | any_(ts...);
+    return (ps | any_(ts...));
 };
 
 // create any_ which will take a variadic parser<Ts>... and convert them to parsers, result will be any parser that succeeds else return unexpected.
