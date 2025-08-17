@@ -44,8 +44,21 @@ class cli {
     };
 
     std::uint8_t m_build_flags{0};
+    std::vector<std::string> m_input_files;
 
-    void parse_input_file(std::stringstream& ss) {};
+    void parse_input_file(std::stringstream& ss) {
+        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+        // TO DO create a sequence parser that can match_ a sequence like acc::seq_(acc::alnum_(), acc::match('.'), acc::match("ace"));
+        auto parser = acc::alnum_();
+        auto v = parser(ss);
+        if (v.has_value()) {
+            if (acc::match_(".ace")(ss)) {
+                m_input_files.push_back(v.value() + '.' + "ace");
+            }
+        }
+
+        std::cout << m_input_files[0];
+    };
 
     void parse_dev_commands(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
@@ -65,7 +78,6 @@ class cli {
                     exit(EXIT_FAILURE);
                 }
             }
-            parse_input_file(ss);
         }
     };
 
@@ -89,6 +101,7 @@ class cli {
         if (v.has_value()) {
             m_build_flags |= m_flag_map.at(v.value());
             parse_commands(ss);
+            parse_input_file(ss);
         }
     };
 
@@ -123,7 +136,6 @@ class cli {
                 if (is_set("-verbose-ast")) {
                     acc::logger::instance().send(logger::LEVEL::INFO, "[DEV FLAG] -verbose-ast has been set");
                 }
-
                 if (is_set("-verbose-lexer")) {
                     acc::logger::instance().send(logger::LEVEL::INFO, "[DEV FLAG] -verbose-lexer has been set");
                 }

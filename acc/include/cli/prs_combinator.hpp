@@ -16,6 +16,46 @@ struct parser : std::function<result<T>(std::istream&)> {
     constexpr parser(parser<T> (*ptr)()) : parser(ptr()) {}
 };
 
+template <typename T>
+parser<std::tuple<>> ignore_(const parser<T>& ps) {
+    return ignore_(ps, "ignore_ parser error : ignored none");
+}
+
+template <typename A>
+auto constexpr operator|(result<A> const& lhs, result<A> const& rhs) {
+    return lhs ? lhs : rhs;
+}
+
+template <typename T>
+constexpr auto either_1(result<T> const& lhs, result<T> const& rhs) {
+    return lhs ? lhs : rhs;
+};
+
+template <typename T>
+constexpr auto either_2(result<T> const& lhs, result<T> const& rhs) {
+    return rhs ? rhs : lhs;
+};
+
+template <typename T>
+constexpr auto any_(result<T> const& ps, result<T> const& qs) {
+    return ps | qs;
+};
+
+template <typename T, typename... Ts>
+constexpr auto any_(result<T> const& ps, Ts... ts) {
+    return (ps | any_(ts...));
+};
+
+template <typename T>
+constexpr auto sequ_(result<T> const& ps, result<T> const& qs) {
+    return ps & qs;
+};
+
+template <typename T, typename... Ts>
+constexpr auto sequ_(result<T> const& ps, Ts... ts) {
+    return (ps & sequ_(ts...));
+};
+
 parser<char> match_(const char c, const std::string& error_message) {
     return [=](std::istream& s) -> result<char> {
         char v = s.get();
@@ -130,6 +170,25 @@ parser<std::string> letters_() {
     return letters_("letters_ parser error");
 }
 
+parser<std::string> alnum_(const std::string& error_message) {
+    return [=](std::istream& ss) -> result<std::string> {
+        std::string ret = "";
+        while (true) {
+            if (std::isalnum(ss.peek())) {
+                ret += ss.get();
+            } else {
+                break;
+            }
+        }
+        if (ret.empty()) return std::unexpected(error_message);
+        return ret;
+    };
+}
+
+parser<std::string> alnum_() {
+    return alnum_("letters_ parser error");
+}
+
 template <typename Ts>
 [[nodiscard]] parser<std::vector<Ts>> many_(const parser<Ts>& ps, const std::string& error_message) {
     return [&ps, error_message](std::istream& ss) -> result<std::vector<Ts>> {
@@ -160,31 +219,6 @@ parser<std::tuple<>> ignore_(const parser<T>& ps, const std::string& error_messa
         return std::make_tuple();
     };
 }
-
-template <typename T>
-parser<std::tuple<>> ignore_(const parser<T>& ps) {
-    return ignore_(ps, "ignore_ parser error : ignored none");
-}
-
-template <typename A>
-auto constexpr operator|(result<A> const& lhs, result<A> const& rhs) {
-    return lhs ? lhs : rhs;
-}
-
-template <typename T>
-constexpr auto either_(result<T> const& lhs, result<T> const& rhs) {
-    return lhs ? lhs : rhs;
-};
-
-template <typename T, typename U>
-constexpr auto any_(result<T> const& ps, result<U> const& qs) {
-    return ps | qs;
-};
-
-template <typename T, typename... Ts>
-constexpr auto any_(result<T> const& ps, Ts... ts) {
-    return (ps | any_(ts...));
-};
 
 // create any_ which will take a variadic parser<Ts>... and convert them to parsers, result will be any parser that succeeds else return unexpected.
 
