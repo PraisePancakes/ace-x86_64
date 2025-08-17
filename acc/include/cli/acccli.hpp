@@ -57,8 +57,12 @@ class cli {
                 if (v.has_value()) {
                     m_build_flags |= m_flag_map.at(v.value());
                 }
+
                 if (acc::match_(']')(ss)) {
                     break;
+                } else if (ss.peek() == -1) {
+                    acc::logger::instance().send(acc::logger::LEVEL::FATAL, "CLI input parser failed.");
+                    exit(EXIT_FAILURE);
                 }
             }
             parse_input_file(ss);
