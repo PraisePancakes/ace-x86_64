@@ -49,6 +49,7 @@ class cli {
     void parse_input_file(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         // TO DO create a sequence parser that can match_ a sequence like acc::seq_(acc::alnum_(), acc::match('.'), acc::match("ace"));
+
         auto parser = acc::alnum_();
         auto v = parser(ss);
         if (v.has_value()) {
@@ -57,16 +58,20 @@ class cli {
             }
         }
 
-        std::cout << m_input_files[0];
+        if (m_input_files.size() > 0) {
+            std::cout << m_input_files[0];
+        }
     };
 
     void parse_dev_commands(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+
         auto open = acc::match_('[')(ss);
         if (open.value()) {
             while (true) {
                 acc::many_(acc::ignore_(acc::match_(' ')))(ss);
                 auto v = acc::any_(acc::match_("-verbose-lexer")(ss), acc::match_("-verbose-ast")(ss));
+
                 if (v.has_value()) {
                     m_build_flags |= m_flag_map.at(v.value());
                 }
