@@ -49,7 +49,7 @@ class cli {
     void parse_input_file(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         // TO DO create a sequence parser that can match_ a sequence like acc::seq_(acc::alnum_(), acc::match('.'), acc::match("ace"));
-
+      
         auto parser = acc::alnum_();
         auto v = parser(ss);
         if (v.has_value()) {

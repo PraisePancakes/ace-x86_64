@@ -189,25 +189,31 @@ parser<std::string> alnum_() {
     return alnum_("letters_ parser error");
 }
 
-template <typename Ts>
-[[nodiscard]] parser<std::vector<Ts>> many_(const parser<Ts>& ps, const std::string& error_message) {
-    return [&ps, error_message](std::istream& ss) -> result<std::vector<Ts>> {
-        std::vector<Ts> parsed;
-        while (true) {
-            auto ir = ps(ss);
-            if (!ir.has_value()) {
-                break;
+template <typename T>
+concept appendable = requires(T t, T v) {
+    { t += v } -> std::same_as<T>;
+};
+
+template <typename T>
+constexpr parser<std::pair<std::vector<T>, std::string>> many_(const parser<T>& prsr, const std::string& error_message) {
+    using pair_type = std::pair<std::vector<T>, std::string>;
+    return [=](std::istream& ss) -> std::expected<pair_type, std::string> {
+        std::vector<T> rv;
+        std::string rs;
+        while (auto v = prsr(ss)) {
+            rv.push_back(v.value());
+            if constexpr (appendable<T>) {
+                rs += v.value();
             }
-            parsed.push_back(ir.value());
         }
-        if (parsed.empty()) return std::unexpected(error_message);
-        return parsed;
+        if (rv.empty() && rs.empty()) return std::unexpected(error_message);
+        return std::make_pair(rv, rs);
     };
-}
+};
 
 // many_match_parser = many_(match_("hello"));
 template <typename Ts>
-[[nodiscard]] parser<std::vector<Ts>> many_(const parser<Ts>& ps) {
+[[nodiscard]] parser<std::pair<std::vector<Ts>, std::string>> many_(const parser<Ts>& ps) {
     return many_(ps, "many_ parser error : found none");
 };
 template <typename T>
