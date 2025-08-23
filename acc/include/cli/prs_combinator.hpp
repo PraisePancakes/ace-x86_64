@@ -206,9 +206,26 @@ constexpr parser<std::pair<std::vector<T>, std::string>> many_(const parser<T>& 
                 rs += v.value();
             }
         }
-        if (rv.empty() && rs.empty()) return std::unexpected(error_message);
         return std::make_pair(rv, rs);
     };
+};
+
+template <typename T>
+constexpr parser<std::pair<std::vector<T>, std::string>> many_one(const parser<T>& prsr, const std::string& error_message) {
+    using pair_type = std::pair<std::vector<T>, std::string>;
+    return [=](std::istream& ss) -> std::expected<pair_type, std::string> {
+        auto v = many_(prsr, error_message);
+        if (v.has_value()) {
+            if (v.value().first.empty() || v.value().second.empty()) return v.error();
+            return v.value();
+        }
+        return v.error();
+    };
+};
+
+template <typename Ts>
+[[nodiscard]] parser<std::pair<std::vector<Ts>, std::string>> many_one(const parser<Ts>& ps) {
+    return many_one(ps, "many_one parser error : found none");
 };
 
 // many_match_parser = many_(match_("hello"));
