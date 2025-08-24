@@ -37,9 +37,27 @@ constexpr auto either_2(result<T> const& lhs, result<T> const& rhs) {
     return rhs ? rhs : lhs;
 };
 
+template <typename T, typename U>
+[[nodiscard]] constexpr auto both_(parser<T> const& lhs, parser<U> const& rhs) {
+    return [=](std::istream& ss) -> result<std::tuple<T, U>> {
+        if (auto v = lhs(ss)) {
+            if (auto r = rhs(ss)) {
+                return std::make_tuple(v.value(), r.value());
+            }
+        }
+        return std::unexpected("Not both");
+    };
+};
+
+template <typename T, typename U>
+[[nodiscard]] constexpr auto operator>>(parser<T> const& lhs, parser<U> const& rhs) {
+    return both_(lhs, rhs);
+};
+// (A , B) -> result<A + B>
+
 template <typename... Ts>
-constexpr auto any_(parser<Ts> const&... ts) {
-    return [=](std::istream& ss) {
+[[nodiscard]] constexpr auto any_(parser<Ts> const&... ts) {
+    return [=](std::istream& ss) -> result<std::tuple_element_t<0, std::tuple<Ts...>>> {
         return (ts(ss) | ...);
     };
 };
@@ -226,6 +244,13 @@ template <typename T, typename F>
 };
 
 template <typename T>
+[[nodiscard]] constexpr auto to_parser(parser<T> const& p) {
+    return [=](std::istream& ss) {
+        return p;
+    };
+};
+
+template <typename T>
 parser<std::tuple<>> ignore_(const parser<T>& ps, const std::string& error_message) {
     return [&ps, error_message](std::istream& ss) -> result<std::tuple<>> {
         if (!ps(ss)) {
@@ -233,7 +258,7 @@ parser<std::tuple<>> ignore_(const parser<T>& ps, const std::string& error_messa
         }
         return std::make_tuple();
     };
-}
+};
 
 // create any_ which will take a variadic parser<Ts>... and convert them to parsers, result will be any parser that succeeds else return unexpected.
 

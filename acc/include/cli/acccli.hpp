@@ -58,9 +58,9 @@ class cli {
             }
         }
 
-        if (m_input_files.size() > 0) {
-            std::cout << m_input_files[0];
-        }
+        // if (m_input_files.size() > 0) {
+        //     std::cout << m_input_files[0];
+        // }
     };
 
     void parse_dev_commands(std::stringstream& ss) {
