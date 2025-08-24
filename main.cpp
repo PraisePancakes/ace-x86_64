@@ -21,15 +21,18 @@ auto main(int argc, char** argv) -> int {
     // acc::cli acli(std::move(ss));
 
     std::stringstream ss;
-    ss << "hello 1";
+    ss << "hello ";
 
-    auto v = (acc::match_("hello") >> acc::match_('1'))(ss);
+    auto v = (acc::match_("hello") >> acc::map_(acc::match_(' '), [](char c) { return "SPACE"; }))(ss);
 
     if (v) {
         std::apply([](auto&&... args) {
             ((std::cout << args << "\n"), ...);
         },
                    v.value());
+    } else {
+        std::cout << v.error() << std::endl;
     };
+
     return EXIT_SUCCESS;
 }

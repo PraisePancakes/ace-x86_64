@@ -58,14 +58,13 @@ template <typename T, typename... Ts>
 [[nodiscard]] constexpr auto sequ_(Ts&&... ts) {
     return [=](std::istream& ss) {
         // TO DO implement seq via tuple catting
-        
     };
 };
 // (A , B) -> result<A + B>
 
 template <typename... Ts>
 [[nodiscard]] constexpr auto any_(parser<Ts> const&... ts) {
-    return [=](std::istream& ss) -> result<std::tuple_element_t<0, std::tuple<Ts...>>> {
+    return [=](std::istream& ss) -> auto {
         return (ts(ss) | ...);
     };
 };
@@ -240,23 +239,16 @@ template <typename Ts>
 };
 
 template <typename T, typename F>
-[[nodiscard]] constexpr auto map(parser<T> const& p, const F& f) noexcept(
-    noexcept(std::is_nothrow_invocable_v<F, T>)) {
-    return [=](std::istream& ss) -> result<std::invoke_result_t<F, T>> {
+[[nodiscard]] constexpr auto map_(parser<T> const& p, const F& f) noexcept(noexcept(std::is_nothrow_invocable_v<F, T>)) {
+    using U = std::invoke_result_t<F, T>;
+    return parser<U>{[=](std::istream& ss) -> result<U> {
         auto v = p(ss);
         if (v.has_value()) {
             return std::invoke(f, v.value());
-        };
+        }
         return std::unexpected(v.error());
-    };
-};
-
-template <typename T>
-[[nodiscard]] constexpr auto to_parser(parser<T> const& p) {
-    return [=](std::istream& ss) {
-        return p;
-    };
-};
+    }};
+}
 
 template <typename T>
 parser<std::tuple<>> ignore_(const parser<T>& ps, const std::string& error_message) {
