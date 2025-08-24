@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 
+#include "../traits/appendable.hpp"
 namespace acc {
 
 template <typename T>
@@ -177,11 +178,6 @@ parser<std::string> alnum_() {
 }
 
 template <typename T>
-concept appendable = requires(T t, T v) {
-    { t += v } -> std::convertible_to<T>;
-};
-
-template <typename T>
 constexpr parser<std::pair<std::vector<T>, std::string>> many_(const parser<T>& prsr) {
     using pair_type = std::pair<std::vector<T>, std::string>;
     return [=](std::istream& ss) -> result<pair_type> {
@@ -189,7 +185,7 @@ constexpr parser<std::pair<std::vector<T>, std::string>> many_(const parser<T>& 
         std::string rs;
         while (auto v = prsr(ss)) {
             rv.push_back(v.value());
-            if constexpr (appendable<T>) {
+            if constexpr (traits::appendable<T>) {
                 rs += v.value();
             }
         }

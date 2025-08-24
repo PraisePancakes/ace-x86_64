@@ -9,28 +9,16 @@
 #include "acc/include/cli/acccli.hpp"
 
 auto main(int argc, char** argv) -> int {
-    // if (argc <= 1) {
-    //     acc::logger::instance().send(acc::logger::LEVEL::FATAL, "no input files determined for Ace compilation.");
-    //     return EXIT_FAILURE;
-    // }
-    // std::stringstream ss;
-    // for (int i = 1; i < argc; i++) {
-    //     ss << std::string(argv[i]) << " ";
-    // }
-
-    // acc::cli acli(std::move(ss));
-
+    if (argc <= 1) {
+        acc::logger::instance().send(acc::logger::LEVEL::FATAL, "no input files determined for Ace compilation.");
+        return EXIT_FAILURE;
+    }
     std::stringstream ss;
-    ss << "hello";
+    for (int i = 1; i < argc; i++) {
+        ss << std::string(argv[i]) << " ";
+    }
 
-    auto v = acc::map(acc::match_("hello"), [](const std::string& st) { int s = 0;
-                                                                        for(auto e : st) {
-                                                                            std::cout << (unsigned char)e << " : " << (int)e << std::endl;
-                                                                            s += e;
-                                                                        }
-                                                                        return s; })(ss);
-
-    std::cout << v.value_or(3);
+    acc::cli acli(std::move(ss));
 
     return EXIT_SUCCESS;
 }
