@@ -191,11 +191,11 @@ parser<std::string> alnum_() {
 
 template <typename T>
 concept appendable = requires(T t, T v) {
-    { t += v } -> std::same_as<T>;
+    { t += v } -> std::convertible_to<T>;
 };
 
 template <typename T>
-constexpr parser<std::pair<std::vector<T>, std::string>> many_(const parser<T>& prsr, const std::string& error_message) {
+constexpr parser<std::pair<std::vector<T>, std::string>> many_(const parser<T>& prsr) {
     using pair_type = std::pair<std::vector<T>, std::string>;
     return [=](std::istream& ss) -> std::expected<pair_type, std::string> {
         std::vector<T> rv;
@@ -211,15 +211,17 @@ constexpr parser<std::pair<std::vector<T>, std::string>> many_(const parser<T>& 
 };
 
 template <typename T>
-constexpr parser<std::pair<std::vector<T>, std::string>> many_one(const parser<T>& prsr, const std::string& error_message) {
+constexpr parser<std::pair<std::vector<T>, std::string>>
+many_one(const parser<T>& prsr, const std::string& error_message) {
     using pair_type = std::pair<std::vector<T>, std::string>;
     return [=](std::istream& ss) -> std::expected<pair_type, std::string> {
-        auto v = many_(prsr, error_message);
+        auto v = many_(prsr)(ss);
         if (v.has_value()) {
-            if (v.value().first.empty() || v.value().second.empty()) return v.error();
+            if (v.value().first.empty() || v.value().second.empty()) return std::unexpected(error_message);
             return v.value();
         }
-        return v.error();
+
+        return std::unexpected(error_message);
     };
 };
 
@@ -228,11 +230,6 @@ template <typename Ts>
     return many_one(ps, "many_one parser error : found none");
 };
 
-// many_match_parser = many_(match_("hello"));
-template <typename Ts>
-[[nodiscard]] parser<std::pair<std::vector<Ts>, std::string>> many_(const parser<Ts>& ps) {
-    return many_(ps, "many_ parser error : found none");
-};
 template <typename T>
 parser<std::tuple<>> ignore_(const parser<T>& ps, const std::string& error_message) {
     return [&ps, error_message](std::istream& ss) -> result<std::tuple<>> {
