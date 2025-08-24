@@ -21,9 +21,9 @@ auto main(int argc, char** argv) -> int {
     // acc::cli acli(std::move(ss));
 
     std::stringstream ss;
-    ss << "hello1";
+    ss << "hello 1";
 
-    acc::result<std::tuple<std::string, char>> v = (acc::match_("hello") >> acc::match_('1'))(ss);
+    auto v = (acc::match_("hello") >> acc::match_('1'))(ss);
 
     if (v) {
         std::apply([](auto&&... args) {

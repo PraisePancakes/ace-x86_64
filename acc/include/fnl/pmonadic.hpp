@@ -53,6 +53,14 @@ template <typename T, typename U>
 [[nodiscard]] constexpr auto operator>>(parser<T> const& lhs, parser<U> const& rhs) {
     return both_(lhs, rhs);
 };
+
+template <typename T, typename... Ts>
+[[nodiscard]] constexpr auto sequ_(Ts&&... ts) {
+    return [=](std::istream& ss) {
+        // TO DO implement seq via tuple catting
+        
+    };
+};
 // (A , B) -> result<A + B>
 
 template <typename... Ts>
