@@ -184,7 +184,7 @@ concept appendable = requires(T t, T v) {
 template <typename T>
 constexpr parser<std::pair<std::vector<T>, std::string>> many_(const parser<T>& prsr) {
     using pair_type = std::pair<std::vector<T>, std::string>;
-    return [=](std::istream& ss) -> std::expected<pair_type, std::string> {
+    return [=](std::istream& ss) -> result<pair_type> {
         std::vector<T> rv;
         std::string rs;
         while (auto v = prsr(ss)) {
@@ -201,7 +201,7 @@ template <typename T>
 constexpr parser<std::pair<std::vector<T>, std::string>>
 many_one(const parser<T>& prsr, const std::string& error_message) noexcept {
     using pair_type = std::pair<std::vector<T>, std::string>;
-    return [=](std::istream& ss) -> std::expected<pair_type, std::string> {
+    return [=](std::istream& ss) -> result<pair_type> {
         auto v = many_(prsr)(ss);
         if (v.has_value()) {
             if (v.value().first.empty() || v.value().second.empty()) return std::unexpected(error_message);
@@ -220,7 +220,7 @@ template <typename Ts>
 template <typename T, typename F>
 [[nodiscard]] constexpr auto map(parser<T> const& p, const F& f) noexcept(
     noexcept(std::is_nothrow_invocable_v<F, T>)) {
-    return [=](std::istream& ss) -> std::expected<std::invoke_result_t<F, T>, std::string> {
+    return [=](std::istream& ss) -> result<std::invoke_result_t<F, T>> {
         auto v = p(ss);
         if (v.has_value()) {
             return std::invoke(f, v.value());
