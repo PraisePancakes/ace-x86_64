@@ -49,7 +49,7 @@ class cli {
     void parse_input_file(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         // TO DO create a sequence parser that can match_ a sequence like acc::seq_(acc::alnum_(), acc::match('.'), acc::match("ace"));
-      
+
         auto parser = acc::alnum_();
         auto v = parser(ss);
         if (v.has_value()) {
@@ -70,7 +70,7 @@ class cli {
         if (open.value()) {
             while (true) {
                 acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-                auto v = acc::any_(acc::match_("-verbose-lexer")(ss), acc::match_("-verbose-ast")(ss));
+                auto v = acc::any_(acc::match_("-verbose-lexer"), acc::match_("-verbose-ast"))(ss);
 
                 if (v.has_value()) {
                     m_build_flags |= m_flag_map.at(v.value());
@@ -89,9 +89,9 @@ class cli {
     void parse_commands(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
 
-        auto v = acc::any_(acc::match_("--set-dev")(ss),
-                           acc::match_("--help-all")(ss),
-                           acc::match_("--help-dev")(ss));
+        auto v = acc::any_(acc::match_("--set-dev"),
+                           acc::match_("--help-all"),
+                           acc::match_("--help-dev"))(ss);
 
         if (v.has_value()) {
             m_build_flags |= m_flag_map.at(v.value());

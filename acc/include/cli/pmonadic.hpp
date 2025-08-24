@@ -36,14 +36,11 @@ constexpr auto either_2(result<T> const& lhs, result<T> const& rhs) {
     return rhs ? rhs : lhs;
 };
 
-template <typename T>
-constexpr auto any_(result<T> const& ps, result<T> const& qs) {
-    return ps | qs;
-};
-
-template <typename T, typename... Ts>
-constexpr auto any_(result<T> const& ps, Ts... ts) {
-    return (ps | any_(ts...));
+template <typename... Ts>
+constexpr auto any_(parser<Ts> const&... ts) {
+    return [=](std::istream& ss) {
+        return (ts(ss) | ...);
+    };
 };
 
 template <typename T>
