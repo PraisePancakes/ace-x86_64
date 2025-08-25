@@ -22,8 +22,9 @@ auto main(int argc, char** argv) -> int {
 
     std::stringstream ss;
     ss << "hello ";
-
-    auto v = (acc::match_("hello") >> acc::map_(acc::match_(' '), [](char c) { return "SPACE"; }))(ss);
+    auto v = acc::sequ_(acc::match_("hello"),
+                        acc::transform_(acc::ignore_(acc::match_(' ')), [](auto ignored) { return "space"; }),
+                        acc::digit_())(ss);
 
     if (v) {
         std::apply([](auto&&... args) {
@@ -31,8 +32,7 @@ auto main(int argc, char** argv) -> int {
         },
                    v.value());
     } else {
-        std::cout << v.error() << std::endl;
-    };
-
+        std::cout << v.error();
+    }
     return EXIT_SUCCESS;
 }

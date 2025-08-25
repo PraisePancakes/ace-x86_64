@@ -54,12 +54,29 @@ template <typename T, typename U>
     return both_(lhs, rhs);
 };
 
-template <typename T, typename... Ts>
-[[nodiscard]] constexpr auto sequ_(Ts&&... ts) {
-    return [=](std::istream& ss) {
-        // TO DO implement seq via tuple catting
+template <typename... Ts>
+[[nodiscard]] constexpr auto sequ_(Ts&&... ps) {
+    return [xt = std::make_tuple(ps...)](std::istream& ss) {
+        return [&]<std::size_t... I>(std::index_sequence<I...>)
+                   -> result<std::tuple<typename std::decay_t<decltype(ps)>::value_type...>> {
+            bool success = true;
+            std::tuple<typename std::decay_t<decltype(ps)>::value_type...> out;
+            ([&]<std::size_t idx>(std::integral_constant<std::size_t, idx>) {
+                auto v = std::get<idx>(xt)(ss);
+                if (!success) return;
+                if (v) {
+                    std::get<idx>(out) = *v;
+                } else {
+                    success = false;
+                }
+            }(std::integral_constant<std::size_t, I>{}),
+             ...);
+            if (!success) return std::unexpected("err");
+            return out;
+        }(std::make_index_sequence<sizeof...(Ts)>{});
     };
 };
+
 // (A , B) -> result<A + B>
 
 template <typename... Ts>
@@ -220,7 +237,7 @@ constexpr parser<std::pair<std::vector<T>, std::string>> many_(const parser<T>& 
 
 template <typename T>
 constexpr parser<std::pair<std::vector<T>, std::string>>
-many_one(const parser<T>& prsr, const std::string& error_message) noexcept {
+many_1(const parser<T>& prsr, const std::string& error_message) noexcept {
     using pair_type = std::pair<std::vector<T>, std::string>;
     return [=](std::istream& ss) -> result<pair_type> {
         auto v = many_(prsr)(ss);
@@ -234,20 +251,22 @@ many_one(const parser<T>& prsr, const std::string& error_message) noexcept {
 };
 
 template <typename Ts>
-[[nodiscard]] parser<std::pair<std::vector<Ts>, std::string>> many_one(const parser<Ts>& ps) noexcept {
-    return many_one(ps, "many_one parser error : found none");
+[[nodiscard]] parser<std::pair<std::vector<Ts>, std::string>> many_1(const parser<Ts>& ps) noexcept {
+    return many_1(ps, "many_1 parser error : found none");
 };
 
 template <typename T, typename F>
-[[nodiscard]] constexpr auto map_(parser<T> const& p, const F& f) noexcept(noexcept(std::is_nothrow_invocable_v<F, T>)) {
+[[nodiscard]] constexpr parser<std::invoke_result_t<F, T>>
+transform_(parser<T> const& p, const F& f) noexcept(
+    noexcept(std::is_nothrow_invocable_v<F, T>)) {
     using U = std::invoke_result_t<F, T>;
-    return parser<U>{[=](std::istream& ss) -> result<U> {
+    return [=](std::istream& ss) -> result<U> {
         auto v = p(ss);
         if (v.has_value()) {
             return std::invoke(f, v.value());
         }
         return std::unexpected(v.error());
-    }};
+    };
 }
 
 template <typename T>
