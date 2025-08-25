@@ -1,6 +1,7 @@
 #pragma once
 #include <cassert>
 #include <cstdint>
+#include <functional>
 #include <iostream>
 #include <unordered_map>
 
@@ -49,18 +50,21 @@ class cli {
     void parse_input_file(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         // TO DO create a sequence parser that can match_ a sequence like acc::seq_(acc::alnum_(), acc::match('.'), acc::match("ace"));
-
-        auto parser = acc::alnum_();
-        auto v = parser(ss);
-        if (v.has_value()) {
-            if (acc::match_(".ace")(ss)) {
-                m_input_files.push_back(v.value() + '.' + "ace");
-            }
+        auto v = acc::sequ_(acc::alnum_(), acc::match_(".ace"))(ss);
+        if (v) {
+            std::string path = std::apply([](auto&&... args) {
+                return (args + ...);
+            },
+                                          v.value());
+            m_input_files.push_back(path);
+        } else {
+            // handle error better
+            std::cout << v.error() << std::endl;
         }
 
-        // if (m_input_files.size() > 0) {
-        //     std::cout << m_input_files[0];
-        // }
+        if (m_input_files.size() > 0) {
+            std::cout << m_input_files[0];
+        }
     };
 
     void parse_dev_commands(std::stringstream& ss) {

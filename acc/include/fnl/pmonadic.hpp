@@ -57,10 +57,11 @@ template <typename T, typename U>
 template <typename... Ts>
 [[nodiscard]] constexpr auto sequ_(Ts&&... ps) {
     return [xt = std::make_tuple(ps...)](std::istream& ss) {
+        using OutTupleT = std::tuple<typename std::decay_t<decltype(ps)>::value_type...>;
         return [&]<std::size_t... I>(std::index_sequence<I...>)
-                   -> result<std::tuple<typename std::decay_t<decltype(ps)>::value_type...>> {
+                   -> result<OutTupleT> {
             bool success = true;
-            std::tuple<typename std::decay_t<decltype(ps)>::value_type...> out;
+            OutTupleT out;
             ([&]<std::size_t idx>(std::integral_constant<std::size_t, idx>) {
                 auto v = std::get<idx>(xt)(ss);
                 if (!success) return;
