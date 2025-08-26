@@ -5,8 +5,8 @@
 #include <sstream>
 #include <variant>
 
-#include "acc/include/acclog.hpp"
-#include "acc/include/cli/acccli.hpp"
+#include "acc/cli/acccli.hpp"
+#include "acc/utils/acclog.hpp"
 
 auto main(int argc, char** argv) -> int {
     if (argc <= 1) {

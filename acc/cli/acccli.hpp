@@ -5,9 +5,9 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "../acclog.hpp"
+#include "../utils/acclog.hpp"
 #include "../fnl/pmonadic.hpp"
-
+#define ACC__CLI__DEBUG false
 /**
  *  BNF
  * ______
@@ -49,7 +49,6 @@ class cli {
 
     void parse_input_file(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-        // TO DO create a sequence parser that can match_ a sequence like acc::seq_(acc::alnum_(), acc::match('.'), acc::match("ace"));
         auto v = acc::sequ_(acc::alnum_(), acc::match_(".ace"))(ss);
         if (v) {
             std::string path = std::apply([](auto&&... args) {
@@ -58,13 +57,14 @@ class cli {
                                           v.value());
             m_input_files.push_back(path);
         } else {
-            // handle error better
-            std::cout << v.error() << std::endl;
+            acc::logger::instance().send(acc::logger::LEVEL::FATAL, "improper input path.");
         }
 
+#if ACC__CLI__DEBUG
         if (m_input_files.size() > 0) {
             std::cout << m_input_files[0];
         }
+#endif
     };
 
     void parse_dev_commands(std::stringstream& ss) {
