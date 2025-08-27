@@ -61,6 +61,7 @@ template <typename... Ts>
         return [&]<std::size_t... I>(std::index_sequence<I...>)
                    -> result<OutTupleT> {
             bool success = true;
+            std::string error = "";
             OutTupleT out;
             ([&]<std::size_t idx>(std::integral_constant<std::size_t, idx>) {
                 auto v = std::get<idx>(xt)(ss);
@@ -69,10 +70,11 @@ template <typename... Ts>
                     std::get<idx>(out) = *v;
                 } else {
                     success = false;
+                    error = v.error();
                 }
             }(std::integral_constant<std::size_t, I>{}),
              ...);
-            if (!success) return std::unexpected("err");
+            if (!success) return std::unexpected(error);
             return out;
         }(std::make_index_sequence<sizeof...(Ts)>{});
     };
@@ -94,25 +96,30 @@ parser<char> match_(const char c, const std::string& error_message) {
             return v;
         } else {
             s.unget();
-            return std::unexpected(error_message);
+            return std::unexpected(error_message + " got: " + (char)v);
         }
     };
 }
 
 parser<char> match_(const char c) {
-    return match_(c, "match_ parser error");
+    return match_(c, "match_ parser error expected " + c);
 }
 
 parser<std::string> match_(const std::string& s, const std::string& error_message) {
     return [=](std::istream& ss) -> result<std::string> {
+        std::string outbuilder = "";
+        std::streampos pos = ss.tellg();
         for (std::size_t i = 0; i < s.size(); ++i) {
             if (ss.peek() == s[i]) {
                 ss.get();
             } else {
-                while (i--) {
-                    ss.unget();
+                ss.seekg(pos);
+                for (std::size_t x = 0; x < s.size(); x++) {
+                    outbuilder += ss.get();
                 }
-                return std::unexpected("match_ error");
+                ss.seekg(pos);
+                std::string error = error_message + " got : " + outbuilder;
+                return std::unexpected(error);
             }
         }
 
@@ -121,7 +128,7 @@ parser<std::string> match_(const std::string& s, const std::string& error_messag
 };
 
 parser<std::string> match_(std::string s) {
-    return match_(s, "match_ parser error");
+    return match_(s, "match_ parser error expected " + s);
 };
 
 parser<int> digit_(const std::string& error_message) {
@@ -192,6 +199,7 @@ parser<std::string> letters_(const std::string& error_message) {
                 break;
             }
         }
+
         if (ret.empty()) return std::unexpected(error_message);
         return ret;
     };
@@ -211,6 +219,7 @@ parser<std::string> alnum_(const std::string& error_message) {
                 break;
             }
         }
+
         if (ret.empty()) return std::unexpected(error_message);
         return ret;
     };
@@ -277,6 +286,15 @@ parser<std::tuple<>> ignore_(const parser<T>& ps, const std::string& error_messa
             return std::unexpected(error_message);
         }
         return std::make_tuple();
+    };
+};
+
+[[nodiscard]] constexpr static parser<bool> eof_() {
+    return [=](std::istream& ss) -> result<bool> {
+        if (ss.peek() == EOF) {
+            return true;
+        }
+        return std::unexpected("not eof");
     };
 };
 

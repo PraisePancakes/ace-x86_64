@@ -7,7 +7,7 @@
 
 #include "../fnl/pmonadic.hpp"
 #include "../utils/acclog.hpp"
-#define ACC__CLI__DEBUG false
+#define ACC__CLI__DEBUG true
 /**
  *  BNF
  * ______
@@ -49,54 +49,53 @@ class cli {
 
     void parse_input_file(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-        auto v = acc::sequ_(acc::alnum_(), acc::match_(".ace"))(ss);
-        if (v) {
-            std::string path = std::apply([](auto&&... args) {
-                return (args + ...);
-            },
-                                          v.value());
-            m_input_files.push_back(path);
-        } else {
-            acc::logger::instance().send(acc::logger::LEVEL::FATAL, "improper input path.", std::cout);
-        }
+        while (true) {
+            acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+            if (auto v = acc::sequ_(acc::alnum_("invalid file name"), acc::match_(".ace", "Unknown file extension."))(ss)) {
+                std::string path = std::apply([](auto&&... args) {
+                    return (args + ...);
+                },
+                                              v.value());
+                m_input_files.push_back(path);
+            } else {
+                if (!acc::eof_()(ss)) {
+                    acc::logger::instance().send(acc::logger::LEVEL::FATAL, v.error(), std::cout);
+                }
+                break;
+            }
+        };
 
 #if ACC__CLI__DEBUG
         if (m_input_files.size() > 0) {
-            std::cout << m_input_files[0];
+            for (auto file : m_input_files) {
+                std::cout << file << std::endl;
+            }
         }
 #endif
     };
 
     void parse_dev_commands(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-
-        auto open = acc::match_('[')(ss);
-        if (open.value()) {
-            while (true) {
+        if (acc::match_('[', "missing '[' ")(ss)) {
+            acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+            while (auto v = acc::any_(acc::match_("-verbose-lexer"), acc::match_("-verbose-ast"))(ss)) {
                 acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-                auto v = acc::any_(acc::match_("-verbose-lexer"), acc::match_("-verbose-ast"))(ss);
-
-                if (v.has_value()) {
-                    m_build_flags |= m_flag_map.at(v.value());
-                }
-
-                if (acc::match_(']')(ss)) {
-                    break;
-                } else if (ss.peek() == -1) {
-                    acc::logger::instance().send(acc::logger::LEVEL::FATAL, "CLI input parser failed.", std::cout);
-                    exit(EXIT_FAILURE);
-                }
+                m_build_flags |= m_flag_map.at(v.value());
+            }
+            if (auto v = acc::match_(']', "missing dev command terminator ']'")(ss)) {
+                return;
+            } else {
+                acc::logger::instance().send(acc::logger::LEVEL::FATAL, v.error(), std::cout);
+                exit(EXIT_FAILURE);
             }
         }
     };
 
     void parse_commands(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-
         auto v = acc::any_(acc::match_("--set-dev"),
                            acc::match_("--help-all"),
                            acc::match_("--help-dev"))(ss);
-
         if (v.has_value()) {
             m_build_flags |= m_flag_map.at(v.value());
             if (v.value() == "--set-dev") {
