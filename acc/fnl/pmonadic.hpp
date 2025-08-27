@@ -289,7 +289,7 @@ parser<std::tuple<>> ignore_(const parser<T>& ps, const std::string& error_messa
     };
 };
 
-[[nodiscard]] constexpr static parser<bool> eof_() {
+[[nodiscard]] static parser<bool> eof_() {
     return [=](std::istream& ss) -> result<bool> {
         if (ss.peek() == EOF) {
             return true;
