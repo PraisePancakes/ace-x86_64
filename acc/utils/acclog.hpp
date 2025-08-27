@@ -20,15 +20,8 @@ class logger {
         {LEVEL::ERROR, "\x1b[1;31m[ERROR]\x1b[0m "},
         {LEVEL::FATAL, "\x1b[0;31m[FATAL]\x1b[0m "}};
 
-    std::stack<std::string> m_logs;
     logger() = default;
-    ~logger() {
-        while (!m_logs.empty()) {
-            std::cout << m_logs.top() << std::endl;
-            m_logs.pop();
-        }
-    };
-
+    ~logger() = default;
     logger(const logger&) = delete;
     void operator=(const logger&) = delete;
     logger(logger&&) = delete;
@@ -39,9 +32,14 @@ class logger {
         return log;
     };
 
+    template <typename Out>
+    void send(LEVEL level, const std::string& message, Out& out) {
+        out << m_log_tag[level] << message << std::endl;
+    }
+
     void send(LEVEL level, const std::string& message) {
-        m_logs.push(m_log_tag[level] + message);
-    };
+        std::cout << m_log_tag[level] << message << std::endl;
+    }
 };
 
 };  // namespace acc

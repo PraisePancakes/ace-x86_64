@@ -5,8 +5,8 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "../utils/acclog.hpp"
 #include "../fnl/pmonadic.hpp"
+#include "../utils/acclog.hpp"
 #define ACC__CLI__DEBUG false
 /**
  *  BNF
@@ -57,7 +57,7 @@ class cli {
                                           v.value());
             m_input_files.push_back(path);
         } else {
-            acc::logger::instance().send(acc::logger::LEVEL::FATAL, "improper input path.");
+            acc::logger::instance().send(acc::logger::LEVEL::FATAL, "improper input path.", std::cout);
         }
 
 #if ACC__CLI__DEBUG
@@ -83,7 +83,7 @@ class cli {
                 if (acc::match_(']')(ss)) {
                     break;
                 } else if (ss.peek() == -1) {
-                    acc::logger::instance().send(acc::logger::LEVEL::FATAL, "CLI input parser failed.");
+                    acc::logger::instance().send(acc::logger::LEVEL::FATAL, "CLI input parser failed.", std::cout);
                     exit(EXIT_FAILURE);
                 }
             }
@@ -120,13 +120,14 @@ class cli {
             --set-dev [-verbose-lexer , -verbose-ast]
                 -verbose-lexer : prints the lexed result of each input file.
                 -verbose-ast : prints the abstract-syntax-tree of each input file.
-                                                                )");
+                                                                )",
+                                     std::cout);
     }
 
     void print_usage_all() {
         print_usage_devs();
-        acc::logger::instance().send(logger::LEVEL::INFO, "e.g.            acc                                                     foo.ace         -o                              fexec");
-        acc::logger::instance().send(logger::LEVEL::INFO, "         (ace protocol)  <optional flags> [optional flag options]    (input file)  (output type flag (binary))     (executable name)");
+        acc::logger::instance().send(logger::LEVEL::INFO, "e.g.            acc                                                     foo.ace         -o                              fexec", std::cout);
+        acc::logger::instance().send(logger::LEVEL::INFO, "         (ace protocol)  <optional flags> [optional flag options]    (input file)  (output type flag (binary))     (executable name)", std::cout);
     };
 
     [[nodiscard]] bool constexpr is_set(const std::string& f) const noexcept {
@@ -143,10 +144,10 @@ class cli {
                 print_usage_devs();
             } else if (is_set("--set-dev")) {
                 if (is_set("-verbose-ast")) {
-                    acc::logger::instance().send(logger::LEVEL::INFO, "[DEV FLAG] -verbose-ast has been set");
+                    acc::logger::instance().send(logger::LEVEL::INFO, "[DEV FLAG] -verbose-ast has been set", std::cout);
                 }
                 if (is_set("-verbose-lexer")) {
-                    acc::logger::instance().send(logger::LEVEL::INFO, "[DEV FLAG] -verbose-lexer has been set");
+                    acc::logger::instance().send(logger::LEVEL::INFO, "[DEV FLAG] -verbose-lexer has been set", std::cout);
                 }
             }
         }

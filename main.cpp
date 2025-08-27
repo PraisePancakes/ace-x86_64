@@ -10,7 +10,7 @@
 
 auto main(int argc, char** argv) -> int {
     if (argc <= 1) {
-        acc::logger::instance().send(acc::logger::LEVEL::FATAL, "no input files determined for Ace compilation.");
+        acc::logger::instance().send(acc::logger::LEVEL::FATAL, "no input files determined for Ace compilation.", std::cout);
         return EXIT_FAILURE;
     }
     std::stringstream ss;
