@@ -7,6 +7,7 @@
 
 #include "../fnl/pmonadic.hpp"
 #include "../utils/acclog.hpp"
+
 #define ACC__CLI__DEBUG true
 /**
  *  BNF
