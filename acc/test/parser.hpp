@@ -3,8 +3,8 @@
 #include "../frontend/accparser.hpp"
 
 int TEST_PARSER() {
-    acc::lexer lex({acc::ACC_ALL_TOKEN_ENUM::TK_SPACE});
-    auto ts = lex("123 \"456\"");
+    acc::lexer lexe({acc::ACC_ALL_TOKEN_ENUM::TK_SPACE}, "123 \"456\"");
+    auto ts = lexe.lex();
     for (auto t : ts) {
         t.print_token();
     }

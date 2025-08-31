@@ -5,58 +5,33 @@
 #include <vector>
 
 #include "acctoken.hpp"
+#include "storage.hpp"
 #include "tkxmacro.hpp"
 namespace acc {
 
 // the two basic units of a set of tokens is an identifier and a number everything else is up to the user.
 
-class lexer {
-    std::unordered_set<ACC_ALL_TOKEN_ENUM> m_delims;
+template <typename T = char>
+class lexer : protected acc::storage<std::basic_string_view<char>> {
     std::size_t m_x{0};
     std::size_t m_y{0};
-    std::size_t m_start{0};
-    std::size_t m_end{0};
     std::vector<token> m_output;
-    std::string_view m_input;
-
-    [[nodiscard]] bool is_end() const noexcept {
-        return m_end >= m_input.size();
-    };
-
-    [[nodiscard]] char peek() const noexcept {
-        return m_input[m_end];
-    };
-
-    [[nodiscard]] char peek_prev() const noexcept {
-        return m_input[m_end - 1];
-    }
-
-    [[nodiscard]] char peek_next() const noexcept {
-        return m_input[m_end + 1];
-    }
-
-    char advance() noexcept {
-        if (is_end()) {
-            return peek();
-        }
-        return m_input[m_end++];
-    };
-
+    std::unordered_set<ACC_ALL_TOKEN_ENUM> m_delims;
     [[nodiscard]] bool is_delim(const unsigned char unit) const noexcept {
         return m_delims.find((ACC_ALL_TOKEN_ENUM)unit) != m_delims.end();
     }
 
     std::string to_substr() const noexcept {
-        return std::string(m_input.substr(m_start, m_end - m_start));
+        return std::string(this->m_input.substr(this->m_start, this->m_end - this->m_start));
     };
 
     std::string to_substr(std::size_t new_begin, std::size_t new_end) const noexcept {
-        return std::string(m_input.substr(new_begin, new_end - new_begin));
+        return std::string(this->m_input.substr(new_begin, new_end - new_begin));
     };
 
     token lex_identifier() {
-        while (!is_end() && !is_delim(peek()) && !isspace(peek())) {
-            advance();
+        while (!this->is_end() && !is_delim(this->peek()) && !isspace(this->peek())) {
+            this->advance();
         }
         return token{to_substr(),
                      std::make_pair(m_x, m_y),
@@ -65,8 +40,8 @@ class lexer {
     };
 
     token lex_number() {
-        while (!is_end() && !isalpha(peek()) && !is_delim(peek())) {
-            advance();
+        while (!this->is_end() && !isalpha(this->peek()) && !is_delim(this->peek())) {
+            this->advance();
         }
         return token{to_substr(),
                      std::make_pair(m_x, m_y),
@@ -75,14 +50,11 @@ class lexer {
     };
 
     token lex_string() {
-        advance();
-        while (!is_end() && peek() != '\"') {
-            advance();
+        this->advance();
+        while (this->peek() != '\"' && !this->is_end()) {
+            this->advance();
         }
-        if (is_end()) {
-            throw std::runtime_error("open string");
-        }
-        advance();
+        this->advance();
         return token{to_substr(),
                      std::make_pair(m_x, m_y),
                      token_type_t::TK_LITERAL_STRING,
@@ -90,16 +62,16 @@ class lexer {
     };
 
     token lex_it() {
-        if (is_delim(peek())) {
-            return token{to_substr(m_start, m_end + 1),
+        if (is_delim(this->peek())) {
+            return token{to_substr(this->m_start, this->m_end + 1),
                          std::make_pair(m_x, m_y),
-                         *(m_delims.find((acc::ACC_ALL_TOKEN_ENUM)advance())),
-                         peek_prev()};
+                         *(m_delims.find((acc::ACC_ALL_TOKEN_ENUM)this->advance())),
+                         this->peek_prev()};
         };
-        if (isdigit(peek())) {
+        if (isdigit(this->peek())) {
             return lex_number();
         }
-        if (peek() == '\"') {
+        if (this->peek() == '\"') {
             return lex_string();
         }
         return lex_identifier();
@@ -108,32 +80,31 @@ class lexer {
    public:
     using token_type_t = acc::ACC_ALL_TOKEN_ENUM;
     lexer() {};
-    lexer(const std::unordered_set<acc::ACC_ALL_TOKEN_ENUM>& delims) : m_delims(delims) {
+    lexer(const std::unordered_set<acc::ACC_ALL_TOKEN_ENUM>& delims, std::string_view sv) : acc::storage<std::string_view>(sv), m_delims(delims) {
 
-                                                                       };
-
-    std::vector<token> operator()(std::string_view sv) noexcept {
-        m_input = sv;
+                                                                                            };
+    std::vector<token> lex() {
         std::vector<token> ret{};
 
-        while (!is_end()) {
+        while (!this->is_end()) {
             m_x++;
-            if (peek() == '\n') {
+            if (this->peek() == '\n') {
                 m_x = 0;
                 m_y++;
             }
 
-            if (std::isspace(peek())) {
-                advance();
-                m_start = m_end;
+            if (std::isspace(this->peek())) {
+                this->advance();
+                this->m_start = this->m_end;
                 continue;
             }
             ret.push_back(lex_it());
-            m_start = m_end;
+            this->m_start = this->m_end;
         }
         ret.push_back(token{"", acc::ACC_ALL_TOKEN_ENUM::TK_EOF, '\0'});
         return ret;
-    };
+    }
+
     ~lexer() {};
 };
 }  // namespace acc

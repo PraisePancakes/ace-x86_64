@@ -2,91 +2,55 @@
 #include <iostream>
 #include <vector>
 
+#include "../traits/token_trait.hpp"
 #include "../utils/visitor.hpp"
 #include "accast.hpp"
 #include "acctoken.hpp"
+#include "storage.hpp"
 #define DISCARD(f) (void)f
 namespace acc {
 
-class [[nodiscard]] acc_parser {
-    std::vector<acc::token> m_input;
-    std::size_t m_end{0};
+template <typename T = acc::token>
+class [[nodiscard]] acc_parser
+    : public acc::storage<std::vector<T>> {
     std::vector<acc::ExprVariant> exprs;  // block will have this
 
-    [[nodiscard]] bool is_end() const noexcept {
-        return peek().type == acc::ACC_ALL_TOKEN_ENUM::TK_EOF;
-    };
-
-    [[nodiscard]] acc::token peek() const noexcept {
-        return m_input[m_end];
-    };
-
-    [[nodiscard]] acc::token peek_prev() const noexcept {
-        return m_input[m_end - 1];
-    }
-
-    [[nodiscard]] acc::token peek_next() const noexcept {
-        return m_input[m_end + 1];
-    }
-
-    acc::token advance() noexcept {
-        if (is_end()) {
-            return peek();
-        }
-        return m_input[m_end++];
-    }
-
     bool check_it(acc::ACC_ALL_TOKEN_ENUM type) noexcept {
-        if (is_end()) {
+        if (this->is_end()) {
             return false;
         }
-        return peek().type == type;
+        return this->peek().type == type;
     }
     bool match_it(acc::ACC_ALL_TOKEN_ENUM type) noexcept {
         if (check_it(type)) {
-            DISCARD(advance());
+            DISCARD(this->advance());
             return true;
         }
 
         return false;
     }
 
-    auto match_any(auto&&... types)
-        -> decltype((std::is_same_v<decltype(types),
-                                    acc::ACC_ALL_TOKEN_ENUM> &&
-                     ...),
-                    std::true_type{}) {
+    auto match_any(traits::acc_token_t auto&&... types) {
         return (match_it(types) || ...);
     }
 
     acc::ExprVariant parse_primary() {
-        if (match_it(TK_LITERAL_INT)) {
-            return new acc::node::LiteralExpr{.value = peek_prev().value,
-                                              .embedded = peek_prev()};
-        }
-
-        if (match_it(TK_LITERAL_STRING)) {
-            return new acc::node::LiteralExpr{.value = peek_prev().value,
-                                              .embedded = peek_prev()};
-        }
-
-        if (match_it(TK_LITERAL_DOUBLE)) {
-            return new acc::node::LiteralExpr{.value = peek_prev().value,
-                                              .embedded = peek_prev()};
-        }
-
-        if (match_it(TK_LITERAL_FLOAT)) {
-            return new acc::node::LiteralExpr{.value = peek_prev().value,
-                                              .embedded = peek_prev()};
-        }
+        if (match_any(TK_LITERAL_INT,
+                      TK_LITERAL_STRING,
+                      TK_LITERAL_DOUBLE,
+                      TK_LITERAL_FLOAT)) {
+            return new acc::node::LiteralExpr{.value = this->peek_prev().value,
+                                              .embedded = this->peek_prev()};
+        };
 
         throw std::runtime_error("PARSERROR");
     }
 
    public:
-    acc_parser(const std::vector<acc::token>& toks) : m_input(toks) {
+    acc_parser(const std::vector<T>& toks)
+        : acc::storage<std::vector<T>>(toks) {
 
-                                                      };
+          };
 
     void print_node(acc::ExprVariant expr) {
         std::visit(internal::visitor{[&](acc::node::BinaryExpr* bxpr) {
@@ -104,9 +68,9 @@ class [[nodiscard]] acc_parser {
                    expr);
     };
     std::vector<acc::ExprVariant> parse() {
-        while (!is_end()) {
+        do {
             exprs.push_back(parse_primary());
-        };
+        } while (this->peek().type != TK_EOF);
         return exprs;
     };
     acc_parser(const acc_parser&) = delete;
