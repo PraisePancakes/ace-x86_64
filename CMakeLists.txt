@@ -11,7 +11,7 @@ endforeach()
 
 # Main project executable
 add_executable(${PROJECT_NAME} 
-    main.cpp
+    main.cpp 
 )
 add_compile_options(-fsanitize=address,undefined -fsanitize-undefined-trap-on-error)
 add_link_options(-fsanitize=address,undefined -fsanitize-undefined-trap-on-error)

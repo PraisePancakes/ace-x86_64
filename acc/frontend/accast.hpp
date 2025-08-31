@@ -7,38 +7,52 @@
 #include "acctoken.hpp"
 
 namespace acc {
-namespace expr {
-struct Literal {
-    std::any value;
+// forwards
+namespace node {
+struct LiteralExpr;
+struct BinaryExpr;
+struct UnaryExpr;
+
+struct GroupingExpr;
+}  // namespace node
+using ExprVariant = std::variant<node::BinaryExpr*,
+                                 node::UnaryExpr*,
+                                 node::LiteralExpr*,
+                                 node::GroupingExpr*>;
+
+namespace node {
+// struct IfStmt;
+// struct ThenStmt;
+// struct WhileStmt;
+// struct BlockStmt;
+
+struct LiteralExpr {
+    token::value_type value;
     acc::token embedded;
 };
 struct BinaryExpr {
-    Literal lhs;
-    Literal rhs;
+    ExprVariant lhs;
+    ExprVariant rhs;
     acc::token op;
 };
 struct UnaryExpr {
-    Literal expr;
+    ExprVariant expr;
     acc::token uop;
 };
 
-}  // namespace expr
+struct GroupingExpr {
+    ExprVariant expr;
+};
 
-namespace stmt {
-struct IfStmt {};
-struct ThenStmt {};
-struct WhileStmt {};
-struct BlockStmt {};
-}  // namespace stmt
+// struct IfStmt {};
+// struct ThenStmt {};
+// struct WhileStmt {};
+// struct BlockStmt {};
 
-template <typename T>
-using uptr = std::unique_ptr<T>;
-using ExprOwningVariant = std::variant<uptr<expr::BinaryExpr>,
-                                       uptr<expr::UnaryExpr>,
-                                       uptr<expr::Literal>>;
+}  // namespace node
 
-using StmtOwningVariant = std::variant<uptr<stmt::IfStmt>,
-                                       uptr<stmt::ThenStmt>,
-                                       uptr<stmt::WhileStmt>,
-                                       uptr<stmt::BlockStmt>>;
+// using StmtOwningVariant = std::variant<node::IfStmt*,
+//                                        node::ThenStmt*,
+//                                        node::WhileStmt*,
+//                                        node::BlockStmt*>;
 }  // namespace acc

@@ -74,6 +74,21 @@ class lexer {
                      std::stoi(to_substr())};
     };
 
+    token lex_string() {
+        advance();
+        while (!is_end() && peek() != '\"') {
+            advance();
+        }
+        if (is_end()) {
+            throw std::runtime_error("open string");
+        }
+        advance();
+        return token{to_substr(),
+                     std::make_pair(m_x, m_y),
+                     token_type_t::TK_LITERAL_STRING,
+                     to_substr()};
+    };
+
     token lex_it() {
         if (is_delim(peek())) {
             return token{to_substr(m_start, m_end + 1),
@@ -83,6 +98,9 @@ class lexer {
         };
         if (isdigit(peek())) {
             return lex_number();
+        }
+        if (peek() == '\"') {
+            return lex_string();
         }
         return lex_identifier();
     };
