@@ -3,11 +3,12 @@
 #include "../frontend/accparser.hpp"
 
 int TEST_PARSER() {
-    acc::lexer lexe({acc::ACC_ALL_TOKEN_ENUM::TK_SPACE}, "123 \"456\"");
+    acc::lexer lexe({acc::ACC_ALL_TOKEN_ENUM::TK_SPACE,
+                     acc::ACC_ALL_TOKEN_ENUM::TK_PLUS,
+                     acc::ACC_ALL_TOKEN_ENUM::TK_DASH,
+                     acc::ACC_ALL_TOKEN_ENUM::TK_STAR},
+                    "123 + 324 * 3");
     auto ts = lexe.lex();
-    for (auto t : ts) {
-        t.print_token();
-    }
     acc::acc_parser pr(ts);
     auto v = pr.parse();
     for (auto e : v) {

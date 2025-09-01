@@ -33,14 +33,7 @@ class [[nodiscard]] acc_parser
     auto match_any(traits::acc_token_t auto&&... types) {
         return (match_it(types) || ...);
     }
-    /*
-    TOKEN TYPE ID (xF) [TK_LITERAL_INT]
-        location (row, col) < 1 , 0 > [INT]     123
-    TOKEN TYPE ID (xF) [TK_LITERAL_STRING]
-        location (row, col) < 3 , 0 > [STRING] "456"
-    TOKEN TYPE ID (\0) [TK_EOF]
-        location (row, col) < 0 , 0 > [CHAR]   '\0'
-    */
+
     acc::ExprVariant parse_primary() {
         if (match_any(TK_LITERAL_INT,
                       TK_LITERAL_STRING,
@@ -53,6 +46,34 @@ class [[nodiscard]] acc_parser
         throw std::runtime_error("PARSERROR");
     }
 
+    acc::ExprVariant parse_term() {
+        auto lhs = parse_primary();
+        while (match_any(acc::ACC_ALL_TOKEN_ENUM::TK_PLUS,
+                         acc::ACC_ALL_TOKEN_ENUM::TK_DASH)) {
+            auto op = this->peek_prev();
+            auto rhs = parse_expr();
+            return new acc::node::BinaryExpr{.lhs = lhs,
+                                             .rhs = rhs,
+                                             .op = op};
+        };
+        return lhs;
+    };
+    acc::ExprVariant parse_factor() {
+        auto lhs = parse_term();
+        while (match_any(acc::ACC_ALL_TOKEN_ENUM::TK_STAR,
+                         acc::ACC_ALL_TOKEN_ENUM::TK_SLASH)) {
+            auto op = this->peek_prev();
+            auto rhs = parse_expr();
+            return new acc::node::BinaryExpr{.lhs = lhs,
+                                             .rhs = rhs,
+                                             .op = op};
+        };
+        return lhs;
+    };
+    acc::ExprVariant parse_expr() {
+        return parse_factor();
+    };
+
    public:
     acc_parser(const std::vector<T>& toks)
         : acc::storage<std::vector<T>>(toks) {
@@ -63,7 +84,23 @@ class [[nodiscard]] acc_parser
         std::visit(internal::visitor{[&](acc::node::BinaryExpr* bxpr) {
                                          std::cout << " [ BINARY EXPR ] " << std::endl;
                                          print_node(bxpr->lhs);
-                                         std::cout << bxpr->op.word << std::endl;
+                                         std::cout << bxpr->op.word << " : [" << ([&]() -> std::string {
+                                             if (bxpr->op.word == "+") {
+                                                 return "ADD";
+                                             }
+                                             if (bxpr->op.word == "-") {
+                                                 return "SUB";
+                                             }
+
+                                             if (bxpr->op.word == "/") {
+                                                 return "DIV";
+                                             }
+                                             if (bxpr->op.word == "*") {
+                                                 return "MULT";
+                                             }
+                                             return "UNDEFINED BINARY OPERATOR";
+                                         }()) << "] "
+                                                   << std::endl;
                                          print_node(bxpr->rhs);
                                      },
                                      [](acc::node::LiteralExpr* lxpr) {
@@ -76,7 +113,7 @@ class [[nodiscard]] acc_parser
     };
     std::vector<acc::ExprVariant> parse() {
         do {
-            exprs.push_back(parse_primary());
+            exprs.push_back(parse_expr());
         } while (!this->is_end());
         return exprs;
     };
