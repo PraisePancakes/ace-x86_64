@@ -81,7 +81,7 @@ class [[nodiscard]] acc_parser
           };
 
     void print_node(acc::ExprVariant expr) {
-        std::visit(internal::visitor{[&](acc::node::BinaryExpr* bxpr) {
+        std::visit(internal::visitor{[this](acc::node::BinaryExpr* bxpr) {
                                          std::cout << " [ BINARY EXPR ] " << std::endl;
                                          print_node(bxpr->lhs);
                                          std::cout << bxpr->op.word << " : [" << ([&]() -> std::string {
@@ -91,7 +91,6 @@ class [[nodiscard]] acc_parser
                                              if (bxpr->op.word == "-") {
                                                  return "SUB";
                                              }
-
                                              if (bxpr->op.word == "/") {
                                                  return "DIV";
                                              }
