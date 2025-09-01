@@ -54,7 +54,11 @@ class lexer : protected acc::storage<std::basic_string_view<char>> {
         while (this->peek() != '\"' && !this->is_end()) {
             this->advance();
         }
+        if (this->is_end()) {
+            throw std::runtime_error("LEXERROR : unbounded string");
+        }
         this->advance();
+
         return token{to_substr(),
                      std::make_pair(m_x, m_y),
                      token_type_t::TK_LITERAL_STRING,
@@ -85,7 +89,6 @@ class lexer : protected acc::storage<std::basic_string_view<char>> {
                                                                                             };
     std::vector<token> lex() {
         std::vector<token> ret{};
-
         while (!this->is_end()) {
             m_x++;
             if (this->peek() == '\n') {
@@ -101,7 +104,6 @@ class lexer : protected acc::storage<std::basic_string_view<char>> {
             ret.push_back(lex_it());
             this->m_start = this->m_end;
         }
-        ret.push_back(token{"", acc::ACC_ALL_TOKEN_ENUM::TK_EOF, '\0'});
         return ret;
     }
 

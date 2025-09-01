@@ -7,7 +7,7 @@
 
 #include "acc/cli/acccli.hpp"
 #include "acc/frontend/accparser.hpp"
-#include "acc/test/parser.hpp"
+#include "acc/test/test_parser.hpp"
 #include "acc/utils/acclog.hpp"
 auto main(int argc, char** argv) -> int {
     // if (argc <= 1) {

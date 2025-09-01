@@ -36,7 +36,7 @@ class storage<Ty<T>> {
     storage(const Ty<T>& in) : m_input(in) {};
 
     [[nodiscard]] bool is_end() const noexcept {
-        return !(m_end < m_input.size());
+        return m_end >= m_input.size();
     };
 
     [[nodiscard]] underlying_type peek() const noexcept {

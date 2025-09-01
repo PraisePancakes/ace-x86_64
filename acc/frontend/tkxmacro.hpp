@@ -17,7 +17,6 @@ namespace acc {
     TOKEN_DEF(TK_PLUS, '+')            \
     TOKEN_DEF(TK_STAR, '*')            \
     TOKEN_DEF(TK_SLASH, '/')           \
-    TOKEN_DEF(TK_EOF, '\0')            \
     TOKEN_DEF(TK_DASH, '-')            \
     TOKEN_DEF(TK_DOT, '.')             \
     TOKEN_DEF(TK_SPACE, ' ')           \

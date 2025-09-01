@@ -33,7 +33,14 @@ class [[nodiscard]] acc_parser
     auto match_any(traits::acc_token_t auto&&... types) {
         return (match_it(types) || ...);
     }
-
+    /*
+    TOKEN TYPE ID (xF) [TK_LITERAL_INT]
+        location (row, col) < 1 , 0 > [INT]     123
+    TOKEN TYPE ID (xF) [TK_LITERAL_STRING]
+        location (row, col) < 3 , 0 > [STRING] "456"
+    TOKEN TYPE ID (\0) [TK_EOF]
+        location (row, col) < 0 , 0 > [CHAR]   '\0'
+    */
     acc::ExprVariant parse_primary() {
         if (match_any(TK_LITERAL_INT,
                       TK_LITERAL_STRING,
@@ -70,7 +77,7 @@ class [[nodiscard]] acc_parser
     std::vector<acc::ExprVariant> parse() {
         do {
             exprs.push_back(parse_primary());
-        } while (this->peek().type != TK_EOF);
+        } while (!this->is_end());
         return exprs;
     };
     acc_parser(const acc_parser&) = delete;
