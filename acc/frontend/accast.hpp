@@ -36,8 +36,8 @@ struct BinaryExpr {
     acc::token op;
 };
 struct UnaryExpr {
+    acc::token op;
     ExprVariant expr;
-    acc::token uop;
 };
 
 struct GroupingExpr {

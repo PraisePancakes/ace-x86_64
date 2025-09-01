@@ -46,8 +46,17 @@ class [[nodiscard]] acc_parser
         throw std::runtime_error("PARSERROR");
     }
 
+    acc::ExprVariant parse_unary() {
+        if (match_any(TK_BANG, TK_STAR)) {
+            auto op = this->peek_prev();
+            auto expr = parse_expr();
+            return new acc::node::UnaryExpr{.op = op, .expr = expr};
+        }
+        return parse_primary();
+    };
+
     acc::ExprVariant parse_term() {
-        auto lhs = parse_primary();
+        auto lhs = parse_unary();
         while (match_any(acc::ACC_ALL_TOKEN_ENUM::TK_PLUS,
                          acc::ACC_ALL_TOKEN_ENUM::TK_DASH)) {
             auto op = this->peek_prev();
@@ -84,32 +93,49 @@ class [[nodiscard]] acc_parser
         std::visit(internal::visitor{[this](acc::node::BinaryExpr* bxpr) {
                                          std::cout << " [ BINARY EXPR ] " << std::endl;
                                          print_node(bxpr->lhs);
-                                         std::cout << bxpr->op.word << " : [" << ([&]() -> std::string {
-                                             if (bxpr->op.word == "+") {
+                                         std::cout << bxpr->op.word << " : [" << ([&](const std::string& word) -> std::string {
+                                             if (word == "+")
                                                  return "ADD";
-                                             }
-                                             if (bxpr->op.word == "-") {
+                                             if (word == "-")
                                                  return "SUB";
-                                             }
-                                             if (bxpr->op.word == "/") {
+                                             if (word == "/")
                                                  return "DIV";
-                                             }
-                                             if (bxpr->op.word == "*") {
+                                             if (word == "*")
                                                  return "MULT";
-                                             }
-                                             return "UNDEFINED BINARY OPERATOR";
-                                         }()) << "] "
+                                             else
+                                                 return "UNDEFINED BINARY OPERATOR";
+                                         }(bxpr->op.word))
+                                                   << "] "
                                                    << std::endl;
+
                                          print_node(bxpr->rhs);
                                      },
                                      [](acc::node::LiteralExpr* lxpr) {
                                          std::cout << " [ LITERAL EXPR ] " << std::endl;
                                          lxpr->embedded.print_token();
                                      },
-                                     [](acc::node::UnaryExpr* uexpr) {},
+                                     [this](acc::node::UnaryExpr* uexpr) {
+                                         std::cout << " [ UNARY EXPR ] " << std::endl;
+                                         std::cout << uexpr->op.word << " : [" << ([&](const std::string& word) -> std::string {
+                                             if (word == "!")
+                                                 return "BANG";
+                                             if (word == "-")
+                                                 return "SUB";
+                                             if (word == "/")
+                                                 return "DIV";
+                                             if (word == "*")
+                                                 return "MULT";
+                                             else
+                                                 return "UNDEFINED BINARY OPERATOR";
+                                         }(uexpr->op.word))
+                                                   << "] "
+                                                   << std::endl;
+                                         print_node(uexpr->expr);
+                                     },
                                      [](acc::node::GroupingExpr* gexpr) {}},
                    expr);
     };
+
     std::vector<acc::ExprVariant> parse() {
         do {
             exprs.push_back(parse_expr());
