@@ -43,6 +43,12 @@ class [[nodiscard]] acc_parser
                                               .embedded = this->peek_prev()};
         };
 
+        if (match_it(TK_PAREN_L)) {
+            auto expr = parse_expr();
+            if (!match_it(TK_PAREN_R)) throw std::runtime_error("MISSING PAREN");
+            return new acc::node::GroupingExpr{.expr = expr};
+        }
+
         throw std::runtime_error("PARSERROR");
     }
 
@@ -79,6 +85,7 @@ class [[nodiscard]] acc_parser
         };
         return lhs;
     };
+
     acc::ExprVariant parse_expr() {
         return parse_factor();
     };
@@ -93,21 +100,7 @@ class [[nodiscard]] acc_parser
         std::visit(internal::visitor{[this](acc::node::BinaryExpr* bxpr) {
                                          std::cout << " [ BINARY EXPR ] " << std::endl;
                                          print_node(bxpr->lhs);
-                                         std::cout << bxpr->op.word << " : [" << ([&](const std::string& word) -> std::string {
-                                             if (word == "+")
-                                                 return "ADD";
-                                             if (word == "-")
-                                                 return "SUB";
-                                             if (word == "/")
-                                                 return "DIV";
-                                             if (word == "*")
-                                                 return "MULT";
-                                             else
-                                                 return "UNDEFINED BINARY OPERATOR";
-                                         }(bxpr->op.word))
-                                                   << "] "
-                                                   << std::endl;
-
+                                         bxpr->op.print_token();
                                          print_node(bxpr->rhs);
                                      },
                                      [](acc::node::LiteralExpr* lxpr) {
@@ -116,23 +109,13 @@ class [[nodiscard]] acc_parser
                                      },
                                      [this](acc::node::UnaryExpr* uexpr) {
                                          std::cout << " [ UNARY EXPR ] " << std::endl;
-                                         std::cout << uexpr->op.word << " : [" << ([&](const std::string& word) -> std::string {
-                                             if (word == "!")
-                                                 return "BANG";
-                                             if (word == "-")
-                                                 return "SUB";
-                                             if (word == "/")
-                                                 return "DIV";
-                                             if (word == "*")
-                                                 return "MULT";
-                                             else
-                                                 return "UNDEFINED BINARY OPERATOR";
-                                         }(uexpr->op.word))
-                                                   << "] "
-                                                   << std::endl;
+                                         uexpr->op.print_token();
                                          print_node(uexpr->expr);
                                      },
-                                     [](acc::node::GroupingExpr* gexpr) {}},
+                                     [this](acc::node::GroupingExpr* gexpr) {
+                                         std::cout << " [ GROUP EXPR ] " << std::endl;
+                                         print_node(gexpr->expr);
+                                     }},
                    expr);
     };
 
