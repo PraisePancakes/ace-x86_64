@@ -2,6 +2,8 @@
 #include <iostream>
 #include <stack>
 #include <unordered_map>
+
+#include "ansi.hpp"
 namespace acc {
 
 class logger {
@@ -14,12 +16,6 @@ class logger {
     };
 
    private:
-    std::unordered_map<LEVEL, std::string> m_log_tag{
-        {LEVEL::INFO, "\x1b[1;32m[INFO]\x1b[0m "},
-        {LEVEL::WARNING, "\x1b[1;33m[WARNING]\x1b[0m "},
-        {LEVEL::ERROR, "\x1b[1;31m[ERROR]\x1b[0m "},
-        {LEVEL::FATAL, "\x1b[0;31m[FATAL]\x1b[0m "}};
-
     logger() = default;
     ~logger() = default;
     logger(const logger&) = delete;
@@ -34,11 +30,25 @@ class logger {
 
     template <typename Out>
     void send(LEVEL level, const std::string& message, Out& out) {
-        out << m_log_tag[level] << message << std::endl;
+        auto get_color_stream = [&](LEVEL lvl, std::ostream& os) {
+            switch (lvl) {
+                case LEVEL::INFO:
+                    return acc::ansi::foreground_green;
+                case LEVEL::FATAL:
+                    return ansi::foreground_red;
+                case LEVEL::WARNING:
+                    return ansi::foreground_yellow;
+                case LEVEL::ERROR:
+                    return ansi::foreground_red;
+                default:
+                    return ansi::foreground_grey;
+            };
+        };
+        out << get_color_stream(level, out) << message << acc::ansi::reset << std::endl;
     }
 
     void send(LEVEL level, const std::string& message) {
-        std::cout << m_log_tag[level] << message << std::endl;
+        send(level, message, std::cout);
     }
 };
 

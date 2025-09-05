@@ -97,22 +97,23 @@ class [[nodiscard]] acc_parser
           };
 
     void print_node(acc::ExprVariant expr) {
-        std::visit(internal::visitor{[this](acc::node::BinaryExpr* bxpr) {
+        // non owning view of nodes
+        std::visit(internal::visitor{[this](const acc::node::BinaryExpr* bxpr) {
                                          std::cout << " [ BINARY EXPR ] " << std::endl;
                                          print_node(bxpr->lhs);
                                          bxpr->op.print_token();
                                          print_node(bxpr->rhs);
                                      },
-                                     [](acc::node::LiteralExpr* lxpr) {
+                                     [](const acc::node::LiteralExpr* lxpr) {
                                          std::cout << " [ LITERAL EXPR ] " << std::endl;
                                          lxpr->embedded.print_token();
                                      },
-                                     [this](acc::node::UnaryExpr* uexpr) {
+                                     [this](const acc::node::UnaryExpr* uexpr) {
                                          std::cout << " [ UNARY EXPR ] " << std::endl;
                                          uexpr->op.print_token();
                                          print_node(uexpr->expr);
                                      },
-                                     [this](acc::node::GroupingExpr* gexpr) {
+                                     [this](const acc::node::GroupingExpr* gexpr) {
                                          std::cout << " [ GROUP EXPR ] " << std::endl;
                                          print_node(gexpr->expr);
                                      }},

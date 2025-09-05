@@ -20,6 +20,14 @@ using ExprVariant = std::variant<node::BinaryExpr*,
                                  node::LiteralExpr*,
                                  node::GroupingExpr*>;
 
+// TO DO parser should return ownership of these nodes. It is not the parsers job to free this memory!!!!
+template <typename T>
+using uptr = std::unique_ptr<T>;
+using ExprOwningVariant = std::variant<uptr<node::BinaryExpr>,
+                                       uptr<node::UnaryExpr>,
+                                       uptr<node::LiteralExpr>,
+                                       uptr<node::GroupingExpr>>;
+
 namespace node {
 // struct IfStmt;
 // struct ThenStmt;
