@@ -29,23 +29,23 @@
  * acc             --set-dev    [-verbose-lexer -verbose-ast ]  f.ace         -o                              fexec
  *
  * (ace protocol)   (help)
- * acc              --help-all
+ * acc              --help
  * acc              --help-dev
  */
 namespace acc {
 
 class cli {
-    const std::unordered_map<std::string, std::uint8_t> m_flag_map{
-        {"acc", 0x1u},
-        {"--set-dev", 0x2u},
-        {"-verbose-lexer", 0x4u},
-        {"-verbose-ast", 0x8u},
-        {"--help-all", 0x10u},
-        {"--help-dev", 0x20u}
-
+    using flag_size_t = std::byte;
+    enum class FLAGS : std::underlying_type_t<flag_size_t> {
+        ACC = 0x1u,
+        SET_DEV = 0x2u,
+        VLEXER = 0x4u,
+        VAST = 0x8u,
+        HELP_DEV = 0x10u,
+        HELP_ALL = 0x20u
     };
 
-    std::uint8_t m_build_flags{0};
+    flag_size_t m_build_flags{};
     std::vector<std::string> m_input_files;
 
     void parse_input_file(std::stringstream& ss) {
@@ -79,9 +79,10 @@ class cli {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         if (acc::match_('[', "missing '[' ")(ss)) {
             acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-            while (auto v = acc::any_(acc::match_("-verbose-lexer"), acc::match_("-verbose-ast"))(ss)) {
+            while (auto v = acc::any_(acc::transform_(acc::match_("-verbose-lexer"), [](auto) { return FLAGS::VLEXER; }),
+                                      acc::transform_(acc::match_("-verbose-ast"), [](auto) { return FLAGS::VAST; }))(ss)) {
                 acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-                m_build_flags |= m_flag_map.at(v.value());
+                m_build_flags |= (flag_size_t)v.value();
             }
             if (auto v = acc::match_(']', "missing dev command terminator ']'")(ss)) {
                 return;
@@ -94,21 +95,27 @@ class cli {
 
     void parse_commands(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-        auto v = acc::any_(acc::match_("--set-dev"),
-                           acc::match_("--help-all"),
-                           acc::match_("--help-dev"))(ss);
+        auto v = acc::any_(acc::transform_(acc::match_("--set-dev"), [](auto) {
+                               return FLAGS::SET_DEV;
+                           }),
+                           acc::transform_(acc::match_("--help-all"), [](auto) {
+                               return FLAGS::HELP_ALL;
+                           }),
+                           acc::transform_(acc::match_("--help-dev"), [](auto) {
+                               return FLAGS::HELP_DEV;
+                           }))(ss);
         if (v.has_value()) {
-            m_build_flags |= m_flag_map.at(v.value());
-            if (v.value() == "--set-dev") {
+            m_build_flags |= (flag_size_t)v.value();
+            if (v.value() == FLAGS::SET_DEV) {
                 parse_dev_commands(ss);
             }
         }
     };
 
     void parse(std::stringstream& ss) {
-        auto v = acc::match_("acc")(ss);
+        auto v = acc::transform_(acc::match_("acc"), [](auto) { return FLAGS::ACC; })(ss);
         if (v.has_value()) {
-            m_build_flags |= m_flag_map.at(v.value());
+            m_build_flags |= (flag_size_t)v.value();
             parse_commands(ss);
             parse_input_file(ss);
         }
@@ -130,23 +137,23 @@ class cli {
         acc::logger::instance().send(logger::LEVEL::INFO, "         (ace protocol)  <optional flags> [optional flag options]    (input file)  (output type flag (binary))     (executable name)", std::cout);
     };
 
-    [[nodiscard]] bool constexpr is_set(const std::string& f) const noexcept {
-        return ((m_build_flags & m_flag_map.at(f)) == m_flag_map.at(f));
+    [[nodiscard]] bool constexpr is_set(FLAGS f) const noexcept {
+        return ((m_build_flags & (flag_size_t)f) == (flag_size_t)f);
     };
 
    public:
     cli(std::stringstream&& ss) {
         parse(ss);
-        if (is_set("acc")) {
-            if (is_set("--help-all")) {
+        if (is_set(FLAGS::ACC)) {
+            if (is_set(FLAGS::HELP_ALL)) {
                 print_usage_all();
-            } else if (is_set("--help-dev")) {
+            } else if (is_set(FLAGS::HELP_DEV)) {
                 print_usage_devs();
-            } else if (is_set("--set-dev")) {
-                if (is_set("-verbose-ast")) {
+            } else if (is_set(FLAGS::SET_DEV)) {
+                if (is_set(FLAGS::VAST)) {
                     acc::logger::instance().send(logger::LEVEL::INFO, "[DEV FLAG] -verbose-ast has been set", std::cout);
                 }
-                if (is_set("-verbose-lexer")) {
+                if (is_set(FLAGS::VLEXER)) {
                     acc::logger::instance().send(logger::LEVEL::INFO, "[DEV FLAG] -verbose-lexer has been set", std::cout);
                 }
             }

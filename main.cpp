@@ -18,7 +18,6 @@ auto main(int argc, char** argv) -> int {
     for (int i = 1; i < argc; i++) {
         ss << std::string(argv[i]) << " ";
     }
-
     acc::cli acli(std::move(ss));
     // TEST_PARSER();
     return EXIT_SUCCESS;

@@ -35,11 +35,11 @@ class logger {
                 case LEVEL::INFO:
                     return acc::ansi::foreground_green;
                 case LEVEL::FATAL:
-                    return ansi::foreground_red;
+                    return ansi::foreground_dark_red;
                 case LEVEL::WARNING:
                     return ansi::foreground_yellow;
                 case LEVEL::ERROR:
-                    return ansi::foreground_red;
+                    return ansi::foreground_light_red;
                 default:
                     return ansi::foreground_grey;
             };

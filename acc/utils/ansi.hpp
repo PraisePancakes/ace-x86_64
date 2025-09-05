@@ -11,8 +11,12 @@ constexpr std::ostream &foreground_black(std::ostream &os) {
     return os << "\033[30m";
 }
 
-constexpr std::ostream &foreground_red(std::ostream &os) {
+constexpr std::ostream &foreground_dark_red(std::ostream &os) {
     return os << "\033[31m";
+}
+
+constexpr std::ostream &foreground_light_red(std::ostream &os) {
+    return os << "\033[1;31m";
 }
 
 constexpr std::ostream &foreground_yellow(std::ostream &os) {
