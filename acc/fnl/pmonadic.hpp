@@ -266,6 +266,20 @@ template <typename Ts>
 };
 
 template <typename T, typename F>
+[[nodiscard]] constexpr parser<std::invoke_result_t<F>>
+transform_(parser<T> const& p, const F& f) noexcept(
+    noexcept(std::is_nothrow_invocable_v<F>)) {
+    using U = std::invoke_result_t<F>;
+    return [=](std::istream& ss) -> result<U> {
+        auto v = p(ss);
+        if (v.has_value()) {
+            return std::invoke(f);
+        }
+        return std::unexpected(v.error());
+    };
+}
+
+template <typename T, typename F>
 [[nodiscard]] constexpr parser<std::invoke_result_t<F, T>>
 transform_(parser<T> const& p, const F& f) noexcept(
     noexcept(std::is_nothrow_invocable_v<F, T>)) {

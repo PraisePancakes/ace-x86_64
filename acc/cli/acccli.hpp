@@ -36,6 +36,8 @@ namespace acc {
 
 class cli {
     using flag_size_t = std::byte;
+    std::vector<std::string> m_input_files;
+
     enum class FLAGS : std::underlying_type_t<flag_size_t> {
         ACC = 0x1u,
         SET_DEV = 0x2u,
@@ -46,13 +48,13 @@ class cli {
     };
 
     flag_size_t m_build_flags{};
-    std::vector<std::string> m_input_files;
 
     void parse_input_file(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         while (true) {
             acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-            if (auto v = acc::sequ_(acc::alnum_("invalid file name"), acc::match_(".ace", "Unknown file extension."))(ss)) {
+            if (auto v = acc::sequ_(acc::alnum_("invalid file name"),
+                                    acc::match_(".ace", "Unknown file extension."))(ss)) {
                 std::string path = std::apply([](auto&&... args) {
                     return (args + ...);
                 },
@@ -79,8 +81,8 @@ class cli {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
         if (acc::match_('[', "missing '[' ")(ss)) {
             acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-            while (auto v = acc::any_(acc::transform_(acc::match_("-verbose-lexer"), [](auto) { return FLAGS::VLEXER; }),
-                                      acc::transform_(acc::match_("-verbose-ast"), [](auto) { return FLAGS::VAST; }))(ss)) {
+            while (auto v = acc::any_(acc::transform_(acc::match_("-verbose-lexer"), []() { return FLAGS::VLEXER; }),
+                                      acc::transform_(acc::match_("-verbose-ast"), []() { return FLAGS::VAST; }))(ss)) {
                 acc::many_(acc::ignore_(acc::match_(' ')))(ss);
                 m_build_flags |= (flag_size_t)v.value();
             }
@@ -95,13 +97,13 @@ class cli {
 
     void parse_commands(std::stringstream& ss) {
         acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-        auto v = acc::any_(acc::transform_(acc::match_("--set-dev"), [](auto) {
+        auto v = acc::any_(acc::transform_(acc::match_("--set-dev"), []() {
                                return FLAGS::SET_DEV;
                            }),
-                           acc::transform_(acc::match_("--help-all"), [](auto) {
+                           acc::transform_(acc::match_("--help-all"), []() {
                                return FLAGS::HELP_ALL;
                            }),
-                           acc::transform_(acc::match_("--help-dev"), [](auto) {
+                           acc::transform_(acc::match_("--help-dev"), []() {
                                return FLAGS::HELP_DEV;
                            }))(ss);
         if (v.has_value()) {
@@ -113,7 +115,7 @@ class cli {
     };
 
     void parse(std::stringstream& ss) {
-        auto v = acc::transform_(acc::match_("acc"), [](auto) { return FLAGS::ACC; })(ss);
+        auto v = acc::transform_(acc::match_("acc"), []() { return FLAGS::ACC; })(ss);
         if (v.has_value()) {
             m_build_flags |= (flag_size_t)v.value();
             parse_commands(ss);
