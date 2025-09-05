@@ -96,26 +96,40 @@ class [[nodiscard]] acc_parser
 
           };
 
-    void print_node(acc::ExprVariant expr) {
+    void print_node(acc::ExprVariant expr, std::size_t depth = 0) {
         // non owning view of nodes
-        std::visit(internal::visitor{[this](const acc::node::BinaryExpr* bxpr) {
-                                         std::cout << " [ BINARY EXPR ] " << std::endl;
-                                         print_node(bxpr->lhs);
-                                         bxpr->op.print_token();
-                                         print_node(bxpr->rhs);
+        depth++;
+        for (std::size_t i = 0; i < depth; i++) {
+            std::cout << "     ";
+        }
+        std::visit(internal::visitor{[this, &depth](const acc::node::BinaryExpr* bxpr) {
+                                         std::cout << acc::ansi::foreground_green << " [ BINARY EXPR ] " << acc::ansi::reset << std::endl;
+                                         print_node(bxpr->lhs, depth);
+                                         for (std::size_t i = 0; i < depth; i++) {
+                                             std::cout << "     ";
+                                         }
+                                         std::cout << acc::ansi::foreground_light_red << bxpr->op.word << acc::ansi::reset << std::endl;
+                                         print_node(bxpr->rhs, depth);
                                      },
-                                     [](const acc::node::LiteralExpr* lxpr) {
-                                         std::cout << " [ LITERAL EXPR ] " << std::endl;
-                                         lxpr->embedded.print_token();
+                                     [&depth](const acc::node::LiteralExpr* lxpr) {
+                                         std::cout << acc::ansi::foreground_green << " [ LITERAL EXPR ] " << acc::ansi::reset << std::endl;
+                                         for (std::size_t i = 0; i < depth; i++) {
+                                             std::cout << "     ";
+                                         }
+                                         std::cout << ansi::foreground_yellow << lxpr->embedded.word << acc::ansi::reset << std::endl;
                                      },
-                                     [this](const acc::node::UnaryExpr* uexpr) {
-                                         std::cout << " [ UNARY EXPR ] " << std::endl;
-                                         uexpr->op.print_token();
-                                         print_node(uexpr->expr);
+                                     [this, &depth](const acc::node::UnaryExpr* uexpr) {
+                                         std::cout << acc::ansi::foreground_green << " [ UNARY EXPR ] " << acc::ansi::reset << std::endl;
+                                         for (std::size_t i = 0; i < depth; i++) {
+                                             std::cout << "     ";
+                                         }
+                                         std::cout << acc::ansi::foreground_light_red << uexpr->op.word << acc::ansi::reset << std::endl;
+                                         print_node(uexpr->expr, depth);
                                      },
-                                     [this](const acc::node::GroupingExpr* gexpr) {
-                                         std::cout << " [ GROUP EXPR ] " << std::endl;
-                                         print_node(gexpr->expr);
+                                     [this, &depth](const acc::node::GroupingExpr* gexpr) {
+                                         std::cout << acc::ansi::foreground_green << " [ GROUP EXPR ] " << acc::ansi::reset << std::endl;
+
+                                         print_node(gexpr->expr, depth);
                                      }},
                    expr);
     };
