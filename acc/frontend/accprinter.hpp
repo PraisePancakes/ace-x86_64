@@ -11,7 +11,7 @@ class printer {
     std::vector<acc::ExprVariant> exprs;
 
    public:
-    void print_expression(acc::ExprVariant expr) {
+    void print_expression(const acc::ExprVariant expr) {
         // non owning view of nodes
         m_depth++;
         for (std::size_t i = 0; i < m_depth; i++) {

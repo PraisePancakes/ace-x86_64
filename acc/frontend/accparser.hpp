@@ -5,16 +5,15 @@
 #include "../traits/token_trait.hpp"
 #include "../utils/visitor.hpp"
 #include "accast.hpp"
+#include "accprinter.hpp"
 #include "acctoken.hpp"
-#include "printer.hpp"
 #include "storage.hpp"
 
 #define DISCARD(f) (void)f
 namespace acc {
 
-template <typename T = acc::token>
 class [[nodiscard]] acc_parser
-    : public acc::storage<std::vector<T>> {
+    : public acc::storage<std::vector<acc::token>> {
     std::vector<acc::ExprVariant> exprs;  // block will have this
 
     bool check_it(acc::ACC_ALL_TOKEN_ENUM type) noexcept {
@@ -93,8 +92,8 @@ class [[nodiscard]] acc_parser
     };
 
    public:
-    acc_parser(const std::vector<T>& toks)
-        : acc::storage<std::vector<T>>(toks) {
+    acc_parser(const std::vector<acc::token>& toks)
+        : acc::storage<std::vector<acc::token>>(toks) {
 
           };
     void print_ast() {
