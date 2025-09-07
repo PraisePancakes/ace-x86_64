@@ -138,6 +138,7 @@ class [[nodiscard]] acc_parser
         do {
             exprs.push_back(parse_expr());
         } while (!this->is_end());
+        std::cout << "HERE" << this->exprs.size();
         return exprs;
     };
     acc_parser(const acc_parser&) = delete;

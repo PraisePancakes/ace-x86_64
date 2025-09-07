@@ -10,6 +10,7 @@
 #include "acc/frontend/accparser.hpp"
 #include "acc/utils/acclog.hpp"
 #include "test/test_parser.hpp"
+
 auto main(int argc, char** argv) -> int {
     // if (argc <= 1) {
     //     acc::logger::instance().send(acc::logger::LEVEL::FATAL, "no input files determined for Ace compilation.", std::cout);
