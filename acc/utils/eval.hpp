@@ -68,9 +68,11 @@ class expr_eval {
 
    public:
     expr_eval() {};
-    acc::token::value_type operator()(acc::ExprVariant expr) && {
-        return evaluate(expr);
-    };
+
+    template <typename T>
+    T as(acc::ExprVariant expr) {
+        return std::get<T>(evaluate(expr));
+    }
     ~expr_eval() {};
 };
 };  // namespace acc::interp

@@ -16,7 +16,7 @@ int TEST_PARSER() {
     acc::acc_parser pr(ts);
     auto v = pr.parse();
     pr.print_ast();
-    auto val = acc::interp::expr_eval{}(v[0]);
-    std::cout << std::get<int>(val) << std::endl;
+    acc::interp::expr_eval eval;
+    std::cout << eval.as<int>(v[0]);
     return 0;
 };
