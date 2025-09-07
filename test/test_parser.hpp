@@ -14,8 +14,6 @@ int TEST_PARSER() {
     auto ts = lexe.lex();
     acc::acc_parser pr(ts);
     auto v = pr.parse();
-    for (auto e : v) {
-        pr.print_node(e);
-    }
+    pr.print_ast();
     return 0;
 };
