@@ -13,7 +13,7 @@
 namespace acc {
 
 class [[nodiscard]] acc_parser
-    : public acc::storage<std::vector<acc::token>> {
+    : public acc::fsm_storage<std::vector<acc::token>> {
     std::vector<acc::ExprVariant> exprs;  // block will have this
 
     bool check_it(acc::ACC_ALL_TOKEN_ENUM type) noexcept {
@@ -93,7 +93,7 @@ class [[nodiscard]] acc_parser
 
    public:
     acc_parser(const std::vector<acc::token>& toks)
-        : acc::storage<std::vector<acc::token>>(toks) {
+        : acc::fsm_storage<std::vector<acc::token>>(toks) {
 
           };
     void print_ast() {

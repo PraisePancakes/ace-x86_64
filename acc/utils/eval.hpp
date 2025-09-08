@@ -8,11 +8,11 @@
 
 namespace acc::interp {
 class expr_eval {
-    acc::token::value_type evaluate(acc::ExprVariant exp) {
-        auto to_literal = [](acc::token::value_type var) -> acc::token::value_type {
-            return std::visit([](auto v) -> acc::token::value_type { return v; }, var);
-        };
+    [[nodiscard]] auto to_literal(acc::token::value_type var) const noexcept {
+        return std::visit([](const auto v) -> acc::token::value_type { return v; }, var);
+    };
 
+    [[nodiscard]] acc::token::value_type evaluate(acc::ExprVariant exp) const {
         return std::visit(internal::visitor{
                               [&](acc::node::BinaryExpr* bxpr) -> acc::token::value_type {
                                   acc::token::value_type l = evaluate(bxpr->lhs);

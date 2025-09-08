@@ -12,7 +12,7 @@ namespace acc {
 // the two basic units of a set of tokens is an identifier and a number everything else is up to the user.
 
 template <typename T = char>
-class lexer : protected acc::storage<std::basic_string_view<char>> {
+class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     std::size_t m_x{0};
     std::size_t m_y{0};
     std::vector<token> m_output;
@@ -84,7 +84,7 @@ class lexer : protected acc::storage<std::basic_string_view<char>> {
    public:
     using token_type_t = acc::ACC_ALL_TOKEN_ENUM;
     lexer() {};
-    lexer(const std::unordered_set<acc::ACC_ALL_TOKEN_ENUM>& delims, std::string_view sv) : acc::storage<std::string_view>(sv), m_delims(delims) {
+    lexer(const std::unordered_set<acc::ACC_ALL_TOKEN_ENUM>& delims, std::string_view sv) : acc::fsm_storage<std::string_view>(sv), m_delims(delims) {
 
                                                                                             };
     std::vector<token> lex() {
