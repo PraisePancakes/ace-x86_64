@@ -6,9 +6,9 @@
 #include <sstream>
 #include <variant>
 
-#include "acc/cli/acccli.hpp"
-#include "acc/frontend/accparser.hpp"
-#include "acc/utils/acclog.hpp"
+#include "accx86_64/cli/acccli.hpp"
+#include "accx86_64/frontend/accparser.hpp"
+#include "accx86_64/utils/acclog.hpp"
 #include "test/test_parser.hpp"
 
 auto main(int argc, char** argv) -> int {

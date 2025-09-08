@@ -1,16 +1,22 @@
 #pragma once
-#include "../acc/frontend/acclexer.hpp"
-#include "../acc/frontend/accparser.hpp"
-#include "../acc/utils/eval.hpp"
+#include "../accx86_64/frontend/acclexer.hpp"
+#include "../accx86_64/frontend/accparser.hpp"
+#include "../accx86_64/utils/eval.hpp"
 
 int TEST_PARSER() {
-    acc::lexer lexe({acc::ACC_ALL_TOKEN_ENUM::TK_SPACE,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_PLUS,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_DASH,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_STAR,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_BANG,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_PAREN_L,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_PAREN_R},
+    acc::lexer lexe({
+                        acc::ACC_ALL_TOKEN_ENUM::TK_SPACE,
+                        acc::ACC_ALL_TOKEN_ENUM::TK_PLUS,
+                        acc::ACC_ALL_TOKEN_ENUM::TK_DASH,
+                        acc::ACC_ALL_TOKEN_ENUM::TK_STAR,
+                        acc::ACC_ALL_TOKEN_ENUM::TK_BANG,
+                        acc::ACC_ALL_TOKEN_ENUM::TK_PAREN_L,
+                        acc::ACC_ALL_TOKEN_ENUM::TK_PAREN_R,
+                        acc::ACC_ALL_TOKEN_ENUM::TK_BANG,
+                        acc::ACC_ALL_TOKEN_ENUM::TK_LT,
+                        acc::ACC_ALL_TOKEN_ENUM::TK_GT,
+                        acc::ACC_ALL_TOKEN_ENUM::TK_EQUALS
+                    },
                     "(123 + (324 * 3)) ");
     auto ts = lexe.lex();
     acc::acc_parser pr(ts);

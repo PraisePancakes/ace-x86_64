@@ -45,6 +45,15 @@ class printer {
                                          std::cout << acc::ansi::foreground_green << " [ GROUP EXPR ] " << acc::ansi::reset << std::endl;
 
                                          print_expression(gexpr->expr);
+                                     },
+                                     [this](const acc::node::ComparisonExpr* cxpr) {
+                                         std::cout << acc::ansi::foreground_green << " [ COMPARISON EXPR ] " << acc::ansi::reset << std::endl;
+                                         print_expression(cxpr->lhs);
+                                         for (std::size_t i = 0; i < m_depth; i++) {
+                                             std::cout << "     ";
+                                         }
+                                         std::cout << acc::ansi::foreground_light_red << cxpr->op.word << acc::ansi::reset << std::endl;
+                                         print_expression(cxpr->rhs);
                                      }},
                    expr);
         m_depth--;

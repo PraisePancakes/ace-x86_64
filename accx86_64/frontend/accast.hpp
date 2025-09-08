@@ -13,6 +13,7 @@ struct LiteralExpr;
 struct BinaryExpr;
 struct UnaryExpr;
 struct GroupingExpr;
+struct ComparisonExpr;
 
 struct IfStmt;
 struct ThenStmt;
@@ -21,7 +22,6 @@ struct BlockStmt;
 struct ForStmt;
 
 }  // namespace node
-
 
 // TO DO parser should return ownership of these nodes. It is not the parsers job to free this memory!!!!
 // template <typename T>
@@ -33,13 +33,14 @@ struct ForStmt;
 using ExprVariant = std::variant<node::BinaryExpr*,
                                  node::UnaryExpr*,
                                  node::LiteralExpr*,
-                                 node::GroupingExpr*>;
+                                 node::GroupingExpr*,
+                                 node::ComparisonExpr*>;
 
 using StmtVariant = std::variant<node::IfStmt*,
-                                       node::ThenStmt*,
-                                       node::WhileStmt*,
-                                       node::BlockStmt*,
-                                       node::ForStmt*>;
+                                 node::ThenStmt*,
+                                 node::WhileStmt*,
+                                 node::BlockStmt*,
+                                 node::ForStmt*>;
 
 namespace node {
 // struct IfStmt;
@@ -65,13 +66,22 @@ struct GroupingExpr {
     ExprVariant expr;
 };
 
-struct IfStmt {};
+struct ComparisonExpr {
+    ExprVariant lhs;
+    acc::token op;
+    ExprVariant rhs;
+};
+
+struct IfStmt {
+    ExprVariant condition;
+    StmtVariant then;
+    StmtVariant else_;
+};
 struct ThenStmt {};
 struct WhileStmt {};
 struct BlockStmt {};
 struct ForStmt {};
 
 }  // namespace node
-
 
 }  // namespace acc

@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <iostream>
 #include <vector>
 
@@ -87,8 +88,14 @@ class [[nodiscard]] acc_parser
         return lhs;
     };
 
+    acc::ExprVariant parse_comparison() {
+        auto lhs = parse_factor();
+      
+        return lhs;
+    };
+
     acc::ExprVariant parse_expr() {
-        return parse_factor();
+        return parse_comparison();
     };
 
    public:
