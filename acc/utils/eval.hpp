@@ -17,39 +17,25 @@ class expr_eval {
                               [&](acc::node::BinaryExpr* bxpr) -> acc::token::value_type {
                                   acc::token::value_type l = evaluate(bxpr->lhs);
                                   acc::token::value_type r = evaluate(bxpr->rhs);
-                                  switch (bxpr->op.type) {
-                                      case acc::ACC_ALL_TOKEN_ENUM::TK_PLUS:
-                                          return std::visit(internal::visitor{
-                                                                []<acc::traits::arithmeticable T>(T a, T b) -> acc::token::value_type { return a + b; },
-                                                                [](auto, auto) -> acc::token::value_type {
-                                                                    throw std::runtime_error("undefined binary evaluation with operator for +");
-                                                                }},
-                                                            to_literal(l), to_literal(r));
-                                      case acc::ACC_ALL_TOKEN_ENUM::TK_DASH:
-                                          return std::visit(internal::visitor{
-                                                                []<acc::traits::arithmeticable T>(T a, T b) -> acc::token::value_type { return a - b; },
-                                                                [](auto, auto) -> acc::token::value_type {
-                                                                    throw std::runtime_error("undefined binary evaluation with operator for -");
-                                                                }},
-                                                            to_literal(l), to_literal(r));
-                                      case acc::ACC_ALL_TOKEN_ENUM::TK_STAR:
-                                          return std::visit(internal::visitor{
-                                                                []<acc::traits::arithmeticable T>(T a, T b) -> acc::token::value_type { return a * b; },
-                                                                [](auto, auto) -> acc::token::value_type {
-                                                                    throw std::runtime_error("undefined binary evaluation with operator for *");
-                                                                }},
-                                                            to_literal(l), to_literal(r));
-
-                                      case acc::ACC_ALL_TOKEN_ENUM::TK_SLASH:
-                                          return std::visit(internal::visitor{
-                                                                []<acc::traits::arithmeticable T>(T a, T b) -> acc::token::value_type { return a / b; },
-                                                                [](auto, auto) -> acc::token::value_type {
-                                                                    throw std::runtime_error("undefined binary evaluation with operator for /");
-                                                                }},
-                                                            to_literal(l), to_literal(r));
-                                      default:
-                                          throw std::runtime_error("undefined binary operator. ");
-                                  }
+                                  return std::visit(internal::visitor{
+                                                        [&bxpr]<acc::traits::arithmeticable T>(T a, T b) -> acc::token::value_type {
+                                                            switch (bxpr->op.type) {
+                                                                case ACC_ALL_TOKEN_ENUM::TK_PLUS:
+                                                                    return a + b;
+                                                                case ACC_ALL_TOKEN_ENUM::TK_DASH:
+                                                                    return a - b;
+                                                                case ACC_ALL_TOKEN_ENUM::TK_STAR:
+                                                                    return a * b;
+                                                                case ACC_ALL_TOKEN_ENUM::TK_SLASH:
+                                                                    return a / b;
+                                                                default:
+                                                                    throw std::runtime_error("undefined binary operator");
+                                                            };
+                                                        },
+                                                        [](auto, auto) -> acc::token::value_type {
+                                                            throw std::runtime_error("mismatched type binary evaluation");
+                                                        }},
+                                                    to_literal(l), to_literal(r));
                               },
                               [&](acc::node::LiteralExpr* lxpr) -> acc::token::value_type {
                                   return to_literal(lxpr->value);
