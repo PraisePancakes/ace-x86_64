@@ -32,8 +32,17 @@ class [[nodiscard]] acc_parser
         return false;
     }
 
-    auto match_any(traits::acc_token_t auto&&... types) {
+    bool match_any(traits::acc_token_t auto&&... types) {
         return (match_it(types) || ...);
+    }
+
+    bool match_seq(traits::acc_token_t auto&&... types) {
+        auto old = this->m_end;
+        if ((!match_it(types) && ...)) {
+            this->m_end = old;
+            return false;
+        };
+        return true;
     }
 
     acc::ExprVariant parse_primary() {
@@ -90,7 +99,7 @@ class [[nodiscard]] acc_parser
 
     acc::ExprVariant parse_comparison() {
         auto lhs = parse_factor();
-      
+
         return lhs;
     };
 
