@@ -68,8 +68,8 @@ struct GroupingExpr {
 
 struct ComparisonExpr {
     ExprVariant lhs;
-    acc::token op;
     ExprVariant rhs;
+    acc::token op;
 };
 
 struct IfStmt {

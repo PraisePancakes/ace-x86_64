@@ -99,7 +99,18 @@ class [[nodiscard]] acc_parser
 
     acc::ExprVariant parse_comparison() {
         auto lhs = parse_factor();
-
+        while (match_any(acc::ACC_ALL_TOKEN_ENUM::TK_BANG_EQ,
+                         acc::ACC_ALL_TOKEN_ENUM::TK_LT,
+                         acc::ACC_ALL_TOKEN_ENUM::TK_GT,
+                         acc::ACC_ALL_TOKEN_ENUM::TK_LT_EQ,
+                         acc::ACC_ALL_TOKEN_ENUM::TK_GT_EQ,
+                         acc::ACC_ALL_TOKEN_ENUM::TK_STRICT_EQ)) {
+            auto op = this->peek_prev();
+            auto rhs = parse_expr();
+            return new acc::node::ComparisonExpr{.lhs = lhs,
+                                                 .rhs = rhs,
+                                                 .op = op};
+        }
         return lhs;
     };
 

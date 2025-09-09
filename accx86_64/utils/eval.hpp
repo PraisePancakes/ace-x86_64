@@ -29,11 +29,11 @@ class expr_eval {
                                                                 case ACC_ALL_TOKEN_ENUM::TK_SLASH:
                                                                     return a / b;
                                                                 default:
-                                                                    throw std::runtime_error("undefined binary operator");
+                                                                    throw std::runtime_error("undefined binary operator for evaluator");
                                                             };
                                                         },
                                                         [](auto, auto) -> acc::token::value_type {
-                                                            throw std::runtime_error("mismatched type binary evaluation");
+                                                            throw std::runtime_error("mismatched type binary evaluation for evaluator");
                                                         }},
                                                     to_literal(l), to_literal(r));
                               },
@@ -54,6 +54,10 @@ class expr_eval {
                                   return std::visit(internal::visitor{
                                                         [&cxpr]<acc::traits::arithmeticable T>(T a, T b) -> acc::token::value_type {
                                                             switch (cxpr->op.type) {
+                                                                case ACC_ALL_TOKEN_ENUM::TK_LT:
+                                                                    return a < b;
+                                                                case ACC_ALL_TOKEN_ENUM::TK_GT:
+                                                                    return a > b;
                                                                 case ACC_ALL_TOKEN_ENUM::TK_STRICT_EQ:
                                                                     return a == b;
                                                                 case ACC_ALL_TOKEN_ENUM::TK_LT_EQ:
@@ -63,11 +67,11 @@ class expr_eval {
                                                                 case ACC_ALL_TOKEN_ENUM::TK_BANG_EQ:
                                                                     return a != b;
                                                                 default:
-                                                                    throw std::runtime_error("undefined comparison operator");
+                                                                    throw std::runtime_error("undefined comparison operator for evaluator");
                                                             };
                                                         },
                                                         [](auto, auto) -> acc::token::value_type {
-                                                            throw std::runtime_error("mismatched type comparison evaluation");
+                                                            throw std::runtime_error("mismatched type comparison evaluation for evaluator");
                                                         }},
                                                     to_literal(lhs), to_literal(rhs));
                               }},
