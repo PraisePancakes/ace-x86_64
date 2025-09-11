@@ -1,25 +1,16 @@
 #pragma once
 #include "../accx86_64/frontend/acclexer.hpp"
 #include "../accx86_64/frontend/accparser.hpp"
+#include "../accx86_64/frontend/statics/ro_accdelims.hpp"
+#include "../accx86_64/frontend/statics/ro_accpairdelims.hpp"
+#include "../accx86_64/frontend/statics/ro_acctypes.hpp"
 #include "../accx86_64/utils/eval.hpp"
 
 int TEST_PARSER() {
-    acc::lexer lexe({acc::ACC_ALL_TOKEN_ENUM::TK_SPACE,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_PLUS,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_DASH,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_STAR,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_BANG,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_PAREN_L,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_PAREN_R,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_BANG,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_LT,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_GT,
-                     acc::ACC_ALL_TOKEN_ENUM::TK_EQUALS},
-                    {{"!=", acc::ACC_ALL_TOKEN_ENUM::TK_BANG_EQ},
-                     {">=", acc::ACC_ALL_TOKEN_ENUM::TK_GT_EQ},
-                     {"<=", acc::ACC_ALL_TOKEN_ENUM::TK_LT_EQ},
-                     {"==", acc::ACC_ALL_TOKEN_ENUM::TK_STRICT_EQ}},
-                    "(123 + (324 * 1)) < 1095");
+    acc::lexer lexe("(123 + (324 * 1)) < 1095",
+                    acc::globals::ACC_DELIMS,
+                    acc::globals::ACC_PAIR_DELIMS,
+                    acc::globals::ACC_TYPE_SET);
     auto ts = lexe.lex();
     for (auto& w : ts) {
         w.print_token();

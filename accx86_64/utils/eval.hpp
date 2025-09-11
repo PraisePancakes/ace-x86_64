@@ -20,13 +20,13 @@ class expr_eval {
                                   return std::visit(internal::visitor{
                                                         [&bxpr]<acc::traits::arithmeticable T>(T a, T b) -> acc::token::value_type {
                                                             switch (bxpr->op.type) {
-                                                                case ACC_ALL_TOKEN_ENUM::TK_PLUS:
+                                                                case GLOBAL_TOKENS::TK_PLUS:
                                                                     return a + b;
-                                                                case ACC_ALL_TOKEN_ENUM::TK_DASH:
+                                                                case GLOBAL_TOKENS::TK_DASH:
                                                                     return a - b;
-                                                                case ACC_ALL_TOKEN_ENUM::TK_STAR:
+                                                                case GLOBAL_TOKENS::TK_STAR:
                                                                     return a * b;
-                                                                case ACC_ALL_TOKEN_ENUM::TK_SLASH:
+                                                                case GLOBAL_TOKENS::TK_SLASH:
                                                                     return a / b;
                                                                 default:
                                                                     throw std::runtime_error("undefined binary operator for evaluator");
@@ -54,17 +54,17 @@ class expr_eval {
                                   return std::visit(internal::visitor{
                                                         [&cxpr]<acc::traits::arithmeticable T>(T a, T b) -> acc::token::value_type {
                                                             switch (cxpr->op.type) {
-                                                                case ACC_ALL_TOKEN_ENUM::TK_LT:
+                                                                case GLOBAL_TOKENS::TK_LT:
                                                                     return a < b;
-                                                                case ACC_ALL_TOKEN_ENUM::TK_GT:
+                                                                case GLOBAL_TOKENS::TK_GT:
                                                                     return a > b;
-                                                                case ACC_ALL_TOKEN_ENUM::TK_STRICT_EQ:
+                                                                case GLOBAL_TOKENS::TK_STRICT_EQ:
                                                                     return a == b;
-                                                                case ACC_ALL_TOKEN_ENUM::TK_LT_EQ:
+                                                                case GLOBAL_TOKENS::TK_LT_EQ:
                                                                     return a <= b;
-                                                                case ACC_ALL_TOKEN_ENUM::TK_GT_EQ:
+                                                                case GLOBAL_TOKENS::TK_GT_EQ:
                                                                     return a >= b;
-                                                                case ACC_ALL_TOKEN_ENUM::TK_BANG_EQ:
+                                                                case GLOBAL_TOKENS::TK_BANG_EQ:
                                                                     return a != b;
                                                                 default:
                                                                     throw std::runtime_error("undefined comparison operator for evaluator");

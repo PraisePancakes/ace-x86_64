@@ -2,7 +2,7 @@
 #include <iostream>
 #include <variant>
 
-#include "tkxmacro.hpp"
+#include "statics/tkxmacro.hpp"
 #include "../utils/visitor.hpp"
 namespace acc {
 
@@ -11,7 +11,7 @@ struct [[nodiscard]] token {
 
     std::string word;
     std::pair<int, int> location;
-    using token_type_t = acc::ACC_ALL_TOKEN_ENUM;
+    using token_type_t = acc::GLOBAL_TOKENS;
     token_type_t type;
     value_type value;
 

@@ -29,6 +29,7 @@ namespace acc {
     TOKEN_DEF(TK_GT_EQ, 0xF8u)          \
     TOKEN_DEF(TK_STRICT_EQ, 0xF7u)      \
     TOKEN_DEF(TK_BANG_EQ, 0xF6u)        \
+    TOKEN_DEF(TK_RESERVED, 0xF5u)       \
     TOKEN_DEF(TK_LITERAL_INT, 0xFEu)    \
     TOKEN_DEF(TK_LITERAL_FLOAT, 0xFDu)  \
     TOKEN_DEF(TK_IDENTIFIER, 0xFCu)     \
@@ -38,8 +39,8 @@ namespace acc {
 
 /// Enum representing token types
 #define TOKEN_DEF(NAME, VALUE) NAME = VALUE,
-enum ACC_ALL_TOKEN_ENUM : unsigned char {
+enum GLOBAL_TOKENS : unsigned char {
     TOKEN_DEFs
 };
 #undef TOKEN_DEF
-}  // namespace acc
+}  // namespace acc::globals

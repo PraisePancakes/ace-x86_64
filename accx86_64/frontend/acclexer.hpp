@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "acctoken.hpp"
+#include "statics/tkxmacro.hpp"
 #include "storage.hpp"
-#include "tkxmacro.hpp"
 
 namespace acc {
 // the two basic units of a set of tokens is an identifier and a number everything else is up to the user.
@@ -16,14 +16,20 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     std::size_t m_x{0};
     std::size_t m_y{0};
     std::vector<token> m_output;
-    std::unordered_set<ACC_ALL_TOKEN_ENUM> m_delims;
+    std::unordered_set<GLOBAL_TOKENS> m_delims;
+    std::unordered_map<std::string, acc::GLOBAL_TOKENS> m_pair_delims;
+    std::unordered_set<std::string> m_reserved;
+
+    [[nodiscard]] bool is_reserved(std::string keyword) const noexcept {
+        return m_reserved.find(keyword) != m_reserved.end();
+    }
 
     [[nodiscard]] bool is_pair_delim(const char unit1, const char unit2) const noexcept {
         return m_pair_delims.find(std::string({unit1, unit2})) != m_pair_delims.end();
     }
 
     [[nodiscard]] bool is_delim(const unsigned char unit) const noexcept {
-        return m_delims.find((ACC_ALL_TOKEN_ENUM)unit) != m_delims.end();
+        return m_delims.find((GLOBAL_TOKENS)unit) != m_delims.end();
     }
 
     std::string to_substr() const noexcept {
@@ -38,10 +44,20 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
         while (!this->is_end() && !is_delim(this->peek()) && !isspace(this->peek())) {
             this->advance();
         }
-        return token{to_substr(),
+
+        auto id = to_substr();
+        if (is_reserved(id)) {
+            return token{
+                id,
+                std::make_pair(m_x, m_y),
+                token_type_t::TK_RESERVED,
+                id};
+        }
+
+        return token{id,
                      std::make_pair(m_x, m_y),
                      token_type_t::TK_IDENTIFIER,
-                     to_substr()};
+                     id};
     };
 
     token lex_number() {
@@ -84,7 +100,7 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
             }
             return token{to_substr(this->m_start, this->m_end + 1),
                          std::make_pair(m_x, m_y),
-                         *(m_delims.find((acc::ACC_ALL_TOKEN_ENUM)this->advance())),
+                         *(m_delims.find((acc::GLOBAL_TOKENS)this->advance())),
                          this->peek_prev()};
         };
         if (isdigit(this->peek())) {
@@ -95,17 +111,21 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
         }
         return lex_identifier();
     };
-    std::unordered_map<std::string, acc::ACC_ALL_TOKEN_ENUM> m_pair_delims;
 
    public:
-    using token_type_t = acc::ACC_ALL_TOKEN_ENUM;
+    using token_type_t = acc::GLOBAL_TOKENS;
     lexer() {};
-    lexer(const std::unordered_set<acc::ACC_ALL_TOKEN_ENUM>& delims,
-          const std::unordered_map<std::string, acc::ACC_ALL_TOKEN_ENUM>& pair_delims,
-          std::string_view sv)
-        : acc::fsm_storage<std::string_view>(sv), m_delims(delims), m_pair_delims(pair_delims) {
-
+    lexer(
+        std::string_view sv,
+        const std::unordered_set<acc::GLOBAL_TOKENS>& delims,
+        const std::unordered_map<std::string, acc::GLOBAL_TOKENS>& pair_delims,
+        const std::unordered_set<std::string>& reserves)
+        : acc::fsm_storage<std::string_view>(sv),
+          m_delims(delims),
+          m_pair_delims(pair_delims),
+          m_reserved(reserves) {
           };
+
     std::vector<token> lex() {
         std::vector<token> ret{};
         while (!this->is_end()) {

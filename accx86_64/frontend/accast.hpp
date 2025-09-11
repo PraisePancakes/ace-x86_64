@@ -20,6 +20,7 @@ struct ThenStmt;
 struct WhileStmt;
 struct BlockStmt;
 struct ForStmt;
+struct DeclarationStmt;
 
 }  // namespace node
 
@@ -40,7 +41,8 @@ using StmtVariant = std::variant<node::IfStmt*,
                                  node::ThenStmt*,
                                  node::WhileStmt*,
                                  node::BlockStmt*,
-                                 node::ForStmt*>;
+                                 node::ForStmt*,
+                                 node::DeclarationStmt*>;
 
 namespace node {
 // struct IfStmt;
@@ -70,6 +72,12 @@ struct ComparisonExpr {
     ExprVariant lhs;
     ExprVariant rhs;
     acc::token op;
+};
+
+struct DeclarationStmt {
+    acc::token type;
+    acc::token name;
+    ExprVariant expr;  // resulant literal must match type
 };
 
 struct IfStmt {

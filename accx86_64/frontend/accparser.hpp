@@ -17,13 +17,13 @@ class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
     std::vector<acc::ExprVariant> exprs;  // block will have this
 
-    bool check_it(acc::ACC_ALL_TOKEN_ENUM type) noexcept {
+    bool check_it(acc::GLOBAL_TOKENS type) noexcept {
         if (this->is_end()) {
             return false;
         }
         return this->peek().type == type;
     }
-    bool match_it(acc::ACC_ALL_TOKEN_ENUM type) noexcept {
+    bool match_it(acc::GLOBAL_TOKENS type) noexcept {
         if (check_it(type)) {
             DISCARD(this->advance());
             return true;
@@ -74,8 +74,8 @@ class [[nodiscard]] acc_parser
 
     acc::ExprVariant parse_term() {
         auto lhs = parse_unary();
-        while (match_any(acc::ACC_ALL_TOKEN_ENUM::TK_PLUS,
-                         acc::ACC_ALL_TOKEN_ENUM::TK_DASH)) {
+        while (match_any(acc::GLOBAL_TOKENS::TK_PLUS,
+                         acc::GLOBAL_TOKENS::TK_DASH)) {
             auto op = this->peek_prev();
             auto rhs = parse_expr();
             return new acc::node::BinaryExpr{.lhs = lhs,
@@ -86,8 +86,8 @@ class [[nodiscard]] acc_parser
     };
     acc::ExprVariant parse_factor() {
         auto lhs = parse_term();
-        while (match_any(acc::ACC_ALL_TOKEN_ENUM::TK_STAR,
-                         acc::ACC_ALL_TOKEN_ENUM::TK_SLASH)) {
+        while (match_any(acc::GLOBAL_TOKENS::TK_STAR,
+                         acc::GLOBAL_TOKENS::TK_SLASH)) {
             auto op = this->peek_prev();
             auto rhs = parse_expr();
             return new acc::node::BinaryExpr{.lhs = lhs,
@@ -99,12 +99,12 @@ class [[nodiscard]] acc_parser
 
     acc::ExprVariant parse_comparison() {
         auto lhs = parse_factor();
-        while (match_any(acc::ACC_ALL_TOKEN_ENUM::TK_BANG_EQ,
-                         acc::ACC_ALL_TOKEN_ENUM::TK_LT,
-                         acc::ACC_ALL_TOKEN_ENUM::TK_GT,
-                         acc::ACC_ALL_TOKEN_ENUM::TK_LT_EQ,
-                         acc::ACC_ALL_TOKEN_ENUM::TK_GT_EQ,
-                         acc::ACC_ALL_TOKEN_ENUM::TK_STRICT_EQ)) {
+        while (match_any(acc::GLOBAL_TOKENS::TK_BANG_EQ,
+                         acc::GLOBAL_TOKENS::TK_LT,
+                         acc::GLOBAL_TOKENS::TK_GT,
+                         acc::GLOBAL_TOKENS::TK_LT_EQ,
+                         acc::GLOBAL_TOKENS::TK_GT_EQ,
+                         acc::GLOBAL_TOKENS::TK_STRICT_EQ)) {
             auto op = this->peek_prev();
             auto rhs = parse_expr();
             return new acc::node::ComparisonExpr{.lhs = lhs,
@@ -117,6 +117,16 @@ class [[nodiscard]] acc_parser
     acc::ExprVariant parse_expr() {
         return parse_comparison();
     };
+
+    // acc::StmtVariant parse_declaration() {
+    //     while (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
+            
+    //     };
+    // }
+
+    // acc::StmtVariant parse_stmt() {
+    //     return parse_declaration();
+    // };
 
    public:
     acc_parser(const std::vector<acc::token>& toks)
