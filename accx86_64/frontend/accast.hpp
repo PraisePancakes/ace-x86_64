@@ -16,11 +16,11 @@ struct GroupingExpr;
 struct ComparisonExpr;
 
 struct IfStmt;
-struct ThenStmt;
 struct WhileStmt;
 struct BlockStmt;
 struct ForStmt;
 struct DeclarationStmt;
+struct ExpressionStmt;
 
 }  // namespace node
 
@@ -38,11 +38,11 @@ using ExprVariant = std::variant<node::BinaryExpr*,
                                  node::ComparisonExpr*>;
 
 using StmtVariant = std::variant<node::IfStmt*,
-                                 node::ThenStmt*,
                                  node::WhileStmt*,
                                  node::BlockStmt*,
                                  node::ForStmt*,
-                                 node::DeclarationStmt*>;
+                                 node::DeclarationStmt*,
+                                 node::ExpressionStmt*>;
 
 namespace node {
 // struct IfStmt;
@@ -85,10 +85,20 @@ struct IfStmt {
     StmtVariant then;
     StmtVariant else_;
 };
-struct ThenStmt {};
-struct WhileStmt {};
-struct BlockStmt {};
-struct ForStmt {};
+
+struct ExpressionStmt {
+    ExprVariant expr;
+};
+
+struct WhileStmt {
+    ExprVariant condition;
+    StmtVariant body;
+};
+struct BlockStmt {
+    std::vector<StmtVariant> stmts;
+};
+struct ForStmt {
+};
 
 }  // namespace node
 

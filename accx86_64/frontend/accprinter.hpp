@@ -8,7 +8,7 @@
 namespace acc {
 class printer {
     std::size_t m_depth = 0;
-    std::vector<acc::ExprVariant> exprs;
+    std::vector<acc::StmtVariant> stmts;
 
    public:
     void print_expression(const acc::ExprVariant expr) {
@@ -59,13 +59,57 @@ class printer {
         m_depth--;
     };
 
-    void print_statement() {
+    void print_statement(const acc::StmtVariant stmt) {
+        m_depth++;
+        for (std::size_t i = 0; i < m_depth; i++) {
+            std::cout << "     ";
+        }
+        std::visit(internal::visitor{
+                       [this](const acc::node::IfStmt* ifstmt) {
+                           std::cout << acc::ansi::foreground_green << "( IF ) " << acc::ansi::reset << std::endl;
+                           std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
+                           print_expression(ifstmt->condition);
+                           this->print_statement(ifstmt->then);
+                           this->print_statement(ifstmt->else_);
+                       },
+                       [this](const acc::node::DeclarationStmt* declstmt) {
+                           std::cout << acc::ansi::foreground_green << "( DECLARATION ) " << acc::ansi::reset << std::endl;
+                           std::cout << acc::ansi::foreground_yellow << "TYPE : " << acc::ansi::reset << std::endl;
+                           declstmt->type.print_token();
+                           std::cout << acc::ansi::foreground_yellow << "ID : " << acc::ansi::reset << std::endl;
+                           declstmt->name.print_token();
+                           std::cout << acc::ansi::foreground_yellow << "XPR : " << acc::ansi::reset << std::endl;
+                           this->print_expression(declstmt->expr);
+                       },
+                       [this](const acc::node::ExpressionStmt* xprstmt) {
+                           std::cout << acc::ansi::foreground_green << "( EXPRESSION ) " << acc::ansi::reset << std::endl;
+                           this->print_expression(xprstmt->expr);
+                       },
+                       [this](const acc::node::WhileStmt* whilestmt) {
+                           std::cout << acc::ansi::foreground_green << "( WHILE ) " << acc::ansi::reset << std::endl;
+                           std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
+                           print_expression(whilestmt->condition);
+                           std::cout << acc::ansi::foreground_yellow << "BODY : " << acc::ansi::reset << std::endl;
+                           this->print_statement(whilestmt->body);
+                       },
+                       [this](const acc::node::BlockStmt* bstmt) {
+                           std::cout << acc::ansi::foreground_green << "( BLOCK ) " << acc::ansi::reset << std::endl;
+                           std::cout << acc::ansi::foreground_yellow << "BODY : " << acc::ansi::reset << std::endl;
+                           for (const auto& s : bstmt->stmts) {
+                               this->print_statement(s);
+                           }
+                       },
+                       [this](const acc::node::ForStmt* cxpr) {
+
+                       }},
+                   stmt);
+        m_depth--;
     };
 
-    printer(const std::vector<acc::ExprVariant>& xpr) : exprs(xpr) {};
+    printer(const std::vector<acc::StmtVariant>& st) : stmts(st) {};
     void print() {
-        for (const auto& e : exprs) {
-            print_expression(e);
+        for (const auto& s : stmts) {
+            print_statement(s);
         }
     };
 };

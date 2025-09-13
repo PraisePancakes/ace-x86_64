@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <iostream>
+#include <utility>
 #include <vector>
 
 #include "../traits/token_trait.hpp"
@@ -8,6 +9,7 @@
 #include "accast.hpp"
 #include "accprinter.hpp"
 #include "acctoken.hpp"
+#include "statics/ro_acctypes.hpp"
 #include "storage.hpp"
 
 #define DISCARD(f) (void)f
@@ -15,8 +17,7 @@ namespace acc {
 
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
-    std::vector<acc::ExprVariant> exprs;  // block will have this
-
+    std::vector<acc::StmtVariant> stmts;
     bool check_it(acc::GLOBAL_TOKENS type) noexcept {
         if (this->is_end()) {
             return false;
@@ -118,15 +119,33 @@ class [[nodiscard]] acc_parser
         return parse_comparison();
     };
 
-    // acc::StmtVariant parse_declaration() {
-    //     while (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
-            
-    //     };
-    // }
+    acc::StmtVariant parse_expression_statement() {
+        return new acc::node::ExpressionStmt{.expr = parse_expr()};
+    }
 
-    // acc::StmtVariant parse_stmt() {
-    //     return parse_declaration();
-    // };
+    acc::StmtVariant parse_declaration() {
+        if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
+            if (acc::globals::ACC_TYPE_SET.contains(this->peek_prev().word)) {
+                // have type
+                auto type = peek_prev();
+                auto ident = advance();
+                if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
+                    auto val = parse_expr();
+                    return new acc::node::DeclarationStmt{.type = type,
+                                                          .name = ident,
+                                                          .expr = val};
+                } else {
+                    throw std::runtime_error("missing '=' for declaration");
+                }
+            }
+        }
+        return parse_expression_statement();
+        // REMOVE LATER this is just to stop stupid  [-Werror=return-type]
+    }
+
+    acc::StmtVariant parse_stmt() {
+        return parse_declaration();
+    };
 
    public:
     acc_parser(const std::vector<acc::token>& toks)
@@ -134,16 +153,16 @@ class [[nodiscard]] acc_parser
 
           };
     void print_ast() {
-        acc::printer printer(exprs);
+        acc::printer printer(stmts);
         printer.print();
     };
 
-    std::vector<acc::ExprVariant> parse() {
+    std::vector<acc::StmtVariant> parse() {
         do {
-            exprs.push_back(parse_expr());
+            stmts.push_back(parse_stmt());
         } while (!this->is_end());
 
-        return exprs;
+        return stmts;
     };
     acc_parser(const acc_parser&) = delete;
     acc_parser& operator=(const acc_parser&) = delete;

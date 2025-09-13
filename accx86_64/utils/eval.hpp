@@ -82,8 +82,8 @@ class expr_eval {
     expr_eval() {};
 
     template <typename T>
-    T as(acc::ExprVariant expr) {
-        return std::get<T>(evaluate(expr));
+    T as(acc::StmtVariant expr) {
+        return std::get<T>(evaluate(std::get<acc::node::ExpressionStmt*>(expr)->expr));
     }
     ~expr_eval() {};
 };
