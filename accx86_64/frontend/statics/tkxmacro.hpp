@@ -24,6 +24,7 @@ namespace acc {
     TOKEN_DEF(TK_SPACE, ' ')            \
     TOKEN_DEF(TK_LT, '<')               \
     TOKEN_DEF(TK_GT, '>')               \
+    TOKEN_DEF(TK_SEMI, ';')             \
     TOKEN_DEF(TK_NEWLINE, '\n')         \
     TOKEN_DEF(TK_LT_EQ, 0xF9u)          \
     TOKEN_DEF(TK_GT_EQ, 0xF8u)          \
@@ -43,4 +44,4 @@ enum GLOBAL_TOKENS : unsigned char {
     TOKEN_DEFs
 };
 #undef TOKEN_DEF
-}  // namespace acc::globals
+}  // namespace acc

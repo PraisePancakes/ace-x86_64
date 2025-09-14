@@ -2,6 +2,8 @@
 #include <any>
 #include <iostream>
 #include <memory>
+#include <optional>
+#include <unordered_set>
 #include <variant>
 
 #include "acctoken.hpp"
@@ -77,7 +79,7 @@ struct ComparisonExpr {
 struct DeclarationStmt {
     acc::token type;
     acc::token name;
-    ExprVariant expr;  // resulant literal must match type
+    std::optional<ExprVariant> expr;  // resulant literal must match type
 };
 
 struct IfStmt {

@@ -9,7 +9,7 @@
 namespace acc::utest {
 int TEST_LEXER() {
     std::cout << "\n\n===== [ LEXER TEST ] =====\n\n";
-    acc::lexer lexe("(123 + (324 * 1)) < 1095",
+    acc::lexer lexe("(123 + (324 * 1)) < 1095;",
                     acc::globals::ACC_DELIMS,
                     acc::globals::ACC_PAIR_DELIMS,
                     acc::globals::ACC_TYPE_SET);

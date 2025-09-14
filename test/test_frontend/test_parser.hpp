@@ -12,7 +12,7 @@ int TEST_PARSER() {
 
     {
         std::cout << "\n{ ==EXPRESSIONS== }\n";
-        acc::lexer lexe("(123 + (324 * 1)) < 1095",
+        acc::lexer lexe("(123 + (324 * 1)) < 1095;",
                         acc::globals::ACC_DELIMS,
                         acc::globals::ACC_PAIR_DELIMS,
                         acc::globals::ACC_TYPE_SET);
@@ -24,7 +24,12 @@ int TEST_PARSER() {
 
     {
         std::cout << "\n{ ==DECLARATIONS== }\n";
-        acc::lexer lexe("int x = 3;",
+        acc::lexer lexe(R"(
+            int x;
+            (123 + (324 * 1)) < 1095;
+            
+            
+            )",
                         acc::globals::ACC_DELIMS,
                         acc::globals::ACC_PAIR_DELIMS,
                         acc::globals::ACC_TYPE_SET);

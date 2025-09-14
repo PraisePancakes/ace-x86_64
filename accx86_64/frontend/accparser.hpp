@@ -7,6 +7,7 @@
 #include "../traits/token_trait.hpp"
 #include "../utils/visitor.hpp"
 #include "accast.hpp"
+#include "accparserror.hpp"
 #include "accprinter.hpp"
 #include "acctoken.hpp"
 #include "statics/ro_acctypes.hpp"
@@ -57,11 +58,11 @@ class [[nodiscard]] acc_parser
 
         if (match_it(TK_PAREN_L)) {
             auto expr = parse_expr();
-            if (!match_it(TK_PAREN_R)) throw std::runtime_error("MISSING PAREN");
+            if (!match_it(TK_PAREN_R)) throw acc::parser_error(this->peek_prev(), "missing ')'");
             return new acc::node::GroupingExpr{.expr = expr};
         }
 
-        throw std::runtime_error("PARSERROR");
+        throw acc::parser_error(this->peek_prev(), "unknown primary literal");
     }
 
     acc::ExprVariant parse_unary() {
@@ -122,29 +123,46 @@ class [[nodiscard]] acc_parser
     acc::StmtVariant parse_expression_statement() {
         return new acc::node::ExpressionStmt{.expr = parse_expr()};
     }
-
+    // int a : const = 2;
     acc::StmtVariant parse_declaration() {
         if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
             if (acc::globals::ACC_TYPE_SET.contains(this->peek_prev().word)) {
                 // have type
                 auto type = peek_prev();
                 auto ident = advance();
+
                 if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
                     auto val = parse_expr();
                     return new acc::node::DeclarationStmt{.type = type,
                                                           .name = ident,
                                                           .expr = val};
-                } else {
-                    throw std::runtime_error("missing '=' for declaration");
                 }
+                return new acc::node::DeclarationStmt{.type = type,
+                                                      .name = ident,
+                                                      .expr = std::nullopt};
             }
         }
         return parse_expression_statement();
-        // REMOVE LATER this is just to stop stupid  [-Werror=return-type]
     }
 
     acc::StmtVariant parse_stmt() {
-        return parse_declaration();
+        auto node = parse_declaration();
+        if (!match_it(acc::GLOBAL_TOKENS::TK_SEMI)) {
+            throw acc::parser_error(this->peek_prev(), "missing ';' in statement");
+        }
+        return node;
+    };
+
+    static void report_error(const acc::parser_error& error) noexcept {
+        std::stringstream msg;
+        msg << error.what
+            << " at ("
+            << error.token.location.first
+            << " , "
+            << error.token.location.second
+            << ")\n";
+
+        acc::logger::instance().send(acc::logger::LEVEL::ERROR, msg.str());
     };
 
    public:
@@ -158,9 +176,14 @@ class [[nodiscard]] acc_parser
     };
 
     std::vector<acc::StmtVariant> parse() {
-        do {
-            stmts.push_back(parse_stmt());
-        } while (!this->is_end());
+        try {
+            do {
+                stmts.push_back(parse_stmt());
+            } while (!this->is_end());
+        } catch (acc::parser_error const& err) {
+            report_error(err);
+            // panic recover
+        };
 
         return stmts;
     };
