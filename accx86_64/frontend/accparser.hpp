@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <iostream>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -19,12 +20,15 @@ namespace acc {
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
     std::vector<acc::StmtVariant> stmts;
+    std::unordered_map<std::string, const acc::node::DeclarationStmt*> m_symbols;
+
     bool check_it(acc::GLOBAL_TOKENS type) noexcept {
         if (this->is_end()) {
             return false;
         }
         return this->peek().type == type;
     }
+
     bool match_it(acc::GLOBAL_TOKENS type) noexcept {
         if (check_it(type)) {
             DISCARD(this->advance());
@@ -123,6 +127,14 @@ class [[nodiscard]] acc_parser
     acc::StmtVariant parse_expression_statement() {
         return new acc::node::ExpressionStmt{.expr = parse_expr()};
     }
+
+    static std::byte mask_const() noexcept {
+        return std::byte{1 << 0};
+    };
+
+    static std::byte mask_volatile() noexcept {
+        return std::byte{1 << 1};
+    }
     // int a : const = 2;
     acc::StmtVariant parse_declaration() {
         if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
@@ -130,16 +142,24 @@ class [[nodiscard]] acc_parser
                 // have type
                 auto type = peek_prev();
                 auto ident = advance();
+                std::byte cv_sig{0};
+                if (match_it(acc::GLOBAL_TOKENS::TK_COLON)) {
+                    if (this->peek().word == "const") {
+                        (cv_sig |= mask_const());
+                    }
 
-                if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
-                    auto val = parse_expr();
-                    return new acc::node::DeclarationStmt{.type = type,
-                                                          .name = ident,
-                                                          .expr = val};
+                    if (this->peek().word == "volatile") {
+                        (cv_sig |= mask_volatile());
+                    }
                 }
-                return new acc::node::DeclarationStmt{.type = type,
-                                                      .name = ident,
-                                                      .expr = std::nullopt};
+                acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = type,
+                                                                                  .name = ident,
+                                                                                  .cv_qual_flags = cv_sig,
+                                                                                  .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? std::optional<acc::ExprVariant>(parse_expr())
+                                                                                                                                   : std::optional<acc::ExprVariant>(std::nullopt))};
+
+                m_symbols[decl->name.word] = decl;
+                return decl;
             }
         }
         return parse_expression_statement();
