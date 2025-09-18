@@ -87,6 +87,13 @@ struct DeclarationStmt {
     static std::byte mask_volatile() noexcept {
         return std::byte{1 << 1};
     }
+
+    static bool has_const(std::byte signature) noexcept {
+        return ((signature & acc::node::DeclarationStmt::mask_const()) == acc::node::DeclarationStmt::mask_const());
+    }
+    static bool has_volatile(std::byte signature) noexcept {
+        return ((signature & acc::node::DeclarationStmt::mask_volatile()) == acc::node::DeclarationStmt::mask_volatile());
+        };
     std::optional<ExprVariant> expr;  // resulant literal must match type
 };
 

@@ -128,45 +128,44 @@ class [[nodiscard]] acc_parser
         return new acc::node::ExpressionStmt{.expr = parse_expr()};
     }
 
+    acc::StmtVariant parse_variable() {
+        if (acc::globals::ACC_TYPE_SET.contains(this->peek_prev().word)) {
+            // have type
+            auto type = peek_prev();
+            auto ident = advance();
+            std::byte cv_sig{0};
+            if (match_it(acc::GLOBAL_TOKENS::TK_COLON)) {
+                while (this->peek().word == "const" || this->peek().word == "volatile") {
+                    if (this->peek().word == "const") {
+                        if (acc::node::DeclarationStmt::has_const(cv_sig)) {
+                            throw acc::parser_error(this->peek_prev(), "duplicate const qualifier");
+                        }
+                        (cv_sig |= acc::node::DeclarationStmt::mask_const());
+                    }
+                    if (this->peek().word == "volatile") {
+                        if (acc::node::DeclarationStmt::has_volatile(cv_sig)) {
+                            throw acc::parser_error(this->peek_prev(), "duplicate volatile qualifier");
+                        }
+                        (cv_sig |= acc::node::DeclarationStmt::mask_volatile());
+                    }
+                    DISCARD(advance());
+                }
+            }
+
+            acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = type,
+                                                                              .name = ident,
+                                                                              .cv_qual_flags = cv_sig,
+                                                                              .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? std::optional<acc::ExprVariant>(parse_expr())
+                                                                                                                               : std::optional<acc::ExprVariant>(std::nullopt))};
+            m_symbols[decl->name.word] = decl;
+            return decl;
+        }
+        std::unreachable();
+    }
     // int a : const = 2;
     acc::StmtVariant parse_declaration() {
         if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
-            if (acc::globals::ACC_TYPE_SET.contains(this->peek_prev().word)) {
-                // have type
-
-                auto type = peek_prev();
-                auto ident = advance();
-
-                std::byte cv_sig{0};
-                if (match_it(acc::GLOBAL_TOKENS::TK_COLON)) {
-                    while (this->peek().word == "const" || this->peek().word == "volatile") {
-                        if (this->peek().word == "const") {
-                            if ((cv_sig & acc::node::DeclarationStmt::mask_const()) == acc::node::DeclarationStmt::mask_const()) {
-                                throw acc::parser_error(this->peek_prev(), "duplicate const qualifier");
-                            }
-                            (cv_sig |= acc::node::DeclarationStmt::mask_const());
-                        }
-
-                        if (this->peek().word == "volatile") {
-                            if ((cv_sig & acc::node::DeclarationStmt::mask_volatile()) == acc::node::DeclarationStmt::mask_volatile()) {
-                                throw acc::parser_error(this->peek_prev(), "duplicate volatile qualifier");
-                            }
-                            (cv_sig |= acc::node::DeclarationStmt::mask_volatile());
-                        }
-
-                        DISCARD(advance());
-                    }
-                }
-
-                acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = type,
-                                                                                  .name = ident,
-                                                                                  .cv_qual_flags = cv_sig,
-                                                                                  .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? std::optional<acc::ExprVariant>(parse_expr())
-                                                                                                                                   : std::optional<acc::ExprVariant>(std::nullopt))};
-
-                m_symbols[decl->name.word] = decl;
-                return decl;
-            }
+            return parse_variable();
         }
         return parse_expression_statement();
     }
