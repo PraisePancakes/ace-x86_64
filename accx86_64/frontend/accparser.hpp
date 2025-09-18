@@ -128,30 +128,36 @@ class [[nodiscard]] acc_parser
         return new acc::node::ExpressionStmt{.expr = parse_expr()};
     }
 
-    static std::byte mask_const() noexcept {
-        return std::byte{1 << 0};
-    };
-
-    static std::byte mask_volatile() noexcept {
-        return std::byte{1 << 1};
-    }
     // int a : const = 2;
     acc::StmtVariant parse_declaration() {
         if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
             if (acc::globals::ACC_TYPE_SET.contains(this->peek_prev().word)) {
                 // have type
+
                 auto type = peek_prev();
                 auto ident = advance();
+
                 std::byte cv_sig{0};
                 if (match_it(acc::GLOBAL_TOKENS::TK_COLON)) {
-                    if (this->peek().word == "const") {
-                        (cv_sig |= mask_const());
-                    }
+                    while (this->peek().word == "const" || this->peek().word == "volatile") {
+                        if (this->peek().word == "const") {
+                            if ((cv_sig & acc::node::DeclarationStmt::mask_const()) == acc::node::DeclarationStmt::mask_const()) {
+                                throw acc::parser_error(this->peek_prev(), "duplicate const qualifier");
+                            }
+                            (cv_sig |= acc::node::DeclarationStmt::mask_const());
+                        }
 
-                    if (this->peek().word == "volatile") {
-                        (cv_sig |= mask_volatile());
+                        if (this->peek().word == "volatile") {
+                            if ((cv_sig & acc::node::DeclarationStmt::mask_volatile()) == acc::node::DeclarationStmt::mask_volatile()) {
+                                throw acc::parser_error(this->peek_prev(), "duplicate volatile qualifier");
+                            }
+                            (cv_sig |= acc::node::DeclarationStmt::mask_volatile());
+                        }
+
+                        DISCARD(advance());
                     }
                 }
+
                 acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = type,
                                                                                   .name = ident,
                                                                                   .cv_qual_flags = cv_sig,

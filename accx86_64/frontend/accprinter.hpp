@@ -78,6 +78,10 @@ class printer {
                                      << acc::ansi::reset << std::endl;
                            std::cout << acc::ansi::foreground_yellow << "TYPE : " << acc::ansi::reset << std::endl;
                            declstmt->type.print_token();
+                           std::cout << acc::ansi::foreground_yellow << "QUALIFIERS : " << acc::ansi::reset << std::endl;
+                           bool has_const = ((declstmt->cv_qual_flags & acc::node::DeclarationStmt::mask_const()) == acc::node::DeclarationStmt::mask_const());
+                           bool has_volatile = (((declstmt->cv_qual_flags & acc::node::DeclarationStmt::mask_volatile()) == acc::node::DeclarationStmt::mask_volatile()));
+                           std::cout << "[ " << (has_const ? "const" : " ") << " " << (has_volatile ? "volatile" : " ") << " ]" << std::endl;
                            std::cout << acc::ansi::foreground_yellow << "ID : " << acc::ansi::reset << std::endl;
                            declstmt->name.print_token();
                            if (declstmt->expr.has_value()) {

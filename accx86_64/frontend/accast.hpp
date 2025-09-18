@@ -79,7 +79,14 @@ struct ComparisonExpr {
 struct DeclarationStmt {
     acc::token type;
     acc::token name;
-    std::byte cv_qual_flags;          // 0000 0000 -lsb = const : lsb << 1 = volatile
+    std::byte cv_qual_flags;  // 0000 0000 -lsb = const : lsb << 1 = volatile
+    static std::byte mask_const() noexcept {
+        return std::byte{1 << 0};
+    };
+
+    static std::byte mask_volatile() noexcept {
+        return std::byte{1 << 1};
+    }
     std::optional<ExprVariant> expr;  // resulant literal must match type
 };
 
