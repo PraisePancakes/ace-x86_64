@@ -180,13 +180,12 @@ class [[nodiscard]] acc_parser
                                                                               .name = ident,
                                                                               .cv_qual_flags = cv_sig,
                                                                               .history = {},
-                                                                              .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? (expr = parse_expr(), std::optional<acc::ExprVariant>(expr))
+                                                                              .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? (expr = parse_expr(),
+                                                                                                                                  /* DEBUG ONLY */ m_symbols[decl->name.word]->history.push_back(expr),
+                                                                                                                                  std::optional<acc::ExprVariant>(expr))
                                                                                                                                : std::optional<acc::ExprVariant>(std::nullopt))};
 
             m_symbols[decl->name.word] = decl;
-
-            /* DEBUG ONLY */
-            m_symbols[decl->name.word]->history.push_back(expr);
 
             return decl;
         }
