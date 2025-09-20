@@ -142,6 +142,7 @@ class [[nodiscard]] acc_parser
                 return expr;
             }
         }
+
         return parse_comparison();
     }
 
@@ -175,17 +176,21 @@ class [[nodiscard]] acc_parser
                     }
                 }
             }
-            acc::ExprVariant expr;
+
+            std::optional<acc::ExprVariant> expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? std::optional<acc::ExprVariant>(parse_expr())
+                                                                                            : std::optional<acc::ExprVariant>(std::nullopt));
+
             acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = type,
                                                                               .name = ident,
                                                                               .cv_qual_flags = cv_sig,
                                                                               .history = {},
-                                                                              .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? (expr = parse_expr(),
-                                                                                                                                  /* DEBUG ONLY */ m_symbols[decl->name.word]->history.push_back(expr),
-                                                                                                                                  std::optional<acc::ExprVariant>(expr))
-                                                                                                                               : std::optional<acc::ExprVariant>(std::nullopt))};
+                                                                              .expr = expr};
 
             m_symbols[decl->name.word] = decl;
+            /* DEBUG ONLY */
+            if (expr.has_value()) {
+                m_symbols[decl->name.word]->history.push_back(expr.value());
+            }
 
             return decl;
         }
