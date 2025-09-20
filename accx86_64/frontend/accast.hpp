@@ -80,6 +80,11 @@ struct DeclarationStmt {
     acc::token type;
     acc::token name;
     std::byte cv_qual_flags;  // 0000 0000 -lsb = const : lsb << 1 = volatile
+
+    // DEBUG ONLY
+    std::vector<ExprVariant> history;
+    //
+
     static std::byte mask_const() noexcept {
         return std::byte{1 << 0};
     };
@@ -93,7 +98,7 @@ struct DeclarationStmt {
     }
     static bool has_volatile(std::byte signature) noexcept {
         return ((signature & acc::node::DeclarationStmt::mask_volatile()) == acc::node::DeclarationStmt::mask_volatile());
-        };
+    };
     std::optional<ExprVariant> expr;  // resulant literal must match type
 };
 

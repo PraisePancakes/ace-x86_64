@@ -84,8 +84,16 @@ class printer {
                            std::cout << "[ " << (has_const ? "const" : " ") << " " << (has_volatile ? "volatile" : " ") << " ]" << std::endl;
                            std::cout << acc::ansi::foreground_yellow << "ID : " << acc::ansi::reset << std::endl;
                            declstmt->name.print_token();
+                           std::cout << acc::ansi::foreground_yellow << "HISTORY : " << acc::ansi::reset << std::endl;
+                           std::cout << acc::ansi::foreground_blue << "[ ";
+                           for (const auto& v : declstmt->history) {
+                               std::cout << acc::ansi::foreground_blue << " { " << acc::ansi::reset << std::endl;
+                               print_expression(v);
+                               std::cout << acc::ansi::foreground_blue << " }, " << acc::ansi::reset << std::endl;
+                           }
+                           std::cout << acc::ansi::foreground_blue << " ]" << acc::ansi::reset << std::endl;
                            if (declstmt->expr.has_value()) {
-                               std::cout << acc::ansi::foreground_yellow << "XPR : " << acc::ansi::reset << std::endl;
+                               std::cout << acc::ansi::foreground_yellow << "CURRENT VALUE : " << acc::ansi::reset << std::endl;
                                this->print_expression(declstmt->expr.value());
                            }
                        },

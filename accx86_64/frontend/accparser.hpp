@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "../traits/acc_matchable.hpp"
 #include "../traits/token_trait.hpp"
 #include "../utils/visitor.hpp"
 #include "accast.hpp"
@@ -17,15 +18,12 @@
 #define DISCARD(f) (void)f
 namespace acc {
 
-template <typename T>
-concept acc_matchable = std::is_same_v<T, acc::GLOBAL_TOKENS> || std::is_same_v<T, std::string> || std::is_same_v<std::decay_t<T>, char*>;
-
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
     std::vector<acc::StmtVariant> stmts;
-    std::unordered_map<std::string, const acc::node::DeclarationStmt*> m_symbols;
+    std::unordered_map<std::string, acc::node::DeclarationStmt*> m_symbols;
 
-    template <acc_matchable T>
+    template <traits::acc_matchable T>
     bool check_it(const T& val) const noexcept {
         if (this->is_end()) {
             return false;
@@ -37,7 +35,7 @@ class [[nodiscard]] acc_parser
         }
     }
 
-    template <acc_matchable T>
+    template <traits::acc_matchable T>
     bool match_it(const T& val) noexcept {
         if (check_it(val)) {
             DISCARD(this->advance());
@@ -46,12 +44,12 @@ class [[nodiscard]] acc_parser
         return false;
     }
 
-    template <acc_matchable... Ts>
+    template <traits::acc_matchable... Ts>
     bool match_any(Ts&&... types) {
         return (match_it(types) || ...);
     }
 
-    template <acc_matchable... Ts>
+    template <traits::acc_matchable... Ts>
     bool match_seq(Ts&&... types) {
         auto old = this->m_end;
         if ((!match_it(types) && ...)) {
@@ -130,8 +128,25 @@ class [[nodiscard]] acc_parser
         return lhs;
     };
 
-    acc::ExprVariant parse_expr() {
+    acc::ExprVariant parse_assignment() {
+        while (match_it(acc::GLOBAL_TOKENS::TK_IDENTIFIER)) {
+            const auto id_tok = this->peek_prev();
+            const std::string id = this->peek_prev().word;
+            if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
+                if (acc::node::DeclarationStmt::has_const(this->m_symbols[id]->cv_qual_flags)) {
+                    throw parser_error(id_tok, "assignment to const-qualified lvalue");
+                }
+                auto expr = parse_expr();
+                this->m_symbols[id]->expr = expr;
+                this->m_symbols[id]->history.push_back(expr);
+                return expr;
+            }
+        }
         return parse_comparison();
+    }
+
+    acc::ExprVariant parse_expr() {
+        return parse_assignment();
     };
 
     acc::StmtVariant parse_expression_statement() {
@@ -160,13 +175,19 @@ class [[nodiscard]] acc_parser
                     }
                 }
             }
-
+            acc::ExprVariant expr;
             acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = type,
                                                                               .name = ident,
                                                                               .cv_qual_flags = cv_sig,
-                                                                              .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? std::optional<acc::ExprVariant>(parse_expr())
+                                                                              .history = {},
+                                                                              .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? (expr = parse_expr(), std::optional<acc::ExprVariant>(expr))
                                                                                                                                : std::optional<acc::ExprVariant>(std::nullopt))};
+
             m_symbols[decl->name.word] = decl;
+
+            /* DEBUG ONLY */
+            m_symbols[decl->name.word]->history.push_back(expr);
+
             return decl;
         }
         std::unreachable();

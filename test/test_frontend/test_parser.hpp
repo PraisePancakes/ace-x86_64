@@ -25,8 +25,8 @@ int TEST_PARSER() {
     {
         std::cout << "\n{ ==DECLARATIONS== }\n";
         acc::lexer lexe(R"(
-            int x : volatile const;
-            (123 + (324 * 1)) < 1095;
+            int x : volatile const = 4;
+            x = 3;
             
             
             )",
