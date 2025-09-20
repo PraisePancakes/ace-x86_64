@@ -17,32 +17,42 @@
 #define DISCARD(f) (void)f
 namespace acc {
 
+template <typename T>
+concept acc_matchable = std::is_same_v<T, acc::GLOBAL_TOKENS> || std::is_same_v<T, std::string> || std::is_same_v<std::decay_t<T>, char*>;
+
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
     std::vector<acc::StmtVariant> stmts;
     std::unordered_map<std::string, const acc::node::DeclarationStmt*> m_symbols;
 
-    bool check_it(acc::GLOBAL_TOKENS type) noexcept {
+    template <acc_matchable T>
+    bool check_it(const T& val) const noexcept {
         if (this->is_end()) {
             return false;
         }
-        return this->peek().type == type;
+        if constexpr (std::is_same_v<T, acc::GLOBAL_TOKENS>) {
+            return this->peek().type == val;
+        } else {
+            return this->peek().word == val;
+        }
     }
 
-    bool match_it(acc::GLOBAL_TOKENS type) noexcept {
-        if (check_it(type)) {
+    template <acc_matchable T>
+    bool match_it(const T& val) noexcept {
+        if (check_it(val)) {
             DISCARD(this->advance());
             return true;
         }
-
         return false;
     }
 
-    bool match_any(traits::acc_token_t auto&&... types) {
+    template <acc_matchable... Ts>
+    bool match_any(Ts&&... types) {
         return (match_it(types) || ...);
     }
 
-    bool match_seq(traits::acc_token_t auto&&... types) {
+    template <acc_matchable... Ts>
+    bool match_seq(Ts&&... types) {
         auto old = this->m_end;
         if ((!match_it(types) && ...)) {
             this->m_end = old;
@@ -135,20 +145,19 @@ class [[nodiscard]] acc_parser
             auto ident = advance();
             std::byte cv_sig{0};
             if (match_it(acc::GLOBAL_TOKENS::TK_COLON)) {
-                while (this->peek().word == "const" || this->peek().word == "volatile") {
-                    if (this->peek().word == "const") {
+                while (match_it("const") || match_it("volatile")) {
+                    if (this->peek_prev().word == "const") {
                         if (acc::node::DeclarationStmt::has_const(cv_sig)) {
                             throw acc::parser_error(this->peek_prev(), "duplicate const qualifier");
                         }
                         (cv_sig |= acc::node::DeclarationStmt::mask_const());
                     }
-                    if (this->peek().word == "volatile") {
+                    if (this->peek_prev().word == "volatile") {
                         if (acc::node::DeclarationStmt::has_volatile(cv_sig)) {
                             throw acc::parser_error(this->peek_prev(), "duplicate volatile qualifier");
                         }
                         (cv_sig |= acc::node::DeclarationStmt::mask_volatile());
                     }
-                    DISCARD(advance());
                 }
             }
 
