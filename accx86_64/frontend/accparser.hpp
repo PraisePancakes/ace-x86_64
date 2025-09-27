@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <iostream>
+#include <stack>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -9,6 +10,7 @@
 #include "../traits/token_trait.hpp"
 #include "../utils/visitor.hpp"
 #include "accast.hpp"
+#include "accenv.hpp"
 #include "accparserror.hpp"
 #include "accprinter.hpp"
 #include "acctoken.hpp"
@@ -21,7 +23,9 @@ namespace acc {
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
     std::vector<acc::StmtVariant> stmts;
+
     std::unordered_map<std::string, acc::node::DeclarationStmt*> m_symbols;
+    acc::environment<std::string, acc::node::DeclarationStmt*>* m_env;
 
     template <traits::acc_matchable T>
     bool check_it(const T& val) const noexcept {
@@ -133,12 +137,14 @@ class [[nodiscard]] acc_parser
             const auto id_tok = this->peek_prev();
             const std::string id = this->peek_prev().word;
             if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
-                if (acc::node::DeclarationStmt::has_const(this->m_symbols[id]->cv_qual_flags)) {
+                if (acc::node::DeclarationStmt::has_const(this->m_env->get(id)->cv_qual_flags)) {
                     throw parser_error(id_tok, "assignment to const-qualified lvalue");
                 }
                 auto expr = parse_expr();
-                this->m_symbols[id]->expr = expr;
-                this->m_symbols[id]->history.push_back(expr);
+
+                m_env->get(id)->expr = expr;
+                m_env->get(id)->history.push_back(expr);
+
                 return expr;
             }
         }
@@ -155,51 +161,63 @@ class [[nodiscard]] acc_parser
     }
 
     acc::StmtVariant parse_variable() {
-        if (acc::globals::ACC_TYPE_SET.contains(this->peek_prev().word)) {
-            // have type
-            auto type = peek_prev();
-            auto ident = advance();
-            std::byte cv_sig{0};
-            if (match_it(acc::GLOBAL_TOKENS::TK_COLON)) {
-                while (match_it("const") || match_it("volatile")) {
-                    if (this->peek_prev().word == "const") {
-                        if (acc::node::DeclarationStmt::has_const(cv_sig)) {
-                            throw acc::parser_error(this->peek_prev(), "duplicate const qualifier");
-                        }
-                        (cv_sig |= acc::node::DeclarationStmt::mask_const());
+        // have type
+        auto type = peek_prev();
+        auto ident = advance();
+        std::byte cv_sig{0};
+        if (match_it(acc::GLOBAL_TOKENS::TK_COLON)) {
+            while (match_it("const") || match_it("volatile")) {
+                if (this->peek_prev().word == "const") {
+                    if (acc::node::DeclarationStmt::has_const(cv_sig)) {
+                        throw acc::parser_error(this->peek_prev(), "duplicate const qualifier");
                     }
-                    if (this->peek_prev().word == "volatile") {
-                        if (acc::node::DeclarationStmt::has_volatile(cv_sig)) {
-                            throw acc::parser_error(this->peek_prev(), "duplicate volatile qualifier");
-                        }
-                        (cv_sig |= acc::node::DeclarationStmt::mask_volatile());
+                    (cv_sig |= acc::node::DeclarationStmt::mask_const());
+                }
+                if (this->peek_prev().word == "volatile") {
+                    if (acc::node::DeclarationStmt::has_volatile(cv_sig)) {
+                        throw acc::parser_error(this->peek_prev(), "duplicate volatile qualifier");
                     }
+                    (cv_sig |= acc::node::DeclarationStmt::mask_volatile());
                 }
             }
+        }
 
-            std::optional<acc::ExprVariant> expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? std::optional<acc::ExprVariant>(parse_expr())
-                                                                                            : std::optional<acc::ExprVariant>(std::nullopt));
+        auto expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS) ? std::optional<acc::ExprVariant>(parse_expr())
+                                                             : std::optional<acc::ExprVariant>(std::nullopt));
+        auto* decl = new acc::node::DeclarationStmt{.type = type,
+                                                    .name = ident,
+                                                    .cv_qual_flags = cv_sig,
+                                                    .history = {},
+                                                    .expr = expr};
 
-            acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = type,
-                                                                              .name = ident,
-                                                                              .cv_qual_flags = cv_sig,
-                                                                              .history = {},
-                                                                              .expr = expr};
+        m_env->set(decl->name.word, decl);
 
-            m_symbols[decl->name.word] = decl;
-            /* DEBUG ONLY */
-            if (expr.has_value()) {
-                m_symbols[decl->name.word]->history.push_back(expr.value());
+        /* DEBUG ONLY */
+        if (expr.has_value()) {
+            if (auto* ptr = m_env->resolve(decl->name.word)) {
+                std::cout << "HGEREREREEREREARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR";
+                ptr->get(decl->name.word)->history.push_back(expr.value());
             }
+        }
+        return decl;
+    }
 
-            return decl;
+    acc::StmtVariant parse_block() {
+        if (match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
         }
         std::unreachable();
-    }
+    };
+
     // int a : const = 2;
     acc::StmtVariant parse_declaration() {
         if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
-            return parse_variable();
+            // check if the reserved word is a type
+            if (acc::globals::ACC_TYPE_SET.contains(this->peek_prev().word)) {
+                return parse_variable();
+            }
+        }
+        if (match_it(acc::GLOBAL_TOKENS::TK_CURL_L)) {
+            return parse_block();
         }
         return parse_expression_statement();
     }
@@ -235,6 +253,7 @@ class [[nodiscard]] acc_parser
     };
 
     std::vector<acc::StmtVariant> parse() {
+        m_env = new acc::environment<std::string, acc::node::DeclarationStmt*>();
         try {
             do {
                 stmts.push_back(parse_stmt());

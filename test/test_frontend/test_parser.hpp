@@ -26,7 +26,9 @@ int TEST_PARSER() {
         std::cout << "\n{ ==DECLARATIONS== }\n";
         acc::lexer lexe(R"(
             int x = 3;
+            x = 4;
             x = 5;
+            x = 7;
             
             )",
                         acc::globals::ACC_DELIMS,
