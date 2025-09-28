@@ -22,10 +22,7 @@ namespace acc {
 
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
-    std::vector<acc::StmtVariant> stmts;
-
-    std::unordered_map<std::string, acc::node::DeclarationStmt*> m_symbols;
-    acc::environment<std::string, acc::node::DeclarationStmt*>* m_env;
+    acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* m_env;
 
     template <traits::acc_matchable T>
     bool check_it(const T& val) const noexcept {
@@ -136,17 +133,21 @@ class [[nodiscard]] acc_parser
         while (match_it(acc::GLOBAL_TOKENS::TK_IDENTIFIER)) {
             const auto id_tok = this->peek_prev();
             const std::string id = this->peek_prev().word;
-            if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
-                if (acc::node::DeclarationStmt::has_const(this->m_env->get(id)->cv_qual_flags)) {
-                    throw parser_error(id_tok, "assignment to const-qualified lvalue");
+            try {
+                if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
+                    if (acc::node::DeclarationStmt::has_const(this->m_env->get(id)->cv_qual_flags)) {
+                        throw parser_error(id_tok, "assignment to const-qualified lvalue");
+                    }
+                    auto expr = parse_expr();
+
+                    m_env->get(id)->expr = expr;
+                    m_env->get(id)->history.push_back(expr);
+
+                    return expr;
                 }
-                auto expr = parse_expr();
-
-                m_env->get(id)->expr = expr;
-                m_env->get(id)->history.push_back(expr);
-
-                return expr;
-            }
+            } catch (std::exception& e) {
+                throw acc::parser_error(id_tok, " unresolved symbol ");
+            };
         }
 
         return parse_comparison();
@@ -195,7 +196,6 @@ class [[nodiscard]] acc_parser
         /* DEBUG ONLY */
         if (expr.has_value()) {
             if (auto* ptr = m_env->resolve(decl->name.word)) {
-                std::cout << "HGEREREREEREREARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR";
                 ptr->get(decl->name.word)->history.push_back(expr.value());
             }
         }
@@ -203,9 +203,13 @@ class [[nodiscard]] acc_parser
     }
 
     acc::StmtVariant parse_block() {
-        if (match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
+        acc::node::BlockStmt* block = new acc::node::BlockStmt{.stmts = parse()};
+
+        if (!match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
+            throw acc::parser_error(this->peek_prev(), "open block without closing '}'");
         }
-        std::unreachable();
+
+        return block;
     };
 
     // int a : const = 2;
@@ -233,6 +237,7 @@ class [[nodiscard]] acc_parser
     static void report_error(const acc::parser_error& error) noexcept {
         std::stringstream msg;
         msg << error.what
+            << "'" << error.token.word << "'"
             << " at ("
             << error.token.location.first
             << " , "
@@ -244,26 +249,29 @@ class [[nodiscard]] acc_parser
 
    public:
     acc_parser(const std::vector<acc::token>& toks)
-        : acc::fsm_storage<std::vector<acc::token>>(toks) {
+        : acc::fsm_storage<std::vector<acc::token>>(toks), m_env{nullptr} {
 
           };
     void print_ast() {
-        acc::printer printer(stmts);
+        acc::printer printer(m_env->get_root()->get_items());
         printer.print();
     };
 
     std::vector<acc::StmtVariant> parse() {
-        m_env = new acc::environment<std::string, acc::node::DeclarationStmt*>();
+        auto* new_env = new acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>();
+        new_env->set_parent(m_env);
+        m_env = new_env;
+
         try {
             do {
-                stmts.push_back(parse_stmt());
+                m_env->get_items().push_back(parse_stmt());
             } while (!this->is_end());
         } catch (acc::parser_error const& err) {
             report_error(err);
             // panic recover
         };
 
-        return stmts;
+        return m_env->get_items();
     };
     acc_parser(const acc_parser&) = delete;
     acc_parser& operator=(const acc_parser&) = delete;

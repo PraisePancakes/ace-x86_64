@@ -94,7 +94,9 @@ class printer {
                            std::cout << acc::ansi::foreground_blue << " ]" << acc::ansi::reset << std::endl;
                            if (declstmt->expr.has_value()) {
                                std::cout << acc::ansi::foreground_yellow << "CURRENT VALUE : " << acc::ansi::reset << std::endl;
+                               std::cout << acc::ansi::foreground_yellow << "{ " << acc::ansi::reset << std::endl;
                                this->print_expression(declstmt->expr.value());
+                               std::cout << acc::ansi::foreground_yellow << "} " << acc::ansi::reset << std::endl;
                            }
                        },
                        [this](const acc::node::ExpressionStmt* xprstmt) {

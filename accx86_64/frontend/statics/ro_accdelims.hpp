@@ -11,6 +11,8 @@ const static std::unordered_set<acc::GLOBAL_TOKENS> ACC_DELIMS{acc::GLOBAL_TOKEN
                                                                acc::GLOBAL_TOKENS::TK_BANG,
                                                                acc::GLOBAL_TOKENS::TK_PAREN_L,
                                                                acc::GLOBAL_TOKENS::TK_PAREN_R,
+                                                               acc::GLOBAL_TOKENS::TK_CURL_L,
+                                                               acc::GLOBAL_TOKENS::TK_CURL_R,
                                                                acc::GLOBAL_TOKENS::TK_BANG,
                                                                acc::GLOBAL_TOKENS::TK_SEMI,
                                                                acc::GLOBAL_TOKENS::TK_COLON,

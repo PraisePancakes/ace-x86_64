@@ -25,18 +25,22 @@ int TEST_PARSER() {
     {
         std::cout << "\n{ ==DECLARATIONS== }\n";
         acc::lexer lexe(R"(
-            int x = 3;
-            x = 4;
-            x = 5;
-            x = 7;
+            int x = 0;
+            {
+                x = 4;
+                x = 5;
+                x = 7;
+            };
             
             )",
                         acc::globals::ACC_DELIMS,
                         acc::globals::ACC_PAIR_DELIMS,
                         acc::globals::ACC_TYPE_SET);
         auto ts = lexe.lex();
+
         acc::acc_parser pr(ts);
         auto v = pr.parse();
+        
         pr.print_ast();
     }
 
