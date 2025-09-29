@@ -8,10 +8,10 @@
 
 namespace acc::utest {
 int TEST_PARSER() {
-    std::cout << "\n\n===== [ PARSER TEST ] =====\n\n";
+    std::cout << "\n===== [ PARSER TEST ] =====\n";
 
     {
-        std::cout << "\n{ ==EXPRESSIONS== }\n";
+        std::cout << "\n{ ==EXPRESSIONS== }\n\n";
         acc::lexer lexe("(123 + (324 * 1)) < 1095;",
                         acc::globals::ACC_DELIMS,
                         acc::globals::ACC_PAIR_DELIMS,
@@ -21,17 +21,14 @@ int TEST_PARSER() {
         auto v = pr.parse();
         pr.print_ast();
     }
-
+#if 1
     {
-        std::cout << "\n{ ==DECLARATIONS== }\n";
+        std::cout << "\n{ ==STATEMENTS== }\n\n";
         acc::lexer lexe(R"(
-            int x = 0;
-            {
-                x = 4;
-                x = 5;
-                x = 7;
-            };
-            
+           {
+            int x = 4;
+           };
+          
             )",
                         acc::globals::ACC_DELIMS,
                         acc::globals::ACC_PAIR_DELIMS,
@@ -40,10 +37,11 @@ int TEST_PARSER() {
 
         acc::acc_parser pr(ts);
         auto v = pr.parse();
-        
+
         pr.print_ast();
     }
-
+#endif
     return 0;
 };
+
 }  // namespace acc::utest

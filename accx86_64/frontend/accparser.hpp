@@ -228,6 +228,7 @@ class [[nodiscard]] acc_parser
 
     acc::StmtVariant parse_stmt() {
         auto node = parse_declaration();
+
         if (!match_it(acc::GLOBAL_TOKENS::TK_SEMI)) {
             throw acc::parser_error(this->peek_prev(), "missing ';' in statement");
         }
@@ -265,7 +266,7 @@ class [[nodiscard]] acc_parser
         try {
             do {
                 m_env->get_items().push_back(parse_stmt());
-            } while (!this->is_end());
+            } while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R));
         } catch (acc::parser_error const& err) {
             report_error(err);
             // panic recover
