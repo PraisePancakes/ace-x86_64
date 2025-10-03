@@ -35,6 +35,7 @@ class environment {
         }
         return curr;
     };
+   
 
     void set_parent(acc::environment<Key, Value, Item>* parent) {
         m_parent = parent;

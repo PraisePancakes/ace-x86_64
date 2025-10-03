@@ -190,7 +190,9 @@ class [[nodiscard]] acc_parser
                                                     .cv_qual_flags = cv_sig,
                                                     .history = {},
                                                     .expr = expr};
-
+        if (m_env->resolve(decl->name.word) == m_env) {
+            throw acc::parser_error(decl->name, "scope resolved an ambiguous identifier ");
+        }
         m_env->set(decl->name.word, decl);
 
         /* DEBUG ONLY */

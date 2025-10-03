@@ -25,9 +25,10 @@ int TEST_PARSER() {
     {
         std::cout << "\n{ ==STATEMENTS== }\n\n";
         acc::lexer lexe(R"(
-           {
-            int x = 4;
-           };
+            int x = 5;
+            {
+                int x = 4;
+            };
           
             )",
                         acc::globals::ACC_DELIMS,
