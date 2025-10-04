@@ -1,7 +1,6 @@
 #pragma once
 #include <array>
 #include <iostream>
-#include <stack>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -23,6 +22,19 @@ namespace acc {
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
     acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* m_env;
+    inline static const std::unordered_map<acc::GLOBAL_TOKENS, std::size_t> prec_map{
+        {acc::TK_COMMA, 0},
+        {acc::TK_EQUALS, 1},
+        {acc::TK_LT, 2},
+        {acc::TK_GT, 2},
+        {acc::TK_GT_EQ, 2},
+        {acc::TK_LT_EQ, 2},
+        {acc::TK_PLUS, 3},
+        {acc::TK_DASH, 3},
+        {acc::TK_SLASH, 4},
+        {acc::TK_STAR, 4},
+       
+        };
 
     template <traits::acc_matchable T>
     bool check_it(const T& val) const noexcept {
@@ -87,48 +99,6 @@ class [[nodiscard]] acc_parser
         return parse_primary();
     };
 
-    acc::ExprVariant parse_term() {
-        auto lhs = parse_unary();
-        while (match_any(acc::GLOBAL_TOKENS::TK_PLUS,
-                         acc::GLOBAL_TOKENS::TK_DASH)) {
-            auto op = this->peek_prev();
-            auto rhs = parse_expr();
-            return new acc::node::BinaryExpr{.lhs = lhs,
-                                             .rhs = rhs,
-                                             .op = op};
-        };
-        return lhs;
-    };
-    acc::ExprVariant parse_factor() {
-        auto lhs = parse_term();
-        while (match_any(acc::GLOBAL_TOKENS::TK_STAR,
-                         acc::GLOBAL_TOKENS::TK_SLASH)) {
-            auto op = this->peek_prev();
-            auto rhs = parse_expr();
-            return new acc::node::BinaryExpr{.lhs = lhs,
-                                             .rhs = rhs,
-                                             .op = op};
-        };
-        return lhs;
-    };
-
-    acc::ExprVariant parse_comparison() {
-        auto lhs = parse_factor();
-        while (match_any(acc::GLOBAL_TOKENS::TK_BANG_EQ,
-                         acc::GLOBAL_TOKENS::TK_LT,
-                         acc::GLOBAL_TOKENS::TK_GT,
-                         acc::GLOBAL_TOKENS::TK_LT_EQ,
-                         acc::GLOBAL_TOKENS::TK_GT_EQ,
-                         acc::GLOBAL_TOKENS::TK_STRICT_EQ)) {
-            auto op = this->peek_prev();
-            auto rhs = parse_expr();
-            return new acc::node::ComparisonExpr{.lhs = lhs,
-                                                 .rhs = rhs,
-                                                 .op = op};
-        }
-        return lhs;
-    };
-
     acc::ExprVariant parse_assignment() {
         while (match_it(acc::GLOBAL_TOKENS::TK_IDENTIFIER)) {
             const auto id_tok = this->peek_prev();
@@ -150,11 +120,46 @@ class [[nodiscard]] acc_parser
             };
         }
 
-        return parse_comparison();
+        return parse_unary();
     }
 
+    bool is_binary_op(acc::token tok) {
+        switch (tok.type) {
+            case TK_PLUS:
+            case TK_DASH:
+            case TK_SLASH:
+            case TK_STAR:
+            case TK_COMMA:
+            case TK_LT:
+            case TK_GT:
+            case TK_LT_EQ:
+            case TK_GT_EQ:
+            case TK_EQUALS:
+                return true;
+            default:
+                return false;
+        }
+    }
+ // 1  *  2 + 3
+    acc::ExprVariant parse_expr_prec(std::size_t min_prec) {
+        auto lhs_atom = parse_assignment();
+        while (true) {
+            auto op = peek();
+            if (!is_binary_op(op) || prec_map.at(op.type) < min_prec) {
+                break;
+            }
+
+            auto prec = prec_map.at(op.type);
+            auto next_min_prec = prec + 1;
+            DISCARD(advance());
+            auto rhs_atom = parse_expr_prec(next_min_prec);
+            lhs_atom = new acc::node::BinaryExpr{.lhs = lhs_atom, .rhs = rhs_atom, .op = op};
+        }
+        return lhs_atom;
+    };
+
     acc::ExprVariant parse_expr() {
-        return parse_assignment();
+        return parse_expr_prec(0);
     };
 
     acc::StmtVariant parse_expression_statement() {

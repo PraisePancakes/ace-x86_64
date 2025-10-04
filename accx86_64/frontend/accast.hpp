@@ -38,8 +38,7 @@ struct ExpressionStmt;
 using ExprVariant = std::variant<node::BinaryExpr*,
                                  node::UnaryExpr*,
                                  node::LiteralExpr*,
-                                 node::GroupingExpr*,
-                                 node::ComparisonExpr*>;
+                                 node::GroupingExpr*>;
 
 using StmtVariant = std::variant<node::IfStmt*,
                                  node::WhileStmt*,
@@ -70,12 +69,6 @@ struct UnaryExpr {
 
 struct GroupingExpr {
     ExprVariant expr;
-};
-
-struct ComparisonExpr {
-    ExprVariant lhs;
-    ExprVariant rhs;
-    acc::token op;
 };
 
 struct DeclarationStmt {

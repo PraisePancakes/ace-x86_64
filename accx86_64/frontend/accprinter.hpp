@@ -51,46 +51,37 @@ class printer {
         // non owning view of nodes
         m_depth++;
         print_depth(m_depth, '-');
-        std::visit(internal::visitor{[this](const acc::node::BinaryExpr* bxpr) {
-                                         print_green(" [ BINARY ] ");
-                                         print_depth(m_depth, ' ');
-                                         std::cout << "|";
-                                         print_expression(bxpr->lhs);
-                                         print_depth(m_depth, ' ');
-                                         print_red(bxpr->op.word);
-                                         print_depth(m_depth, ' ');
-                                         std::cout << "|";
-                                         print_expression(bxpr->rhs);
-                                     },
-                                     [this](const acc::node::LiteralExpr* lxpr) {
-                                         print_green(" [ LITERAL ] ");
-                                         print_depth(m_depth, ' ');
+        std::visit(internal::visitor{
+                       [this](const acc::node::BinaryExpr* bxpr) {
+                           print_green(" [ BINARY ] ");
+                           print_depth(m_depth, ' ');
+                           std::cout << "|";
+                           print_expression(bxpr->lhs);
+                           print_depth(m_depth, ' ');
+                           print_red(bxpr->op.word);
+                           print_depth(m_depth, ' ');
+                           std::cout << "|";
+                           print_expression(bxpr->rhs);
+                       },
+                       [this](const acc::node::LiteralExpr* lxpr) {
+                           print_green(" [ LITERAL ] ");
+                           print_depth(m_depth, ' ');
 
-                                         print_yellow(lxpr->embedded.word);
-                                     },
-                                     [this](const acc::node::UnaryExpr* uexpr) {
-                                         print_green(" [ UNARY ] ");
+                           print_yellow(lxpr->embedded.word);
+                       },
+                       [this](const acc::node::UnaryExpr* uexpr) {
+                           print_green(" [ UNARY ] ");
 
-                                         print_red(uexpr->op.word);
-                                         print_expression(uexpr->expr);
-                                     },
-                                     [this](const acc::node::GroupingExpr* gexpr) {
-                                         print_green(" [ GROUP ] ");
-                                         print_depth(m_depth, ' ');
-                                         std::cout << "|";
-                                         print_expression(gexpr->expr);
-                                     },
-                                     [this](const acc::node::ComparisonExpr* cxpr) {
-                                         print_green(" [ COMPARISON ] ");
-                                         print_depth(m_depth, ' ');
-                                         std::cout << "|";
-                                         print_expression(cxpr->lhs);
-                                         print_depth(m_depth, ' ');
-                                         print_red(cxpr->op.word);
-                                         print_depth(m_depth, ' ');
-                                         std::cout << "|";
-                                         print_expression(cxpr->rhs);
-                                     }},
+                           print_red(uexpr->op.word);
+                           print_expression(uexpr->expr);
+                       },
+                       [this](const acc::node::GroupingExpr* gexpr) {
+                           print_green(" [ GROUP ] ");
+                           print_depth(m_depth, ' ');
+                           std::cout << "|";
+                           print_expression(gexpr->expr);
+                       },
+                   },
                    expr);
         m_depth--;
     };

@@ -25,7 +25,7 @@ auto main(int argc, char** argv) -> int {
     // }
     // acc::cli acli(std::move(ss));
 
-    acc::utest::TEST_PARSER();
+    acc::utest::TEST_EVAL();
 
     return EXIT_SUCCESS;
 }

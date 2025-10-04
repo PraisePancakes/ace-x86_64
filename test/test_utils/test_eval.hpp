@@ -9,7 +9,7 @@
 namespace acc::utest {
 int TEST_EVAL() {
     std::cout << "\n\n===== [ EVAL TEST ] =====\n\n";
-    std::string to_ev = "(123 + (324 * 1)) < 1095;";
+    std::string to_ev = "(123 * 0 + 1);";
     acc::lexer lexe(to_ev,
                     acc::globals::ACC_DELIMS,
                     acc::globals::ACC_PAIR_DELIMS,
@@ -20,7 +20,7 @@ int TEST_EVAL() {
     auto prsr = acc::acc_parser(toks);
     auto stmts = prsr.parse();
 
-    std::cout << acc::ansi::foreground_green << std::boolalpha << ev.as<bool>(stmts[0]) << acc::ansi::reset << std::endl;
+    std::cout << acc::ansi::foreground_green << std::boolalpha << ev.as<int>(stmts[0]) << acc::ansi::reset << std::endl;
 
     return 0;
 };

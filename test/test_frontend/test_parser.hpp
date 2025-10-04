@@ -8,6 +8,7 @@
 
 namespace acc::utest {
 int TEST_PARSER() {
+#if 0
     std::cout << "\n===== [ PARSER TEST ] =====\n";
 
     {
@@ -21,13 +22,14 @@ int TEST_PARSER() {
         auto v = pr.parse();
         pr.print_ast();
     }
+#endif
 #if 1
     {
         std::cout << "\n{ ==STATEMENTS== }\n\n";
         acc::lexer lexe(R"(
             int x = 5;
             {
-                int x = 4;
+                x = 6 * (5 + 3);
             };
           
             )",

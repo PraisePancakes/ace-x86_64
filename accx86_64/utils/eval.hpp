@@ -28,6 +28,17 @@ class expr_eval {
                                                                     return a * b;
                                                                 case GLOBAL_TOKENS::TK_SLASH:
                                                                     return a / b;
+                                                            
+                                                                case TK_LT:
+                                                                    return (a < b);
+                                                                case TK_GT:
+                                                                    return (a > b);
+                                                                case TK_LT_EQ:
+                                                                    return (a <= b);
+                                                                case TK_GT_EQ:
+                                                                    return (a >= b);
+                                                                case TK_EQUALS:
+                                                                    return (a = b);
                                                                 default:
                                                                     throw std::runtime_error("undefined binary operator for evaluator");
                                                             };
@@ -48,33 +59,7 @@ class expr_eval {
                                   acc::token::value_type expr = evaluate(gxpr->expr);
                                   return to_literal(expr);
                               },
-                              [&](acc::node::ComparisonExpr* cxpr) -> acc::token::value_type {
-                                  acc::token::value_type lhs = evaluate(cxpr->lhs);
-                                  acc::token::value_type rhs = evaluate(cxpr->rhs);
-                                  return std::visit(internal::visitor{
-                                                        [&cxpr]<acc::traits::arithmeticable T>(T a, T b) -> acc::token::value_type {
-                                                            switch (cxpr->op.type) {
-                                                                case GLOBAL_TOKENS::TK_LT:
-                                                                    return a < b;
-                                                                case GLOBAL_TOKENS::TK_GT:
-                                                                    return a > b;
-                                                                case GLOBAL_TOKENS::TK_STRICT_EQ:
-                                                                    return a == b;
-                                                                case GLOBAL_TOKENS::TK_LT_EQ:
-                                                                    return a <= b;
-                                                                case GLOBAL_TOKENS::TK_GT_EQ:
-                                                                    return a >= b;
-                                                                case GLOBAL_TOKENS::TK_BANG_EQ:
-                                                                    return a != b;
-                                                                default:
-                                                                    throw std::runtime_error("undefined comparison operator for evaluator");
-                                                            };
-                                                        },
-                                                        [](auto, auto) -> acc::token::value_type {
-                                                            throw std::runtime_error("mismatched type comparison evaluation for evaluator");
-                                                        }},
-                                                    to_literal(lhs), to_literal(rhs));
-                              }},
+                          },
                           exp);
     };
 
