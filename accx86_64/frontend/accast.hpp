@@ -74,7 +74,8 @@ struct GroupingExpr {
 struct DeclarationStmt {
     acc::token type;
     acc::token name;
-    std::byte cv_qual_flags;  // 0000 0000 -lsb = const : lsb << 1 = volatile
+    // const by default
+    std::byte cv_qual_flags{0};  // 0000 0000 -lsb = const : lsb << 1 = volatile
 
     // DEBUG ONLY
     std::vector<ExprVariant> history;

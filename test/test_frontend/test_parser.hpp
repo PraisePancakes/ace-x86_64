@@ -2,13 +2,13 @@
 #include "../../accx86_64/frontend/acclexer.hpp"
 #include "../../accx86_64/frontend/accparser.hpp"
 #include "../../accx86_64/frontend/statics/ro_accdelims.hpp"
+#include "../../accx86_64/frontend/statics/ro_acckw.hpp"
 #include "../../accx86_64/frontend/statics/ro_accpairdelims.hpp"
-#include "../../accx86_64/frontend/statics/ro_acctypes.hpp"
 #include "../../accx86_64/utils/eval.hpp"
 
 namespace acc::utest {
 int TEST_PARSER() {
-#if 0
+#if 1
     std::cout << "\n===== [ PARSER TEST ] =====\n";
 
     {
@@ -16,7 +16,7 @@ int TEST_PARSER() {
         acc::lexer lexe("(123 + (324 * 1)) < 1095;",
                         acc::globals::ACC_DELIMS,
                         acc::globals::ACC_PAIR_DELIMS,
-                        acc::globals::ACC_TYPE_SET);
+                        acc::globals::ACC_KW_SET);
         auto ts = lexe.lex();
         acc::acc_parser pr(ts);
         auto v = pr.parse();
@@ -27,7 +27,7 @@ int TEST_PARSER() {
     {
         std::cout << "\n{ ==STATEMENTS== }\n\n";
         acc::lexer lexe(R"(
-            int x = 5;
+            int x : mut = 5;
             {
                 x = 6 * (5 + 3);
             };
@@ -35,7 +35,7 @@ int TEST_PARSER() {
             )",
                         acc::globals::ACC_DELIMS,
                         acc::globals::ACC_PAIR_DELIMS,
-                        acc::globals::ACC_TYPE_SET);
+                        acc::globals::ACC_KW_SET);
         auto ts = lexe.lex();
 
         acc::acc_parser pr(ts);

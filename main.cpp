@@ -1,3 +1,4 @@
+#include <bitset>
 #include <cstdint>
 #include <expected>
 #include <functional>
@@ -14,6 +15,8 @@
 #include "test/test_frontend/test_parser.hpp"
 #include "test/test_utils/test_eval.hpp"
 
+// int x : mut = 4;
+
 auto main(int argc, char** argv) -> int {
     // if (argc <= 1) {
     //     acc::logger::instance().send(acc::logger::LEVEL::FATAL, "no input files determined for Ace compilation.", std::cout);
@@ -26,6 +29,7 @@ auto main(int argc, char** argv) -> int {
     // acc::cli acli(std::move(ss));
 
     acc::utest::TEST_EVAL();
+    acc::utest::TEST_PARSER();
 
     return EXIT_SUCCESS;
 }
