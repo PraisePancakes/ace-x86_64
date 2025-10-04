@@ -193,16 +193,17 @@ class [[nodiscard]] acc_parser
                                                                           .name = ident,
                                                                           .cv_qual_flags = get_cv_sig(),
                                                                           .history = {},
-                                                                          .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)  // bit cursed wtf but works ... meh idc
-                                                                                       ? std::optional<acc::ExprVariant>(parse_expr())
-                                                                                       : ([this, &decl = std::as_const<acc::node::DeclarationStmt*>(decl)]() -> void {
-                                                                                             if (decl->expr.has_value()) {
-                                                                                                 if (auto* ptr = m_env->resolve(decl->name.word)) {
-                                                                                                     ptr->get(decl->name.word)->history.push_back(decl->expr.value());
-                                                                                                 }
+                                                                          .expr =
+                                                                              (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)  // bit cursed wtf but works ... meh idc
+                                                                                   ? std::optional<acc::ExprVariant>(parse_expr())
+                                                                                   : ([this, &decl = std::as_const<acc::node::DeclarationStmt*>(decl)]() -> void {
+                                                                                         if (decl->expr.has_value()) {
+                                                                                             if (auto* ptr = m_env->resolve(decl->name.word)) {
+                                                                                                 ptr->get(decl->name.word)->history.push_back(decl->expr.value());
                                                                                              }
-                                                                                         }(),
-                                                                                          std::optional<acc::ExprVariant>(std::nullopt)))};
+                                                                                         }
+                                                                                     }(),
+                                                                                      std::optional<acc::ExprVariant>(std::nullopt)))};
         if (m_env->resolve(decl->name.word) == m_env) {
             throw acc::parser_error(decl->name, "scope resolved an ambiguous identifier ");
         }
