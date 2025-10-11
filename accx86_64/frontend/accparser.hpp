@@ -14,6 +14,7 @@
 #include "accprinter.hpp"
 #include "acctoken.hpp"
 #include "statics/ro_acckw.hpp"
+#include "statics/ro_accprec.hpp"
 #include "storage.hpp"
 
 #define DISCARD(f) (void)f
@@ -22,19 +23,6 @@ namespace acc {
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
     acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* m_env;
-    inline static const std::unordered_map<acc::GLOBAL_TOKENS, std::size_t> prec_map{
-        {acc::TK_COMMA, 0},
-        {acc::TK_EQUALS, 1},
-        {acc::TK_LT, 2},
-        {acc::TK_GT, 2},
-        {acc::TK_GT_EQ, 2},
-        {acc::TK_LT_EQ, 2},
-        {acc::TK_PLUS, 3},
-        {acc::TK_DASH, 3},
-        {acc::TK_SLASH, 4},
-        {acc::TK_STAR, 4},
-
-    };
 
     template <traits::acc_matchable T>
     [[nodiscard]] bool check_it(T&& val) const noexcept {
@@ -46,6 +34,10 @@ class [[nodiscard]] acc_parser
         } else {
             return this->peek().word == val;
         }
+    }
+
+    [[nodiscard]] bool check_it(traits::acc_matchable auto&&... val) const noexcept {
+        return (this->check_it(std::forward<decltype(val)>(val)) || ...);
     }
 
     template <traits::acc_matchable T>
@@ -103,10 +95,11 @@ class [[nodiscard]] acc_parser
         while (match_it(acc::GLOBAL_TOKENS::TK_IDENTIFIER)) {
             const auto id_tok = this->peek_prev();
             const std::string id = this->peek_prev().word;
+            if (!this->m_env->resolve(id)) throw parser_error(id_tok, " unresolved identifier at ");
 
             if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
                 if (acc::node::DeclarationStmt::has_const(this->m_env->get(id)->cv_qual_flags)) {
-                    throw parser_error(id_tok, "assignment to const-qualified lvalue");
+                    throw parser_error(id_tok, " assignment to const-qualified lvalue with ");
                 }
                 auto expr = parse_expr();
 
@@ -142,11 +135,11 @@ class [[nodiscard]] acc_parser
         auto lhs_atom = parse_assignment();
         while (true) {
             auto op = peek();
-            if (!is_binary_op(op) || prec_map.at(op.type) < min_prec) {
+            if (!is_binary_op(op) || globals::prec_map.at(op.type) < min_prec) {
                 break;
             }
 
-            auto prec = prec_map.at(op.type);
+            auto prec = globals::prec_map.at(op.type);
             auto next_min_prec = prec + 1;
             DISCARD(advance());
             auto rhs_atom = parse_expr_prec(next_min_prec);
@@ -196,7 +189,7 @@ class [[nodiscard]] acc_parser
                                                                           .expr =
                                                                               (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)  // bit cursed wtf but works ... meh idc
                                                                                    ? std::optional<acc::ExprVariant>(parse_expr())
-                                                                                   : ([this, &decl = std::as_const<acc::node::DeclarationStmt*>(decl)]() -> void {
+                                                                                   : ([this, &decl = std::as_const(decl)]() -> void {
                                                                                          if (decl->expr.has_value()) {
                                                                                              if (auto* ptr = m_env->resolve(decl->name.word)) {
                                                                                                  ptr->get(decl->name.word)->history.push_back(decl->expr.value());
@@ -219,7 +212,7 @@ class [[nodiscard]] acc_parser
         acc::node::BlockStmt* block = new acc::node::BlockStmt{.stmts = parse()};
 
         if (!match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
-            throw acc::parser_error(this->peek_prev(), "open block without closing '}'");
+            throw acc::parser_error(this->peek_prev(), " open block without closing '}' with ");
         }
 
         return block;
@@ -241,7 +234,7 @@ class [[nodiscard]] acc_parser
         auto node = parse_declaration();
 
         if (!match_it(acc::GLOBAL_TOKENS::TK_SEMI)) {
-            throw acc::parser_error(this->peek_prev(), "missing ';' in statement");
+            throw acc::parser_error(this->peek_prev(), "missing ';' in statement ");
         }
         return node;
     };
@@ -269,19 +262,26 @@ class [[nodiscard]] acc_parser
         printer.print();
     };
 
+    void panic() {
+        while (!check_it(TK_CURL_R, TK_SEMI) && !this->is_end()) {
+            DISCARD(advance());
+        }
+        DISCARD(advance());
+    };
+
     std::vector<acc::StmtVariant> parse() {
         auto* new_env = new acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>();
         new_env->set_parent(m_env);
         m_env = new_env;
 
-        try {
-            do {
+        do {
+            try {
                 m_env->get_items().push_back(parse_stmt());
-            } while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R));
-        } catch (acc::parser_error const& err) {
-            report_error(err);
-            // panic recover
-        };
+            } catch (acc::parser_error const& err) {
+                report_error(err);
+                panic();
+            };
+        } while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R));
 
         return m_env->get_items();
     };

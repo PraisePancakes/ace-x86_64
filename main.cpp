@@ -16,7 +16,10 @@
 #include "test/test_utils/test_eval.hpp"
 
 // int x : mut = 4;
-
+void thrower() {
+    std::cout << "THROWING\n";
+    throw 32;
+}
 auto main(int argc, char** argv) -> int {
     // if (argc <= 1) {
     //     acc::logger::instance().send(acc::logger::LEVEL::FATAL, "no input files determined for Ace compilation.", std::cout);
