@@ -79,7 +79,14 @@ class [[nodiscard]] acc_parser
             return new acc::node::GroupingExpr{.expr = expr};
         }
 
-        throw acc::parser_error(this->peek_prev(), "unknown primary literal");
+        if (peek_prev().type == TK_IDENTIFIER) {
+            auto env = m_env->resolve(peek_prev().word);
+            if (env->get(peek_prev().word)->expr.has_value())
+                return env->get(peek_prev().word)->expr.value();
+            throw acc::parser_error(this->peek_prev(), "unknown unqualified-id at ");
+        }
+
+        throw acc::parser_error(this->peek_prev(), " unknown primary literal ");
     }
 
     acc::ExprVariant parse_unary() {
@@ -189,7 +196,7 @@ class [[nodiscard]] acc_parser
                                                                                        ? std::optional<acc::ExprVariant>(parse_expr())
                                                                                        : std::optional<acc::ExprVariant>(std::nullopt))};
 
-        /* DEBUG ONLY */
+        /* DEBUG INFO */
         if (m_env->resolve(decl->name.word) == m_env) {
             throw acc::parser_error(decl->name, "scope resolved an ambiguous identifier ");
         }
@@ -198,6 +205,7 @@ class [[nodiscard]] acc_parser
         if (auto* ptr = m_env->resolve(decl->name.word)) {
             ptr->get(decl->name.word)->history.push_back(decl->expr.value());
         }
+        /* DEBUG INFO */
 
         return decl;
     }
