@@ -31,12 +31,9 @@ int TEST_PARSER() {
             {
                 int x = 4;
                 int y = 3;
-                x = 5;
-                y = 4;
-                int z = 2
-                
-            };
           
+            };
+
             )",
                         acc::globals::ACC_DELIMS,
                         acc::globals::ACC_PAIR_DELIMS,

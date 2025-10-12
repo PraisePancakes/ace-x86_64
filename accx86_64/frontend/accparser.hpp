@@ -180,10 +180,9 @@ class [[nodiscard]] acc_parser
     // int x : mut = 4;
     acc::StmtVariant parse_variable() {
         // have type
-        auto type = peek_prev();
-        auto ident = advance();
-        acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = type,
-                                                                          .name = ident,
+
+        acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = peek_prev(),
+                                                                          .name = advance(),
                                                                           .cv_qual_flags = get_cv_sig(),
                                                                           .history = {},
                                                                           .expr =
