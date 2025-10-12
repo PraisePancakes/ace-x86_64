@@ -209,7 +209,7 @@ class [[nodiscard]] acc_parser
         if (!match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
             throw acc::parser_error(this->peek_prev(), " open block without closing '}' with ");
         }
-
+        m_env = m_env->get_parent();
         return block;
     };
 
@@ -278,7 +278,7 @@ class [[nodiscard]] acc_parser
             };
         } while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R));
 
-        return m_env->get_items();
+        return new_env->get_items();
     };
     acc_parser(const acc_parser&) = delete;
     acc_parser& operator=(const acc_parser&) = delete;

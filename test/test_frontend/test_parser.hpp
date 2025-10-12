@@ -32,7 +32,15 @@ int TEST_PARSER() {
                 int x : mut = 4;
                 int y = 3;
                 x = 5;
+
+                {
+                    int another = 43;
+                };
           
+            };
+
+            {
+                int new_block = 4;
             };
 
             )",

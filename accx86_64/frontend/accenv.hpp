@@ -19,7 +19,9 @@ class environment {
         if (!m_parent) return nullptr;
         return m_parent->resolve(key);
     };
-
+    auto get_parent() const {
+        return m_parent;
+    }
     void set(Key key, Value v) {
         m_symbols.insert(std::make_pair(key, v));
     };
@@ -35,7 +37,6 @@ class environment {
         }
         return curr;
     };
-   
 
     void set_parent(acc::environment<Key, Value, Item>* parent) {
         m_parent = parent;
