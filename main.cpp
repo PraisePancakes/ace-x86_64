@@ -33,6 +33,8 @@ auto main(int argc, char** argv) -> int {
 
     acc::utest::TEST_EVAL();
     acc::utest::TEST_PARSER();
+    int x;
+    auto cop = (x = []() -> int { return 4; }(), x + 10);
 
     return EXIT_SUCCESS;
 }

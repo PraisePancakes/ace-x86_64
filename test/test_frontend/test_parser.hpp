@@ -29,8 +29,9 @@ int TEST_PARSER() {
         acc::lexer lexe(R"(
           
             {
-                int x = 4;
+                int x : mut = 4;
                 int y = 3;
+                x = 5;
           
             };
 
