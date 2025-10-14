@@ -79,13 +79,6 @@ class [[nodiscard]] acc_parser
             return new acc::node::GroupingExpr{.expr = expr};
         }
 
-        if (peek_prev().type == TK_IDENTIFIER) {
-            auto env = m_env->resolve(peek_prev().word);
-            if (env->get(peek_prev().word)->expr.has_value())
-                return env->get(peek_prev().word)->expr.value();
-            throw acc::parser_error(this->peek_prev(), "unknown unqualified-id at ");
-        }
-
         throw acc::parser_error(this->peek_prev(), " unknown primary literal ");
     }
 
@@ -98,7 +91,7 @@ class [[nodiscard]] acc_parser
         return parse_primary();
     };
 
-    acc::ExprVariant parse_assignment() {
+    acc::ExprVariant parse_variable_expression() {
         while (match_it(acc::GLOBAL_TOKENS::TK_IDENTIFIER)) {
             const auto id_tok = this->peek_prev();
             const std::string id = this->peek_prev().word;
@@ -115,6 +108,11 @@ class [[nodiscard]] acc_parser
 
                 return expr;
             }
+
+            auto env = m_env->resolve(peek_prev().word);
+            if (env->get(peek_prev().word)->expr.has_value())
+                return env->get(peek_prev().word)->expr.value();
+            throw acc::parser_error(this->peek_prev(), "unknown unqualified-id at ");
         }
 
         return parse_unary();
@@ -139,7 +137,7 @@ class [[nodiscard]] acc_parser
     }
     // 1  *  2 + 3
     acc::ExprVariant parse_expr_prec(std::size_t min_prec) {
-        auto lhs_atom = parse_assignment();
+        auto lhs_atom = parse_variable_expression();
         while (true) {
             auto op = peek();
             if (!is_binary_op(op) || globals::prec_map.at(op.type) < min_prec) {
@@ -185,7 +183,7 @@ class [[nodiscard]] acc_parser
     };
 
     // int x : mut = 4;
-    acc::StmtVariant parse_variable() {
+    acc::StmtVariant parse_variable_declaration() {
         // have type
 
         acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = peek_prev(),
@@ -225,7 +223,7 @@ class [[nodiscard]] acc_parser
     acc::StmtVariant parse_declaration() {
         if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
             // check if the reserved word is a type
-            return parse_variable();
+            return parse_variable_declaration();
         }
         if (match_it(acc::GLOBAL_TOKENS::TK_CURL_L)) {
             return parse_block();
