@@ -219,12 +219,17 @@ class [[nodiscard]] acc_parser
         return block;
     };
 
+    // either pass token or embedded string
+
     // int a : const = 2;
     acc::StmtVariant parse_declaration() {
+        // check if the reserved word is a type or any other reserved
         if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
-            // check if the reserved word is a type
+        }
+        if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED_TYPE)) {
             return parse_variable_declaration();
         }
+
         if (match_it(acc::GLOBAL_TOKENS::TK_CURL_L)) {
             return parse_block();
         }

@@ -26,6 +26,7 @@ namespace acc {
     TOKEN_DEF(TK_GT, '>')               \
     TOKEN_DEF(TK_SEMI, ';')             \
     TOKEN_DEF(TK_NEWLINE, '\n')         \
+    TOKEN_DEF(TK_RESERVED_TYPE, 0xF4)   \
     TOKEN_DEF(TK_LT_EQ, 0xF9u)          \
     TOKEN_DEF(TK_GT_EQ, 0xF8u)          \
     TOKEN_DEF(TK_STRICT_EQ, 0xF7u)      \
@@ -37,6 +38,7 @@ namespace acc {
     TOKEN_DEF(TK_LITERAL_STRING, 0xFBu) \
     TOKEN_DEF(TK_LITERAL_DOUBLE, 0xFAu) \
     TOKEN_DEF(TK_UNKNOWN, 0xFFu)
+// TOKEN_DEF(TK_LOL_JUDGE_DEEZ_NUTS, '\0')   \ // <------- for you dragon! (jk)
 
 /// Enum representing token types
 #define TOKEN_DEF(NAME, VALUE) NAME = VALUE,

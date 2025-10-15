@@ -23,6 +23,9 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     [[nodiscard]] bool is_reserved(std::string keyword) const noexcept {
         return m_reserved.find(keyword) != m_reserved.end();
     }
+    [[nodiscard]] bool is_type(std::string type) const noexcept {
+        return m_types.find(type) != m_types.end();
+    }
 
     [[nodiscard]] bool is_pair_delim(const char unit1, const char unit2) const noexcept {
         return m_pair_delims.find(std::string({unit1, unit2})) != m_pair_delims.end();
@@ -50,13 +53,13 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
             return token{
                 id,
                 std::make_pair(m_x, m_y),
-                token_type_t::TK_RESERVED,
+                is_type(id) ? acc::GLOBAL_TOKENS::TK_RESERVED_TYPE : TK_RESERVED,
                 id};
         }
 
         return token{id,
                      std::make_pair(m_x, m_y),
-                     token_type_t::TK_IDENTIFIER,
+                     acc::GLOBAL_TOKENS::TK_IDENTIFIER,
                      id};
     };
 
@@ -66,7 +69,7 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
         }
         return token{to_substr(),
                      std::make_pair(m_x, m_y),
-                     token_type_t::TK_LITERAL_INT,
+                     acc::GLOBAL_TOKENS::TK_LITERAL_INT,
                      std::stoi(to_substr())};
     };
 
@@ -82,7 +85,7 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
 
         return token{to_substr(),
                      std::make_pair(m_x, m_y),
-                     token_type_t::TK_LITERAL_STRING,
+                     acc::GLOBAL_TOKENS::TK_LITERAL_STRING,
                      to_substr()};
     };
 
@@ -111,19 +114,20 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
         }
         return lex_identifier();
     };
+    std::unordered_set<std::string> m_types;
 
    public:
-    using token_type_t = acc::GLOBAL_TOKENS;
     lexer() {};
     lexer(
         std::string_view sv,
         const std::unordered_set<acc::GLOBAL_TOKENS>& delims,
         const std::unordered_map<std::string, acc::GLOBAL_TOKENS>& pair_delims,
-        const std::unordered_set<std::string>& reserves)
+        const std::unordered_set<std::string>& reserves, const std::unordered_set<std::string>& types)
         : acc::fsm_storage<std::string_view>(sv),
           m_delims(delims),
           m_pair_delims(pair_delims),
-          m_reserved(reserves) {
+          m_reserved(reserves),
+          m_types(types) {
           };
 
     std::vector<token> lex() {
