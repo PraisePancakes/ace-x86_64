@@ -95,7 +95,10 @@ class printer {
                            std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
                            print_expression(ifstmt->condition);
                            this->print_statement(ifstmt->then);
-                           this->print_statement(ifstmt->else_);
+                           if (ifstmt->else_.has_value()) {
+                               print_green("( ELSE )");
+                               this->print_statement(ifstmt->else_.value());
+                           }
                        },
                        [this](const acc::node::DeclarationStmt* declstmt) {
                            bool has_const = declstmt->has_const(declstmt->cv_qual_flags);

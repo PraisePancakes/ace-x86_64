@@ -101,7 +101,7 @@ struct DeclarationStmt {
 struct IfStmt {
     ExprVariant condition;
     StmtVariant then;
-    StmtVariant else_;
+    std::optional<StmtVariant> else_;
 };
 
 struct ExpressionStmt {

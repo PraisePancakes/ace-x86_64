@@ -11,5 +11,8 @@ const static std::unordered_set<std::string> ACC_KW_SET{"int",
                                                         "long",
                                                         "double",
                                                         "mut",
+                                                        "if",
+                                                        "while",
+                                                        "for",
                                                         "volatile"};
 }

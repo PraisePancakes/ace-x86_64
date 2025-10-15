@@ -219,12 +219,32 @@ class [[nodiscard]] acc_parser
         return block;
     };
 
+    acc::StmtVariant parse_conditional() {
+        // if(true) { return false; };
+        //  if , ternary?!?!?!?
+        return new acc::node::IfStmt{.condition = parse_expr(),
+                                     .then = parse_declaration(),
+                                     .else_ = (match_it("else") ? std::optional<StmtVariant>(parse_declaration())
+                                                                : std::optional<StmtVariant>(std::nullopt))};
+    };
+
+    acc::StmtVariant parse_iteration() {
+        // for and whiles
+        return {};
+    };
+
     // either pass token or embedded string
 
     // int a : const = 2;
     acc::StmtVariant parse_declaration() {
         // check if the reserved word is a type or any other reserved
-        if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED)) {
+        if (peek().type == acc::GLOBAL_TOKENS::TK_RESERVED) {
+            if (match_it("if")) {
+                return parse_conditional();
+            }
+            if (match_any("while", "for")) {
+                return parse_iteration();
+            }
         }
         if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED_TYPE)) {
             return parse_variable_declaration();

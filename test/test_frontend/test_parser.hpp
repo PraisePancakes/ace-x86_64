@@ -28,21 +28,15 @@ int TEST_PARSER() {
     {
         std::cout << "\n{ ==STATEMENTS== }\n\n";
         acc::lexer lexe(R"(
-          
-            {
-                int x : mut = 4;
-                int y = x + 3;
-                x = 5;
-
-                {
-                    int another = 43;
-                };
-          
+            
+            int x = 4;
+            if(x < 4) {
+               int y = 3;
+            } else {
+                int z = 4; 
             };
 
-            {
-                int new_block = 4;
-            };
+          
 
             )",
                         acc::globals::ACC_DELIMS,
