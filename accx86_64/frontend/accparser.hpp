@@ -91,10 +91,11 @@ class [[nodiscard]] acc_parser
         return parse_primary();
     };
 
-    acc::ExprVariant parse_variable_expression() {
+    acc::ExprVariant parse_id_expression() {
         while (match_it(acc::GLOBAL_TOKENS::TK_IDENTIFIER)) {
             const auto id_tok = this->peek_prev();
             const std::string id = this->peek_prev().word;
+
             if (!this->m_env->resolve(id)) throw parser_error(id_tok, " unresolved identifier at ");
 
             if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
@@ -109,9 +110,8 @@ class [[nodiscard]] acc_parser
                 return expr;
             }
 
-            auto env = m_env->resolve(peek_prev().word);
-            if (env->get(peek_prev().word)->expr.has_value())
-                return env->get(peek_prev().word)->expr.value();
+            if (m_env->get(peek_prev().word)->expr.has_value())
+                return m_env->get(peek_prev().word)->expr.value();
             throw acc::parser_error(this->peek_prev(), "unknown unqualified-id at ");
         }
 
@@ -137,7 +137,7 @@ class [[nodiscard]] acc_parser
     }
     // 1  *  2 + 3
     acc::ExprVariant parse_expr_prec(std::size_t min_prec) {
-        auto lhs_atom = parse_variable_expression();
+        auto lhs_atom = parse_id_expression();
         while (true) {
             auto op = peek();
             if (!is_binary_op(op) || globals::prec_map.at(op.type) < min_prec) {
