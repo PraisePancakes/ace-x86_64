@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <iostream>
+#include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -243,10 +244,11 @@ class [[nodiscard]] acc_parser
         }
 
         if (peek_prev().word == "for") {
-            return new acc::node::ForStmt{.init = [this]() -> acc::StmtVariant {  
-                                                                if (!match_it(TK_PAREN_L)) 
-                                                throw acc::parser_error(peek(), " missing opening '(' for 'for' conditional list ");
-                                                return parse_stmt(); }(),
+            return new acc::node::ForStmt{.init = [this]() -> acc::StmtVariant {
+                                              if (!match_it(TK_PAREN_L))
+                                                  throw acc::parser_error(peek(), " missing opening '(' for 'for' conditional list ");
+                                              return parse_stmt();
+                                          }(),
                                           .condition = parse_stmt(),
                                           .expr = [this]() -> acc::ExprVariant {
                                               auto expr = parse_expr();
