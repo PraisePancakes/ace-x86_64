@@ -138,6 +138,7 @@ class [[nodiscard]] acc_parser
     // 1  *  2 + 3
     acc::ExprVariant parse_expr_prec(std::size_t min_prec) {
         auto lhs_atom = parse_id_expression();
+
         while (true) {
             auto op = peek();
 
@@ -235,16 +236,23 @@ class [[nodiscard]] acc_parser
             return new acc::node::WhileStmt{.condition = [this]() -> acc::StmtVariant {
                                                 if (!match_it(TK_PAREN_L)) throw acc::parser_error(peek(), " missing opening '(' for while condition ");
                                                 auto cond = parse_declaration();
-                                                if (!match_it(TK_PAREN_R)) throw acc::parser_error(peek(), " missing opening ')' for while condition ");
+                                                if (!match_it(TK_PAREN_R)) throw acc::parser_error(peek(), " missing closing ')' for while condition ");
                                                 return cond;
                                             }(),
                                             .body = parse_declaration()};
         }
 
         if (peek_prev().word == "for") {
-            return new acc::node::ForStmt{.init = parse_declaration(),
-                                          .condition = parse_expr(),
-                                          .expr = parse_expr(),
+            return new acc::node::ForStmt{.init = [this]() -> acc::StmtVariant {  
+                                                                if (!match_it(TK_PAREN_L)) 
+                                                throw acc::parser_error(peek(), " missing opening '(' for 'for' conditional list ");
+                                                return parse_stmt(); }(),
+                                          .condition = parse_stmt(),
+                                          .expr = [this]() -> acc::ExprVariant {
+                                              auto expr = parse_expr();
+                                              if (!match_it(TK_PAREN_R)) throw acc::parser_error(peek(), " missing closing ')' for 'for' conditional list ");
+                                              return expr;
+                                          }(),
                                           .body = parse_declaration()};
         }
         throw acc::parser_error(peek_prev(), " error parsing iteration statement ");
@@ -279,6 +287,7 @@ class [[nodiscard]] acc_parser
         if (!match_it(acc::GLOBAL_TOKENS::TK_SEMI)) {
             throw acc::parser_error(this->peek_prev(), "missing ';' in statement ");
         }
+
         return node;
     };
 

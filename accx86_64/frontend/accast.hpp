@@ -117,7 +117,7 @@ struct BlockStmt {
 };
 struct ForStmt {
     StmtVariant init;
-    ExprVariant condition;
+    StmtVariant condition;
     ExprVariant expr;
     StmtVariant body;
 };

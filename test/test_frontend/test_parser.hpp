@@ -29,11 +29,9 @@ int TEST_PARSER() {
         std::cout << "\n{ ==STATEMENTS== }\n\n";
         acc::lexer lexe(R"(
             
-            int y = 5;
-            while(y < 3) {
-               
-            };
-
+           for(int i : mut = 0; i < 10; i = i + 1) {
+           
+           };
           
 
             )",

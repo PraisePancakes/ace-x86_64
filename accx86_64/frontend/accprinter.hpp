@@ -141,7 +141,15 @@ class printer {
                            }
                        },
                        [this](const acc::node::ForStmt* cxpr) {
-
+                           print_green("( FOR )");
+                           std::cout << acc::ansi::foreground_yellow << "INIT : " << acc::ansi::reset << std::endl;
+                           print_statement(cxpr->init);
+                           std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
+                           print_statement(cxpr->condition);
+                           std::cout << acc::ansi::foreground_yellow << "EXPR : " << acc::ansi::reset << std::endl;
+                           print_expression(cxpr->expr);
+                           print_yellow("BODY :");
+                           print_statement(cxpr->body);
                        }},
                    stmt);
         m_depth--;
