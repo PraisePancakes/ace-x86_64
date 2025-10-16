@@ -109,13 +109,17 @@ struct ExpressionStmt {
 };
 
 struct WhileStmt {
-    ExprVariant condition;
+    StmtVariant condition;
     StmtVariant body;
 };
 struct BlockStmt {
     std::vector<StmtVariant> stmts;
 };
 struct ForStmt {
+    StmtVariant init;
+    ExprVariant condition;
+    ExprVariant expr;
+    StmtVariant body;
 };
 
 }  // namespace node

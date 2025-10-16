@@ -129,7 +129,7 @@ class printer {
                            std::cout << acc::ansi::foreground_green << "\n\n( WHILE )\n\n"
                                      << acc::ansi::reset << std::endl;
                            std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
-                           print_expression(whilestmt->condition);
+                           print_statement(whilestmt->condition);
                            std::cout << acc::ansi::foreground_yellow << "BODY : " << acc::ansi::reset << std::endl;
                            this->print_statement(whilestmt->body);
                        },

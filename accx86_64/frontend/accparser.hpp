@@ -75,11 +75,11 @@ class [[nodiscard]] acc_parser
 
         if (match_it(TK_PAREN_L)) {
             auto expr = parse_expr();
-            if (!match_it(TK_PAREN_R)) throw acc::parser_error(this->peek_prev(), "missing ')'");
+            if (!match_it(TK_PAREN_R)) throw acc::parser_error(this->peek(), "missing ')'");
             return new acc::node::GroupingExpr{.expr = expr};
         }
 
-        throw acc::parser_error(this->peek_prev(), " unknown primary literal ");
+        throw acc::parser_error(this->peek(), " unknown primary literal ");
     }
 
     acc::ExprVariant parse_unary() {
@@ -140,6 +140,7 @@ class [[nodiscard]] acc_parser
         auto lhs_atom = parse_id_expression();
         while (true) {
             auto op = peek();
+
             if (!is_binary_op(op) || globals::prec_map.at(op.type) < min_prec) {
                 break;
             }
@@ -211,10 +212,10 @@ class [[nodiscard]] acc_parser
     acc::StmtVariant
     parse_block() {
         acc::node::BlockStmt* block = new acc::node::BlockStmt{.stmts = parse()};
-
         if (!match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
             throw acc::parser_error(this->peek_prev(), " open block without closing '}' with ");
         }
+
         m_env = m_env->get_parent();
         return block;
     };
@@ -230,7 +231,23 @@ class [[nodiscard]] acc_parser
 
     acc::StmtVariant parse_iteration() {
         // for and whiles
-        return {};
+        if (peek_prev().word == "while") {
+            return new acc::node::WhileStmt{.condition = [this]() -> acc::StmtVariant {
+                                                if (!match_it(TK_PAREN_L)) throw acc::parser_error(peek(), " missing opening '(' for while condition ");
+                                                auto cond = parse_declaration();
+                                                if (!match_it(TK_PAREN_R)) throw acc::parser_error(peek(), " missing opening ')' for while condition ");
+                                                return cond;
+                                            }(),
+                                            .body = parse_declaration()};
+        }
+
+        if (peek_prev().word == "for") {
+            return new acc::node::ForStmt{.init = parse_declaration(),
+                                          .condition = parse_expr(),
+                                          .expr = parse_expr(),
+                                          .body = parse_declaration()};
+        }
+        throw acc::parser_error(peek_prev(), " error parsing iteration statement ");
     };
 
     // either pass token or embedded string
@@ -300,14 +317,14 @@ class [[nodiscard]] acc_parser
         new_env->set_parent(m_env);
         m_env = new_env;
 
-        do {
+        while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
             try {
                 m_env->get_items().push_back(parse_stmt());
             } catch (acc::parser_error const& err) {
                 report_error(err);
                 panic();
             };
-        } while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R));
+        };
 
         return new_env->get_items();
     };

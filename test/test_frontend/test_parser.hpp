@@ -29,11 +29,9 @@ int TEST_PARSER() {
         std::cout << "\n{ ==STATEMENTS== }\n\n";
         acc::lexer lexe(R"(
             
-            int x = 4;
-            if(x < 4) {
-               int y = 3;
-            } else {
-                int z = 4; 
+            int y = 5;
+            while(y < 3) {
+               
             };
 
           
