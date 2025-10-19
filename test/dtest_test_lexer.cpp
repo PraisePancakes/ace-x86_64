@@ -37,6 +37,10 @@ TEST_CASE("Lexical Division") {
         <= 
         > 
         >=
+        ==
+        !=
+        $
+        !
 
          
         )",
@@ -46,7 +50,7 @@ TEST_CASE("Lexical Division") {
                     acc::globals::ACC_KW_TYPE_SET);
     auto toks = lexe.lex();
 
-    REQUIRE(toks.size() == 29);
+    REQUIRE(toks.size() == 33);
     CHECK(toks[0].type == acc::GLOBAL_TOKENS::TK_RESERVED);
     CHECK(toks[1].type == acc::GLOBAL_TOKENS::TK_RESERVED);
     CHECK(toks[2].type == acc::GLOBAL_TOKENS::TK_RESERVED);
@@ -76,4 +80,8 @@ TEST_CASE("Lexical Division") {
     CHECK(toks[26].type == acc::GLOBAL_TOKENS::TK_LT_EQ);
     CHECK(toks[27].type == acc::GLOBAL_TOKENS::TK_GT);
     CHECK(toks[28].type == acc::GLOBAL_TOKENS::TK_GT_EQ);
+    CHECK(toks[29].type == acc::GLOBAL_TOKENS::TK_STRICT_EQ);
+    CHECK(toks[30].type == acc::GLOBAL_TOKENS::TK_BANG_EQ);
+    CHECK(toks[31].type == acc::GLOBAL_TOKENS::TK_DOLLA);
+    CHECK(toks[32].type == acc::GLOBAL_TOKENS::TK_BANG);
 }
