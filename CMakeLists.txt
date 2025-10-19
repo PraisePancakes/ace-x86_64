@@ -13,8 +13,6 @@ endforeach()
 add_executable(${PROJECT_NAME} 
     main.cpp 
 )
-add_compile_options(-fsanitize=address,undefined -fsanitize-undefined-trap-on-error)
-add_link_options(-fsanitize=address,undefined -fsanitize-undefined-trap-on-error)
 
 message("INFO :")
 message("  C: '${CMAKE_C_COMPILER}'")
@@ -35,4 +33,35 @@ else()
 endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
+
+
+# ----------------------------
+# Add Doctest test executable
+# ----------------------------
+
+include(FetchContent)
+FetchContent_Declare(
+  doctest
+  GIT_REPOSITORY https://github.com/doctest/doctest.git
+  GIT_TAG        v2.4.11 # or latest stable tag
+)
+FetchContent_MakeAvailable(doctest)
+
+add_executable(testing
+  test/test_main.cpp
+  test/dtest_test_lexer.cpp
+)
+target_link_libraries(testing PRIVATE doctest)
+target_compile_features(testing PUBLIC cxx_std_20)
+
+if(MSVC)
+  target_compile_options(testing PRIVATE /W4 /WX)
+else()
+  target_compile_options(testing PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+# Optional: enable CTest
+enable_testing()
+add_test(NAME test_all COMMAND testing)
+
+
 

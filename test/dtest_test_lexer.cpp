@@ -1,9 +1,9 @@
-#include "../../accx86_64/frontend/statics/ro_accdelims.hpp"
-#include "../../accx86_64/frontend/statics/ro_acckw.hpp"
-#include "../../accx86_64/frontend/statics/ro_accpairdelims.hpp"
-#include "../../accx86_64/frontend/statics/ro_acctypes.hpp"
-#include "../../accx86_64/frontend/statics/tkxmacro.hpp"
 #include "../accx86_64/frontend/acclexer.hpp"
+#include "../accx86_64/frontend/statics/ro_accdelims.hpp"
+#include "../accx86_64/frontend/statics/ro_acckw.hpp"
+#include "../accx86_64/frontend/statics/ro_accpairdelims.hpp"
+#include "../accx86_64/frontend/statics/ro_acctypes.hpp"
+#include "../accx86_64/frontend/statics/tkxmacro.hpp"
 #include "doctest.hpp"
 
 TEST_CASE("Lexical Division") {
@@ -31,7 +31,8 @@ TEST_CASE("Lexical Division") {
         , 
         + 
         - 
-        / 
+        /
+        *
         < 
         <= 
         > 
@@ -45,7 +46,7 @@ TEST_CASE("Lexical Division") {
                     acc::globals::ACC_KW_TYPE_SET);
     auto toks = lexe.lex();
 
-    REQUIRE(toks.size() == 8);
+    REQUIRE(toks.size() == 29);
     CHECK(toks[0].type == acc::GLOBAL_TOKENS::TK_RESERVED);
     CHECK(toks[1].type == acc::GLOBAL_TOKENS::TK_RESERVED);
     CHECK(toks[2].type == acc::GLOBAL_TOKENS::TK_RESERVED);
@@ -63,4 +64,16 @@ TEST_CASE("Lexical Division") {
     CHECK(toks[14].type == acc::GLOBAL_TOKENS::TK_CURL_R);
     CHECK(toks[15].type == acc::GLOBAL_TOKENS::TK_BRACE_L);
     CHECK(toks[16].type == acc::GLOBAL_TOKENS::TK_BRACE_R);
+    CHECK(toks[17].type == acc::GLOBAL_TOKENS::TK_COLON);
+    CHECK(toks[18].type == acc::GLOBAL_TOKENS::TK_SEMI);
+    CHECK(toks[19].type == acc::GLOBAL_TOKENS::TK_IDENTIFIER);
+    CHECK(toks[20].type == acc::GLOBAL_TOKENS::TK_COMMA);
+    CHECK(toks[21].type == acc::GLOBAL_TOKENS::TK_PLUS);
+    CHECK(toks[22].type == acc::GLOBAL_TOKENS::TK_DASH);
+    CHECK(toks[23].type == acc::GLOBAL_TOKENS::TK_SLASH);
+    CHECK(toks[24].type == acc::GLOBAL_TOKENS::TK_STAR);
+    CHECK(toks[25].type == acc::GLOBAL_TOKENS::TK_LT);
+    CHECK(toks[26].type == acc::GLOBAL_TOKENS::TK_LT_EQ);
+    CHECK(toks[27].type == acc::GLOBAL_TOKENS::TK_GT);
+    CHECK(toks[28].type == acc::GLOBAL_TOKENS::TK_GT_EQ);
 }

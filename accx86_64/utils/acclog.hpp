@@ -30,7 +30,7 @@ class logger {
 
     template <typename Out>
     void send(LEVEL level, const std::string& message, Out& out) {
-        auto get_color_stream = [&](LEVEL lvl, std::ostream& os) {
+        auto get_color_stream = [&](LEVEL lvl) {
             switch (lvl) {
                 case LEVEL::INFO:
                     return acc::ansi::foreground_green;
@@ -44,7 +44,7 @@ class logger {
                     return ansi::foreground_grey;
             };
         };
-        out << get_color_stream(level, out) << message << acc::ansi::reset << std::endl;
+        out << get_color_stream(level) << message << acc::ansi::reset << std::endl;
     }
 
     void send(LEVEL level, const std::string& message) {
