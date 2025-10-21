@@ -7,6 +7,7 @@
 #include "../accx86_64/frontend/statics/tkxmacro.hpp"
 #include "../accx86_64/utils/eval.hpp"
 #include "doctest.hpp"
+#define COMPLEX_PARSE_TEST_WITH_ERR true
 
 TEST_CASE("Parser Analysis") {
     SUBCASE("Parse Declaration") {
@@ -59,14 +60,14 @@ TEST_CASE("Parser Analysis") {
         CHECK(!blx->has_const(blx->cv_qual_flags));
         CHECK(acc::interp::expr_eval{}.as<int>(blx->expr.value()) == 4);
     }
-
+#if COMPLEX_PARSE_TEST_WITH_ERR
     SUBCASE("complex ast print ( with errors )") {
         acc::lexer lxr(R"(
                int x : mut = 4;
                x = 5;
 
                int y = 2;
-               y = 1; //assignment to const-qual
+               y = 1; // ERROR : assignment to const-qual
 
                {    
                     int y : mut = 6;
@@ -74,7 +75,7 @@ TEST_CASE("Parser Analysis") {
 
                     {
                         int x = 5;
-                        x = 8;  //assignment to const-qual
+                        x = 8;  //ERROR : assignment to const-qual
                     };
 
                     {
@@ -95,4 +96,39 @@ TEST_CASE("Parser Analysis") {
         auto v = prs.parse();
         prs.print_ast();
     }
+#endif
+#if !COMPLEX_PARSE_TEST_WITH_ERR
+    SUBCASE("complex ast print ( without errors )") {
+        acc::lexer lxr(R"(
+               int x : mut = 4;
+               x = 5;
+
+               int y = 2;
+
+               {    
+                    int y : mut = 6;
+                    y = 8; 
+
+                    {
+                        int x = 5;
+                    };
+
+                    {
+                        int x : mut = 19;
+                        x = 1;
+                    };
+               };
+
+            )",
+                       acc::globals::ACC_DELIMS,
+                       acc::globals::ACC_PAIR_DELIMS,
+                       acc::globals::ACC_KW_SET,
+                       acc::globals::ACC_KW_TYPE_SET);
+
+        auto ts = lxr.lex();
+        acc::acc_parser prs(ts);
+        auto v = prs.parse();
+        prs.print_ast();
+    }
+#endif
 }
