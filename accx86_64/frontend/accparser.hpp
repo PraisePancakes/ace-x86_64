@@ -260,9 +260,31 @@ class [[nodiscard]] acc_parser
         throw acc::parser_error(peek_prev(), " error parsing iteration statement ");
     };
 
+    acc::StmtVariant parse_function_declaration() {
+        acc::node::FuncStmt* func = new acc::node::FuncStmt{
+            .type = peek_prev(),
+            .name = advance(),
+            .params = [this]() -> std::vector<acc::StmtVariant> {
+                std::vector<acc::StmtVariant> ret;
+                while (!match_it(TK_PAREN_R)) {
+                    ret.push_back(new acc::node::DeclarationStmt{.type = peek_prev(),
+                                                                 .name = advance(),
+                                                                 .cv_qual_flags = get_cv_sig(),
+                                                                 .history = {},
+                                                                 .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)
+                                                                              ? std::optional<acc::ExprVariant>(parse_expr())  // default param
+                                                                              : std::optional<acc::ExprVariant>(std::nullopt))});
+                    if (!match_it(TK_COMMA)) throw acc::parser_error(peek(), "missing param seperator ',' ");
+                }
+                return ret;
+            }(),
+            .body = parse_declaration()};
+        return func;
+    }
+
     // either pass token or embedded string
 
-    // int a : const = 2;
+    // int a : mut = 2;
     acc::StmtVariant parse_declaration() {
         // check if the reserved word is a type or any other reserved
         if (peek().type == acc::GLOBAL_TOKENS::TK_RESERVED) {
@@ -274,6 +296,9 @@ class [[nodiscard]] acc_parser
             }
         }
         if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED_TYPE)) {
+            if (peek_next().type == TK_PAREN_L) {
+                return parse_function_declaration();
+            }
             return parse_variable_declaration();
         }
 

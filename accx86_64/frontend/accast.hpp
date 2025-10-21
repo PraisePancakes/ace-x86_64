@@ -16,6 +16,7 @@ struct BinaryExpr;
 struct UnaryExpr;
 struct GroupingExpr;
 struct ComparisonExpr;
+struct CallExpr;
 
 struct IfStmt;
 struct WhileStmt;
@@ -23,6 +24,7 @@ struct BlockStmt;
 struct ForStmt;
 struct DeclarationStmt;
 struct ExpressionStmt;
+struct FuncStmt;
 
 }  // namespace node
 
@@ -38,14 +40,16 @@ struct ExpressionStmt;
 using ExprVariant = std::variant<node::BinaryExpr*,
                                  node::UnaryExpr*,
                                  node::LiteralExpr*,
-                                 node::GroupingExpr*>;
+                                 node::GroupingExpr*,
+                                 node::CallExpr*>;
 
 using StmtVariant = std::variant<node::IfStmt*,
                                  node::WhileStmt*,
                                  node::BlockStmt*,
                                  node::ForStmt*,
                                  node::DeclarationStmt*,
-                                 node::ExpressionStmt*>;
+                                 node::ExpressionStmt*,
+                                 node::FuncStmt*>;
 
 namespace node {
 // struct IfStmt;
@@ -69,6 +73,10 @@ struct UnaryExpr {
 
 struct GroupingExpr {
     ExprVariant expr;
+};
+
+struct CallExpr {
+    std::vector<ExprVariant> args;
 };
 
 struct DeclarationStmt {
@@ -120,6 +128,18 @@ struct ForStmt {
     StmtVariant condition;
     ExprVariant expr;
     StmtVariant body;
+};
+
+/*
+    int f() {};
+    int f1() => 2;
+*/
+
+struct FuncStmt {
+    acc::token type;
+    acc::token name;
+    std::vector<StmtVariant> params; 
+    StmtVariant body;  // arrow or block
 };
 
 }  // namespace node

@@ -81,6 +81,9 @@ class printer {
                            std::cout << "|";
                            print_expression(gexpr->expr);
                        },
+                       [this]([[maybe_unused]] const acc::node::CallExpr* cexpr) {
+
+                       },
                    },
                    expr);
         m_depth--;
@@ -150,6 +153,19 @@ class printer {
                            print_expression(cxpr->expr);
                            print_yellow("BODY :");
                            print_statement(cxpr->body);
+                       },
+                       [this](const acc::node::FuncStmt* fstmt) {
+                           print_green("( FUNC )");
+                           std::cout << acc::ansi::foreground_yellow << "TYPE : " << acc::ansi::reset << std::endl;
+                           fstmt->type.print_token();
+                           std::cout << acc::ansi::foreground_yellow << "NAME : " << acc::ansi::reset << std::endl;
+                           fstmt->name.print_token();
+                           std::cout << acc::ansi::foreground_yellow << "PARAMS : " << acc::ansi::reset << std::endl;
+                           for (auto& p : fstmt->params) {
+                               print_statement(p);
+                           };
+                           print_yellow("BODY :");
+                           print_statement(fstmt->body);
                        }},
                    stmt);
         m_depth--;

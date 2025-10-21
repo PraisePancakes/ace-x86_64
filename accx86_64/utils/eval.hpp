@@ -28,7 +28,7 @@ class expr_eval {
                                                                     return a * b;
                                                                 case GLOBAL_TOKENS::TK_SLASH:
                                                                     return a / b;
-                                                            
+
                                                                 case TK_LT:
                                                                     return (a < b);
                                                                 case TK_GT:
@@ -59,6 +59,9 @@ class expr_eval {
                                   acc::token::value_type expr = evaluate(gxpr->expr);
                                   return to_literal(expr);
                               },
+                              [&]([[maybe_unused]] acc::node::CallExpr* cxpr) -> acc::token::value_type {
+                                  return {};
+                              },
                           },
                           exp);
     };
@@ -69,6 +72,11 @@ class expr_eval {
     template <typename T>
     T as(acc::StmtVariant expr) {
         return std::get<T>(evaluate(std::get<acc::node::ExpressionStmt*>(expr)->expr));
+    }
+
+    template <typename T>
+    T as(acc::ExprVariant expr) {
+        return std::get<T>(evaluate(expr));
     }
     ~expr_eval() {};
 };
