@@ -93,6 +93,7 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     token lex_it() {
         if (is_delim(this->peek())) {
             // NOTE:  potential pitfall if pair delimeter cannot be separated into two single delims.
+
             if (is_pair_delim(this->peek(), this->peek_next())) {
                 advance();
                 advance();
@@ -116,6 +117,26 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
         return lex_identifier();
     };
     std::unordered_set<std::string> m_types;
+    void skip_comments() {
+        if (this->peek() == '/') {
+            if (this->peek_next() == '/') {
+                advance();
+                advance();
+                while (!this->is_end() && this->peek() != '\n') {
+                    advance();
+                }
+            } else if (this->peek_next() == '*') {
+                advance();
+                advance();
+                while (!this->is_end() && this->peek() != '*' && this->peek_next() != '/') {
+                    advance();
+                }
+                advance();
+                advance();
+            }
+            this->m_start = this->m_end;
+        }
+    }
 
    public:
     lexer() {};
@@ -134,6 +155,7 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     std::vector<token> lex() {
         std::vector<token> ret{};
         while (!this->is_end()) {
+            skip_comments();
             m_x++;
             if (this->peek() == '\n') {
                 m_x = 0;

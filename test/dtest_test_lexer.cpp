@@ -85,3 +85,22 @@ TEST_CASE("Lexical Division") {
     CHECK(toks[31].type == acc::GLOBAL_TOKENS::TK_DOLLA);
     CHECK(toks[32].type == acc::GLOBAL_TOKENS::TK_BANG);
 }
+
+TEST_CASE("Skip Comments") {
+    acc::lexer lexe(R"(
+            int x = 3; //5
+            // this is a comment that should get skipped
+            /*
+                same with this
+            */
+
+            /* and this */
+            int y = 5; //5
+        )", 
+                    acc::globals::ACC_DELIMS,
+                    acc::globals::ACC_PAIR_DELIMS,
+                    acc::globals::ACC_KW_SET,
+                    acc::globals::ACC_KW_TYPE_SET);
+    auto toks = lexe.lex();
+    REQUIRE(toks.size() == 10);
+}

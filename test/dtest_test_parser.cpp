@@ -59,4 +59,40 @@ TEST_CASE("Parser Analysis") {
         CHECK(!blx->has_const(blx->cv_qual_flags));
         CHECK(acc::interp::expr_eval{}.as<int>(blx->expr.value()) == 4);
     }
+
+    SUBCASE("complex ast print ( with errors )") {
+        acc::lexer lxr(R"(
+               int x : mut = 4;
+               x = 5;
+
+               int y = 2;
+               y = 1; //assignment to const-qual
+
+               {    
+                    int y : mut = 6;
+                    y = 8; 
+
+                    {
+                        int x = 5;
+                        x = 8;  //assignment to const-qual
+                    };
+
+                    {
+                        int x : mut = 19;
+                        x = 1;
+                    };
+               };
+
+
+            )",
+                       acc::globals::ACC_DELIMS,
+                       acc::globals::ACC_PAIR_DELIMS,
+                       acc::globals::ACC_KW_SET,
+                       acc::globals::ACC_KW_TYPE_SET);
+
+        auto ts = lxr.lex();
+        acc::acc_parser prs(ts);
+        auto v = prs.parse();
+        prs.print_ast();
+    }
 }
