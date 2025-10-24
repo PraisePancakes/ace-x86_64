@@ -204,7 +204,9 @@ class [[nodiscard]] acc_parser
 
         m_env->set(decl->name.word, decl);
         if (auto* ptr = m_env->resolve(decl->name.word)) {
-            ptr->get(decl->name.word)->history.push_back(decl->expr.value());
+            if (decl->expr.has_value()) {
+                ptr->get(decl->name.word)->history.push_back(decl->expr.value());
+            }
         }
         /* DEBUG INFO */
 
@@ -266,19 +268,17 @@ class [[nodiscard]] acc_parser
             .name = advance(),
             .params = [this]() -> std::vector<acc::StmtVariant> {
                 std::vector<acc::StmtVariant> ret;
-                while (!match_it(TK_PAREN_R)) {
-                    ret.push_back(new acc::node::DeclarationStmt{.type = peek_prev(),
-                                                                 .name = advance(),
-                                                                 .cv_qual_flags = get_cv_sig(),
-                                                                 .history = {},
-                                                                 .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)
-                                                                              ? std::optional<acc::ExprVariant>(parse_expr())  // default param
-                                                                              : std::optional<acc::ExprVariant>(std::nullopt))});
-                    if (!match_it(TK_COMMA)) throw acc::parser_error(peek(), "missing param seperator ',' ");
+                if (match_it(TK_PAREN_L)) {
+                    while (!match_it(TK_PAREN_R)) {
+                        DISCARD(advance());
+                        ret.push_back(parse_variable_declaration());
+                        if (!match_it(TK_COMMA) && peek().type != TK_PAREN_R) throw acc::parser_error(peek(), "missing param seperator ',' ");
+                    }
                 }
                 return ret;
             }(),
             .body = parse_declaration()};
+
         return func;
     }
 

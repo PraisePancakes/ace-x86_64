@@ -12,9 +12,11 @@
 #include "accx86_64/frontend/accparser.hpp"
 #include "accx86_64/utils/acclog.hpp"
 
-
-
 // int x : mut = 4;
+int f(int x, int y) {
+    x = 4;
+    return x;
+};
 
 auto main(int argc, char** argv) -> int {
     // if (argc <= 1) {

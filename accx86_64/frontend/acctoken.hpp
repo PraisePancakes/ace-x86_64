@@ -2,8 +2,8 @@
 #include <iostream>
 #include <variant>
 
-#include "statics/tkxmacro.hpp"
 #include "../utils/visitor.hpp"
+#include "statics/tkxmacro.hpp"
 namespace acc {
 
 struct [[nodiscard]] token {

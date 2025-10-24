@@ -20,6 +20,7 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     std::unordered_set<GLOBAL_TOKENS> m_delims;
     std::unordered_map<std::string, acc::GLOBAL_TOKENS> m_pair_delims;
     std::unordered_set<std::string> m_reserved;
+    std::unordered_set<std::string> m_types;
 
     [[nodiscard]] bool is_reserved(std::string keyword) const noexcept {
         return m_reserved.find(keyword) != m_reserved.end();
@@ -116,7 +117,6 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
         }
         return lex_identifier();
     };
-    std::unordered_set<std::string> m_types;
     void skip_comments() {
         if (this->peek() == '/') {
             if (this->peek_next() == '/') {
