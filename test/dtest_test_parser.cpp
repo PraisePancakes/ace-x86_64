@@ -135,8 +135,8 @@ TEST_CASE("Parser Analysis") {
 
     SUBCASE("functions") {
         acc::lexer lxr(R"(
-            int f(int x : mut, int y) {
-                x = 4;
+            int f(int x : mut = 3, int y) {
+                int y = x + 4;
             };
 
             )",

@@ -24,6 +24,7 @@ namespace acc {
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
     acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* m_env;
+    bool in_params = false;
 
     template <traits::acc_matchable T>
     [[nodiscard]] bool check_it(T&& val) const noexcept {
@@ -75,6 +76,7 @@ class [[nodiscard]] acc_parser
         };
 
         if (match_it(TK_PAREN_L)) {
+            in_params = false;
             auto expr = parse_expr();
             if (!match_it(TK_PAREN_R)) throw acc::parser_error(this->peek(), "missing ')'");
             return new acc::node::GroupingExpr{.expr = expr};
@@ -121,11 +123,13 @@ class [[nodiscard]] acc_parser
 
     bool is_binary_op(acc::token tok) {
         switch (tok.type) {
+            case TK_COMMA: {
+                return (in_params ? false : true);
+            }
             case TK_PLUS:
             case TK_DASH:
             case TK_SLASH:
             case TK_STAR:
-            case TK_COMMA:
             case TK_LT:
             case TK_GT:
             case TK_LT_EQ:
@@ -269,6 +273,7 @@ class [[nodiscard]] acc_parser
             .params = [this]() -> std::vector<acc::StmtVariant> {
                 std::vector<acc::StmtVariant> ret;
                 if (match_it(TK_PAREN_L)) {
+                    in_params = true;
                     while (!match_it(TK_PAREN_R)) {
                         DISCARD(advance());
                         ret.push_back(parse_variable_declaration());
