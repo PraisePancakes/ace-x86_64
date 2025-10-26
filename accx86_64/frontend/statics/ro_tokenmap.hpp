@@ -70,4 +70,30 @@ const static std::unordered_map<std::variant<std::string, char>, std::uint64_t> 
     {"for", ((acc::GLOBAL_TOKENS::TK_RESERVED << TOKEN_TYPE_SHIFTER) | FLAG_RESERVED)},
     {"volatile", ((acc::GLOBAL_TOKENS::TK_RESERVED << TOKEN_TYPE_SHIFTER) | FLAG_RESERVED)}};
 
+struct lexeme_inspector {
+    [[nodiscard]] static acc::GLOBAL_TOKENS to_type(std::variant<std::string, char> key) {
+        return acc::GLOBAL_TOKENS(token_map.find(key)->second >> TOKEN_TYPE_SHIFTER);
+    };
+
+    [[nodiscard]] static bool is_reserved(std::string keyword) noexcept {
+        if (token_map.find(keyword) == token_map.end()) return false;
+        return ((token_map.find(keyword)->second & acc::globals::token_flags_::FLAG_RESERVED) == acc::globals::token_flags_::FLAG_RESERVED);
+    }
+
+    [[nodiscard]] static bool is_type(std::string type) noexcept {
+        if (token_map.find(type) == token_map.end()) return false;
+        return ((token_map.find(type)->second & acc::globals::token_flags_::FLAG_RESERVED_TYPE) == acc::globals::token_flags_::FLAG_RESERVED_TYPE);
+    }
+
+    [[nodiscard]] static bool is_pair_delim(const char unit1, const char unit2) noexcept {
+        if (token_map.find(std::string({unit1, unit2})) == token_map.end()) return false;
+        return ((token_map.find(std::string({unit1, unit2}))->second & acc::globals::token_flags_::FLAG_DELIM_PAIR) == acc::globals::token_flags_::FLAG_DELIM_PAIR);
+    }
+
+    [[nodiscard]] static bool is_delim(const char unit) noexcept {
+        if (token_map.find(unit) == token_map.end()) return false;
+        return (((token_map.find(unit))->second & acc::globals::token_flags_::FLAG_DELIM) == acc::globals::token_flags_::FLAG_DELIM);
+    }
+};
+
 }  // namespace acc::globals
