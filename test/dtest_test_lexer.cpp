@@ -1,8 +1,5 @@
 #include "../accx86_64/frontend/acclexer.hpp"
-#include "../accx86_64/frontend/statics/ro_accdelims.hpp"
-#include "../accx86_64/frontend/statics/ro_acckw.hpp"
-#include "../accx86_64/frontend/statics/ro_accpairdelims.hpp"
-#include "../accx86_64/frontend/statics/ro_acctypes.hpp"
+#include "../accx86_64/frontend/statics/ro_tokenmap.hpp"
 #include "../accx86_64/frontend/statics/tkxmacro.hpp"
 #include "doctest.hpp"
 
@@ -44,10 +41,8 @@ TEST_CASE("Lexical Division") {
 
          
         )",
-                    acc::globals::ACC_DELIMS,
-                    acc::globals::ACC_PAIR_DELIMS,
-                    acc::globals::ACC_KW_SET,
-                    acc::globals::ACC_KW_TYPE_SET);
+                    acc::globals::token_map);
+
     auto toks = lexe.lex();
 
     REQUIRE(toks.size() == 33);
@@ -96,11 +91,8 @@ TEST_CASE("Skip Comments") {
 
             /* and this */
             int y = 5; //5
-        )", 
-                    acc::globals::ACC_DELIMS,
-                    acc::globals::ACC_PAIR_DELIMS,
-                    acc::globals::ACC_KW_SET,
-                    acc::globals::ACC_KW_TYPE_SET);
+        )",
+                    acc::globals::token_map);
     auto toks = lexe.lex();
     REQUIRE(toks.size() == 10);
 }

@@ -1,9 +1,5 @@
 #include "../accx86_64/frontend/acclexer.hpp"
 #include "../accx86_64/frontend/accparser.hpp"
-#include "../accx86_64/frontend/statics/ro_accdelims.hpp"
-#include "../accx86_64/frontend/statics/ro_acckw.hpp"
-#include "../accx86_64/frontend/statics/ro_accpairdelims.hpp"
-#include "../accx86_64/frontend/statics/ro_acctypes.hpp"
 #include "../accx86_64/frontend/statics/tkxmacro.hpp"
 #include "../accx86_64/utils/eval.hpp"
 #include "doctest.hpp"
@@ -13,10 +9,7 @@ TEST_CASE("Parser Analysis") {
         acc::lexer lxr(R"(
                 int x : mut = 4;
             )",
-                       acc::globals::ACC_DELIMS,
-                       acc::globals::ACC_PAIR_DELIMS,
-                       acc::globals::ACC_KW_SET,
-                       acc::globals::ACC_KW_TYPE_SET);
+                       acc::globals::token_map);
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
@@ -37,10 +30,7 @@ TEST_CASE("Parser Analysis") {
                     int x : mut = 4;
                 };
             )",
-                       acc::globals::ACC_DELIMS,
-                       acc::globals::ACC_PAIR_DELIMS,
-                       acc::globals::ACC_KW_SET,
-                       acc::globals::ACC_KW_TYPE_SET);
+                       acc::globals::token_map);
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
@@ -87,10 +77,7 @@ TEST_CASE("Parser Analysis") {
 
 
             )",
-                       acc::globals::ACC_DELIMS,
-                       acc::globals::ACC_PAIR_DELIMS,
-                       acc::globals::ACC_KW_SET,
-                       acc::globals::ACC_KW_TYPE_SET);
+                       acc::globals::token_map);
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
@@ -121,10 +108,7 @@ TEST_CASE("Parser Analysis") {
                };
 
             )",
-                       acc::globals::ACC_DELIMS,
-                       acc::globals::ACC_PAIR_DELIMS,
-                       acc::globals::ACC_KW_SET,
-                       acc::globals::ACC_KW_TYPE_SET);
+                       acc::globals::token_map);
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
@@ -140,10 +124,7 @@ TEST_CASE("Parser Analysis") {
             };
 
             )",
-                       acc::globals::ACC_DELIMS,
-                       acc::globals::ACC_PAIR_DELIMS,
-                       acc::globals::ACC_KW_SET,
-                       acc::globals::ACC_KW_TYPE_SET);
+                       acc::globals::token_map);
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);

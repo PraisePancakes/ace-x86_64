@@ -1,3 +1,4 @@
+#include <array>
 #include <bitset>
 #include <cstdint>
 #include <expected>
@@ -9,7 +10,7 @@
 #include <variant>
 
 #include "accx86_64/cli/acccli.hpp"
-#include "accx86_64/frontend/accparser.hpp"
+#include "accx86_64/frontend/acclexer.hpp"
 #include "accx86_64/utils/acclog.hpp"
 
 // int x : mut = 4;
