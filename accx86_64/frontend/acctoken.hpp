@@ -26,7 +26,7 @@ struct [[nodiscard]] token {
         }
     }
 
-    constexpr static inline const char* to_stringized(token_type_t type) noexcept {
+    constexpr static const char* to_stringized(token_type_t type) noexcept {
         switch (type) {
 #define TOKEN_DEF(NAME, VALUE) \
     case NAME:                 \

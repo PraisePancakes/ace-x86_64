@@ -51,6 +51,7 @@ add_executable(testing
   test/test_main.cpp
   test/dtest_test_lexer.cpp
   test/dtest_test_parser.cpp
+  test/dtest_test_token.cpp
 )
 target_link_libraries(testing PRIVATE doctest)
 target_compile_features(testing PUBLIC cxx_std_20)

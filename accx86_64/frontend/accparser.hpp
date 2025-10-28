@@ -266,7 +266,7 @@ class [[nodiscard]] acc_parser
     };
 
     acc::StmtVariant parse_function_declaration() {
-        acc::node::FuncStmt* func = new acc::node::FuncStmt{
+        return new acc::node::FuncStmt{
             .type = peek_prev(),
             .name = advance(),
             .params = [this]() -> std::vector<acc::StmtVariant> {
@@ -276,14 +276,13 @@ class [[nodiscard]] acc_parser
                     while (!match_it(TK_PAREN_R)) {
                         DISCARD(advance());
                         ret.push_back(parse_variable_declaration());
-                        if (!match_it(TK_COMMA) && peek().type != TK_PAREN_R) throw acc::parser_error(peek(), "missing param seperator ',' ");
+                        if (!match_it(TK_COMMA) && peek().type != TK_PAREN_R)
+                            throw acc::parser_error(peek(), "missing param seperator ',' ");
                     }
                 }
                 return ret;
             }(),
             .body = parse_declaration()};
-
-        return func;
     }
 
     // either pass token or embedded string
