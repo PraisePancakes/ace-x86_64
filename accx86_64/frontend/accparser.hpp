@@ -93,6 +93,11 @@ class [[nodiscard]] acc_parser
         return parse_primary();
     };
 
+    acc::ExprVariant parse_variable() {
+        const auto id_tok = this->peek_prev();
+        return new acc::node::VariableExpr{.name = id_tok};
+    };
+
     acc::ExprVariant parse_id_expression() {
         while (match_it(acc::GLOBAL_TOKENS::TK_IDENTIFIER)) {
             const auto id_tok = this->peek_prev();
@@ -114,7 +119,7 @@ class [[nodiscard]] acc_parser
 
             if (m_env->get(peek_prev().word)->expr.has_value())
                 return m_env->get(peek_prev().word)->expr.value();
-            throw acc::parser_error(this->peek_prev(), "unknown unqualified-id at ");
+            return parse_variable();
         }
 
         return parse_unary();
@@ -215,7 +220,16 @@ class [[nodiscard]] acc_parser
 
         return decl;
     }
+    acc::StmtVariant
+    parse_block(acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* bounded) {
+        acc::node::BlockStmt* block = new acc::node::BlockStmt{.stmts = parse(bounded)};
+        if (!match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
+            throw acc::parser_error(this->peek_prev(), " open block without closing '}' with ");
+        }
 
+        m_env = bounded->get_parent();
+        return block;
+    };
     acc::StmtVariant
     parse_block() {
         acc::node::BlockStmt* block = new acc::node::BlockStmt{.stmts = parse()};
@@ -264,8 +278,15 @@ class [[nodiscard]] acc_parser
         }
         throw acc::parser_error(peek_prev(), " error parsing iteration statement ");
     };
+    /*
+        int f(int x, int y) {
+    x = 4;
+            return x;
+        };
 
+    */
     acc::StmtVariant parse_function_declaration() {
+        auto* this_func_env = create_environment();
         return new acc::node::FuncStmt{
             .type = peek_prev(),
             .name = advance(),
@@ -282,7 +303,12 @@ class [[nodiscard]] acc_parser
                 }
                 return ret;
             }(),
-            .body = parse_declaration()};
+            .body = [this, &this_func_env]() -> acc::StmtVariant {
+                if (match_it(TK_CURL_L)) {
+                    return parse_block(this_func_env);
+                }
+                throw acc::parser_error(peek(), " missing function definition ");
+            }()};
     }
 
     // either pass token or embedded string
@@ -351,14 +377,32 @@ class [[nodiscard]] acc_parser
         DISCARD(advance());
     };
 
-    std::vector<acc::StmtVariant> parse() {
+    acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* create_environment() {
         auto* new_env = new acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>();
         new_env->set_parent(m_env);
         m_env = new_env;
+        return new_env;
+    };
+
+    std::vector<acc::StmtVariant> parse(acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* bounded) {
+        while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
+            try {
+                bounded->get_items().push_back(parse_stmt());
+            } catch (acc::parser_error const& err) {
+                report_error(err);
+                panic();
+            };
+        };
+
+        return bounded->get_items();
+    };
+
+    std::vector<acc::StmtVariant> parse() {
+        auto* new_env = create_environment();
 
         while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
             try {
-                m_env->get_items().push_back(parse_stmt());
+                new_env->get_items().push_back(parse_stmt());
             } catch (acc::parser_error const& err) {
                 report_error(err);
                 panic();

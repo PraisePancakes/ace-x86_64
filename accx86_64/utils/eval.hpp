@@ -59,12 +59,15 @@ class expr_eval {
                                   acc::token::value_type expr = evaluate(gxpr->expr);
                                   return to_literal(expr);
                               },
+                              [&]([[maybe_unused]] acc::node::VariableExpr* vexpr) -> acc::token::value_type {
+                                  return {};
+                              },
                               [&]([[maybe_unused]] acc::node::CallExpr* cxpr) -> acc::token::value_type {
                                   return {};
                               },
                           },
                           exp);
-    };
+    };  // namespace acc::interp
 
    public:
     expr_eval() {};

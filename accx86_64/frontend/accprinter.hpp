@@ -81,6 +81,12 @@ class printer {
                            std::cout << "|";
                            print_expression(gexpr->expr);
                        },
+                       [this](const acc::node::VariableExpr* vexpr) {
+                           print_green(" [ VARIABLE ] ");
+                           print_depth(m_depth, ' ');
+
+                           print_yellow(vexpr->name.word);
+                       },
                        [this]([[maybe_unused]] const acc::node::CallExpr* cexpr) {
 
                        },

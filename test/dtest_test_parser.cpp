@@ -50,7 +50,7 @@ TEST_CASE("Parser Analysis") {
         CHECK(acc::interp::expr_eval{}.as<int>(blx->expr.value()) == 4);
     }
 
-#define COMPLEX_PARSE_TEST_WITH_ERR true
+#define COMPLEX_PARSE_TEST_WITH_ERR false
 #if COMPLEX_PARSE_TEST_WITH_ERR
     SUBCASE("complex ast print ( with errors )") {
         acc::lexer lxr(R"(
@@ -117,9 +117,11 @@ TEST_CASE("Parser Analysis") {
     }
 #endif
 
-    SUBCASE("functions") {
+    // ./testing -tc=*Parser* -sc=*functions*-definition-w-default* --no-capture
+    SUBCASE("functions-definition-w-default") {
         acc::lexer lxr(R"(
-            int f(int x : mut = 3, int y) {
+
+            int f(int x : mut = 3, int y : mut = 2) {
                 int y = x + 4;
             };
 
@@ -129,6 +131,40 @@ TEST_CASE("Parser Analysis") {
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
+        auto* fstmt = std::get<acc::node::FuncStmt*>(v[0]);
         prs.print_ast();
+        REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
+        REQUIRE(fstmt->type.word == "int");
+        REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
+            auto p1 = std::get<acc::node::DeclarationStmt*>(stmt->params[0]);
+            bool has_const = p1->has_const(p1->cv_qual_flags);
+            return !has_const;
+        }());
+    }
+    // ./testing -tc=*Parser* -sc=*functions*-definition-wo-default* --no-capture
+    SUBCASE("functions-definition-wo-default") {
+        acc::lexer lxr(R"(
+                int z = 4;
+                int x = 2;
+                int f(int x : mut, int y) {
+                    int z = x + y;
+                };
+            )",
+                       acc::globals::token_map);
+
+        auto ts = lxr.lex();
+        acc::acc_parser prs(ts);
+        auto v = prs.parse();
+        prs.print_ast();
+        if (v.size() > 0) {
+            auto* fstmt = std::get<acc::node::FuncStmt*>(v[2]);
+            REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
+            REQUIRE(fstmt->type.word == "int");
+            REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
+                auto p1 = std::get<acc::node::DeclarationStmt*>(stmt->params[0]);
+                bool has_const = p1->has_const(p1->cv_qual_flags);
+                return !has_const;
+            }());
+        }
     }
 }

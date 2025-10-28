@@ -17,6 +17,7 @@ struct UnaryExpr;
 struct GroupingExpr;
 struct ComparisonExpr;
 struct CallExpr;
+struct VariableExpr;
 
 struct IfStmt;
 struct WhileStmt;
@@ -41,7 +42,8 @@ using ExprVariant = std::variant<node::BinaryExpr*,
                                  node::UnaryExpr*,
                                  node::LiteralExpr*,
                                  node::GroupingExpr*,
-                                 node::CallExpr*>;
+                                 node::CallExpr*,
+                                 node::VariableExpr*>;
 
 using StmtVariant = std::variant<node::IfStmt*,
                                  node::WhileStmt*,
@@ -77,6 +79,10 @@ struct GroupingExpr {
 
 struct CallExpr {
     std::vector<ExprVariant> args;
+};
+
+struct VariableExpr {
+    acc::token name;
 };
 
 struct DeclarationStmt {
@@ -138,7 +144,7 @@ struct ForStmt {
 struct FuncStmt {
     acc::token type;
     acc::token name;
-    std::vector<StmtVariant> params; 
+    std::vector<StmtVariant> params;
     StmtVariant body;  // arrow or block
 };
 

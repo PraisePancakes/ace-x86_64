@@ -132,7 +132,6 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
           };
 
     std::vector<token> lex() {
-        std::cout << "IN LEX\n";
         std::vector<token> ret{};
         while (!this->is_end()) {
             skip_comments();
