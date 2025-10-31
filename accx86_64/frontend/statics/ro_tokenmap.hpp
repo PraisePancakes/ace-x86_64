@@ -7,13 +7,14 @@
 #include "tkxmacro.hpp"
 
 namespace acc::globals {
-constexpr std::uint64_t TOKEN_TYPE_SHIFTER = 4;
+constexpr std::uint8_t TOKEN_TYPE_SHIFTER = 5;
 
-enum token_flags_ : std::uint64_t {
+enum token_flags_ : std::uint8_t {
     FLAG_DELIM = 1 << 0,
     FLAG_RESERVED = 1 << 1,
     FLAG_RESERVED_TYPE = 1 << 2,
-    FLAG_DELIM_PAIR = 1 << 3
+    FLAG_DELIM_PAIR = 1 << 3,
+    FLAG_BINARY_OP = 1 << 4
 };
 
 const static std::unordered_map<std::variant<std::string, char>, std::uint64_t> token_map{
@@ -28,23 +29,23 @@ const static std::unordered_map<std::variant<std::string, char>, std::uint64_t> 
     {'{', ((acc::GLOBAL_TOKENS::TK_CURL_L << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
     {'}', ((acc::GLOBAL_TOKENS::TK_CURL_R << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
     {'\'', ((acc::GLOBAL_TOKENS::TK_QUOTE_SINGLE << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
-    {'+', ((acc::GLOBAL_TOKENS::TK_PLUS << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
-    {'*', ((acc::GLOBAL_TOKENS::TK_STAR << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
-    {'/', ((acc::GLOBAL_TOKENS::TK_SLASH << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
-    {'-', ((acc::GLOBAL_TOKENS::TK_DASH << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
+    {'+', ((acc::GLOBAL_TOKENS::TK_PLUS << TOKEN_TYPE_SHIFTER) | FLAG_DELIM | FLAG_BINARY_OP)},
+    {'*', ((acc::GLOBAL_TOKENS::TK_STAR << TOKEN_TYPE_SHIFTER) | FLAG_DELIM | FLAG_BINARY_OP)},
+    {'/', ((acc::GLOBAL_TOKENS::TK_SLASH << TOKEN_TYPE_SHIFTER) | FLAG_DELIM | FLAG_BINARY_OP)},
+    {'-', ((acc::GLOBAL_TOKENS::TK_DASH << TOKEN_TYPE_SHIFTER) | FLAG_DELIM | FLAG_BINARY_OP)},
     {'.', ((acc::GLOBAL_TOKENS::TK_DOT << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
     {'!', ((acc::GLOBAL_TOKENS::TK_BANG << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
-    {'=', ((acc::GLOBAL_TOKENS::TK_EQUALS << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
+    {'=', ((acc::GLOBAL_TOKENS::TK_EQUALS << TOKEN_TYPE_SHIFTER) | FLAG_DELIM | FLAG_BINARY_OP)},
     {' ', ((acc::GLOBAL_TOKENS::TK_SPACE << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
-    {'<', ((acc::GLOBAL_TOKENS::TK_LT << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
-    {'>', ((acc::GLOBAL_TOKENS::TK_GT << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
+    {'<', ((acc::GLOBAL_TOKENS::TK_LT << TOKEN_TYPE_SHIFTER) | FLAG_DELIM | FLAG_BINARY_OP)},
+    {'>', ((acc::GLOBAL_TOKENS::TK_GT << TOKEN_TYPE_SHIFTER) | FLAG_DELIM | FLAG_BINARY_OP)},
     {';', ((acc::GLOBAL_TOKENS::TK_SEMI << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
     {'\n', ((acc::GLOBAL_TOKENS::TK_NEWLINE << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
 
-    {"!=", ((acc::GLOBAL_TOKENS::TK_BANG_EQ << TOKEN_TYPE_SHIFTER) | FLAG_DELIM_PAIR)},
-    {"==", ((acc::GLOBAL_TOKENS::TK_STRICT_EQ << TOKEN_TYPE_SHIFTER) | FLAG_DELIM_PAIR)},
-    {">=", ((acc::GLOBAL_TOKENS::TK_GT_EQ << TOKEN_TYPE_SHIFTER) | FLAG_DELIM_PAIR)},
-    {"<=", ((acc::GLOBAL_TOKENS::TK_LT_EQ << TOKEN_TYPE_SHIFTER) | FLAG_DELIM_PAIR)},
+    {"!=", ((acc::GLOBAL_TOKENS::TK_BANG_EQ << TOKEN_TYPE_SHIFTER) | FLAG_DELIM_PAIR | FLAG_BINARY_OP)},
+    {"==", ((acc::GLOBAL_TOKENS::TK_STRICT_EQ << TOKEN_TYPE_SHIFTER) | FLAG_DELIM_PAIR | FLAG_BINARY_OP)},
+    {">=", ((acc::GLOBAL_TOKENS::TK_GT_EQ << TOKEN_TYPE_SHIFTER) | FLAG_DELIM_PAIR | FLAG_BINARY_OP)},
+    {"<=", ((acc::GLOBAL_TOKENS::TK_LT_EQ << TOKEN_TYPE_SHIFTER) | FLAG_DELIM_PAIR | FLAG_BINARY_OP)},
 
     {(char)0xFAull, ((acc::GLOBAL_TOKENS::TK_LITERAL_DOUBLE << TOKEN_TYPE_SHIFTER))},
     {(char)0xFBull, ((acc::GLOBAL_TOKENS::TK_LITERAL_STRING << TOKEN_TYPE_SHIFTER))},
@@ -93,6 +94,21 @@ struct lexeme_inspector {
     [[nodiscard]] static bool is_delim(const char unit) noexcept {
         if (token_map.find(unit) == token_map.end()) return false;
         return (((token_map.find(unit))->second & acc::globals::token_flags_::FLAG_DELIM) == acc::globals::token_flags_::FLAG_DELIM);
+    }
+
+    [[nodiscard]] static bool is_binary_op(const char unit) noexcept {
+        if (token_map.find(unit) == token_map.end()) return false;
+        return (((token_map.find(unit))->second & acc::globals::token_flags_::FLAG_BINARY_OP) == acc::globals::token_flags_::FLAG_BINARY_OP);
+    }
+
+    [[nodiscard]] static bool is_binary_op(const std::string& binop) {
+        if (token_map.find(binop) == token_map.end()) return false;
+        return (((token_map.find(binop))->second & acc::globals::token_flags_::FLAG_BINARY_OP) == acc::globals::token_flags_::FLAG_BINARY_OP);
+    }
+
+    [[nodiscard]] static bool is_binary_op(const acc::token token) {
+        if (token.word.size() <= 1) return is_binary_op(token.word[0]);
+        return is_binary_op(token.word);
     }
 };
 

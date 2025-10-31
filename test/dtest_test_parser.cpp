@@ -122,7 +122,8 @@ TEST_CASE("Parser Analysis") {
         acc::lexer lxr(R"(
 
             int f(int x : mut = 3, int y : mut = 2) {
-                int y = x + 4;
+                int z = x + 4;
+                int h = x + y;
             };
 
             )",
@@ -146,8 +147,9 @@ TEST_CASE("Parser Analysis") {
         acc::lexer lxr(R"(
                 int z = 4;
                 int x = 2;
-                int f(int x : mut, int y) {
+                int h(int x : mut, int y) {
                     int z = x + y;
+                     
                 };
             )",
                        acc::globals::token_map);

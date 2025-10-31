@@ -126,28 +126,14 @@ class [[nodiscard]] acc_parser
     }
 
     bool is_binary_op(acc::token tok) {
-        switch (tok.type) {
-            case TK_COMMA: {
-                return (in_params ? false : true);
-            }
-            case TK_PLUS:
-            case TK_DASH:
-            case TK_SLASH:
-            case TK_STAR:
-            case TK_LT:
-            case TK_GT:
-            case TK_LT_EQ:
-            case TK_GT_EQ:
-            case TK_EQUALS:
-                return true;
-            default:
-                return false;
+        if (tok.type == TK_COMMA) {
+            return (in_params ? false : true);
         }
+        return acc::globals::lexeme_inspector::is_binary_op(tok);
     }
     // 1  *  2 + 3
     acc::ExprVariant parse_expr_prec(std::size_t min_prec) {
         auto lhs_atom = parse_id_expression();
-
         while (true) {
             auto op = peek();
 
@@ -388,6 +374,7 @@ class [[nodiscard]] acc_parser
         while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
             try {
                 bounded->get_items().push_back(parse_stmt());
+
             } catch (acc::parser_error const& err) {
                 report_error(err);
                 panic();
