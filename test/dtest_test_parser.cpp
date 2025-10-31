@@ -120,7 +120,6 @@ TEST_CASE("Parser Analysis") {
     // ./testing -tc=*Parser* -sc=*functions*-definition-w-default* --no-capture
     SUBCASE("functions-definition-w-default") {
         acc::lexer lxr(R"(
-
             int f(int x : mut = 3, int y : mut = 2) {
                 int z = x + 4;
                 int h = x + y;

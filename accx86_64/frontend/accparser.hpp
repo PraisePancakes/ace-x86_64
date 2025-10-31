@@ -125,19 +125,13 @@ class [[nodiscard]] acc_parser
         return parse_unary();
     }
 
-    bool is_binary_op(acc::token tok) {
-        if (tok.type == TK_COMMA) {
-            return (in_params ? false : true);
-        }
-        return acc::globals::lexeme_inspector::is_binary_op(tok);
-    }
     // 1  *  2 + 3
     acc::ExprVariant parse_expr_prec(std::size_t min_prec) {
         auto lhs_atom = parse_id_expression();
         while (true) {
             auto op = peek();
 
-            if (!is_binary_op(op) || globals::prec_map.at(op.type) < min_prec) {
+            if (!acc::globals::lexeme_inspector::is_binary_op(op, in_params) || globals::prec_map.at(op.type) < min_prec) {
                 break;
             }
 
@@ -398,6 +392,7 @@ class [[nodiscard]] acc_parser
 
         return new_env->get_items();
     };
+
     acc_parser(const acc_parser&) = delete;
     acc_parser& operator=(const acc_parser&) = delete;
     acc_parser(acc_parser&&) = default;

@@ -21,7 +21,7 @@ const static std::unordered_map<std::variant<std::string, char>, std::uint64_t> 
     {'\"', ((acc::GLOBAL_TOKENS::TK_QUOTE_DOUBLE << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
     {'(', ((acc::GLOBAL_TOKENS::TK_PAREN_L << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
     {')', ((acc::GLOBAL_TOKENS::TK_PAREN_R << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
-    {',', ((acc::GLOBAL_TOKENS::TK_COMMA << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
+    {',', ((acc::GLOBAL_TOKENS::TK_COMMA << TOKEN_TYPE_SHIFTER) | FLAG_DELIM | FLAG_BINARY_OP)},
     {':', ((acc::GLOBAL_TOKENS::TK_COLON << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
     {'[', ((acc::GLOBAL_TOKENS::TK_BRACE_L << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
     {']', ((acc::GLOBAL_TOKENS::TK_BRACE_R << TOKEN_TYPE_SHIFTER) | FLAG_DELIM)},
@@ -96,8 +96,11 @@ struct lexeme_inspector {
         return (((token_map.find(unit))->second & acc::globals::token_flags_::FLAG_DELIM) == acc::globals::token_flags_::FLAG_DELIM);
     }
 
-    [[nodiscard]] static bool is_binary_op(const char unit) noexcept {
+    [[nodiscard]] static bool is_binary_op(const char unit, bool in_params = false) noexcept {
         if (token_map.find(unit) == token_map.end()) return false;
+        if (unit == ',') {
+            if (in_params) return false;
+        };
         return (((token_map.find(unit))->second & acc::globals::token_flags_::FLAG_BINARY_OP) == acc::globals::token_flags_::FLAG_BINARY_OP);
     }
 
@@ -106,8 +109,8 @@ struct lexeme_inspector {
         return (((token_map.find(binop))->second & acc::globals::token_flags_::FLAG_BINARY_OP) == acc::globals::token_flags_::FLAG_BINARY_OP);
     }
 
-    [[nodiscard]] static bool is_binary_op(const acc::token token) {
-        if (token.word.size() <= 1) return is_binary_op(token.word[0]);
+    [[nodiscard]] static bool is_binary_op(const acc::token token, bool in_params = false) {
+        if (token.word.size() <= 1) return is_binary_op(token.word[0], in_params);
         return is_binary_op(token.word);
     }
 };

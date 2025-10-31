@@ -7,6 +7,8 @@ class generator {
     std::string generated;
 
    public:
-    generator(std::vector<acc::StmtVariant> ast_nodes) {};
+    generator(std::vector<acc::StmtVariant> ast_nodes) {
+        
+    };
 };
 };  // namespace acc::x86_64isa
