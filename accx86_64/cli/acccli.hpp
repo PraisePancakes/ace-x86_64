@@ -12,10 +12,9 @@
 /**
  *  BNF
  * ______
- *
- * <major> ::= <dash><dash><ident><minor>
- * <minor> ::= <dash><ident>
- * <ident> ::= <string>
+ * <protocol>   ::= acc <major>
+ * <major>      ::= -((- flag) | f)[-<minor>]
+ * <minor>      ::= (flag)[filters]
  *
  */
 /**
@@ -100,7 +99,7 @@ class cli {
         auto v = acc::any_(acc::transform_(acc::match_("--set-dev"), []() {
                                return FLAGS::SET_DEV;
                            }),
-                           acc::transform_(acc::match_("--help-all"), []() {
+                           acc::transform_(acc::match_("--help"), []() {
                                return FLAGS::HELP_ALL;
                            }),
                            acc::transform_(acc::match_("--help-dev"), []() {
@@ -126,7 +125,7 @@ class cli {
     void print_usage_devs() {
         acc::logger::instance().send(logger::LEVEL::INFO,
                                      R"(FLAGS 
-            --set-dev [-verbose-lexer , -verbose-ast]
+                --set-dev [-verbose-lexer , -verbose-ast]
                 -verbose-lexer : prints the lexed result of each input file.
                 -verbose-ast : prints the abstract-syntax-tree of each input file.
                                                                 )",
@@ -135,8 +134,13 @@ class cli {
 
     void print_usage_all() {
         print_usage_devs();
-        acc::logger::instance().send(logger::LEVEL::INFO, "e.g.            acc                                                     foo.ace         -o                              fexec", std::cout);
-        acc::logger::instance().send(logger::LEVEL::INFO, "         (ace protocol)  <optional flags> [optional flag options]    (input file)  (output type flag (binary))     (executable name)", std::cout);
+        acc::logger::instance().send(logger::LEVEL::INFO, R"(
+            *  BNF
+            * ______
+            * <protocol>   ::= acc <major>
+            * <major>      ::= -((- flag) | f)[-<minor>]
+            * <minor>      ::= (flag)[filters]
+        )");
     };
 
     [[nodiscard]] bool constexpr is_set(FLAGS f) const noexcept {

@@ -26,13 +26,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(MSVC)
-  target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
-else()
-  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-variable -Wno-parentheses)
-endif()
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 
 
 # ----------------------------
@@ -52,15 +46,17 @@ add_executable(testing
   test/dtest_test_lexer.cpp
   test/dtest_test_parser.cpp
   test/dtest_test_token.cpp
+  test/dtest_test_monadic.cpp
 )
 target_link_libraries(testing PRIVATE doctest)
-target_compile_features(testing PUBLIC cxx_std_20)
 
 if(MSVC)
-  target_compile_options(testing PRIVATE /W4 /WX)
+  target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
 else()
-  target_compile_options(testing PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-variable -Wno-parentheses)
 endif()
+
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 # Optional: enable CTest
 enable_testing()
 add_test(NAME test_all COMMAND testing)

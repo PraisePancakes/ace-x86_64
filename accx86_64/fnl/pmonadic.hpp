@@ -17,11 +17,6 @@ struct parser : std::function<result<T>(std::istream&)> {
     constexpr parser(parser<T> (*ptr)()) : parser(ptr()) {}
 };
 
-template <typename T>
-parser<std::tuple<>> ignore_(const parser<T>& ps) {
-    return ignore_(ps, "ignore_ parser error : ignored none");
-}
-
 template <typename A>
 auto constexpr operator|(result<A> const& lhs, result<A> const& rhs) {
     return lhs ? lhs : rhs;
@@ -294,12 +289,17 @@ transform_(parser<T> const& p, const F& f) noexcept(
 }
 
 template <typename T>
-parser<std::tuple<>> ignore_(const parser<T>& ps, const std::string& error_message) {
-    return [&ps, error_message](std::istream& ss) -> result<std::tuple<>> {
+parser<std::pair<char, std::tuple<>>> ignore_(const parser<T>& ps) {
+    return ignore_(ps, "ignore_ parser error : ignored none");
+}
+
+template <typename T>
+parser<std::pair<char, std::tuple<>>> ignore_(const parser<T>& ps, const std::string& error_message) {
+    return [&ps, error_message](std::istream& ss) -> result<std::pair<char, std::tuple<>>> {
         if (!ps(ss)) {
             return std::unexpected(error_message);
         }
-        return std::make_tuple();
+        return std::make_pair(ss.peek(), std::make_tuple());
     };
 };
 
