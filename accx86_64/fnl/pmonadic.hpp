@@ -152,9 +152,8 @@ parser<int> int_(const std::string& error_message) {
             auto v = digit_parser(ss);
             if (v.has_value() && !ss.eof()) {
                 ret += ('0' + v.value());
-            } else if (ss.peek() == '-') {
-                ret += ss.peek();
-                ss.get();
+            } else if (auto v = match_('-')(ss)) {
+                ret += v.value();
             } else {
                 break;
             }
