@@ -30,13 +30,22 @@ TEST_CASE("Monadic Parser Test") {
     // ./testing -tc=*Monadic* -sc=*Number* --no-capture -s
     SUBCASE("Number") {
         {
-            INFO("Finds number in sequence of tokens, and returns that number.");
+            INFO("Finds positive number in sequence of tokens, and returns that positive number.");
             // success
             std::stringstream ss;
             ss << "12a";
             auto v = acc::int_()(ss);
             std::cout << "NUMBER FOUND :  " << v.value() << "\n";
             CHECK_EQ(v.value(), 12);
+        }
+        {
+            INFO("Finds negative number in sequence of tokens, and returns that negative number.");
+            // success
+            std::stringstream ss;
+            ss << "-12a";
+            auto v = acc::int_()(ss);
+            std::cout << "NUMBER FOUND :  " << v.value() << "\n";
+            CHECK_EQ(v.value(), -12);
         }
 
         {
@@ -47,6 +56,16 @@ TEST_CASE("Monadic Parser Test") {
             auto v = acc::int_()(ss);
             INFO(v.error());
             CHECK_FALSE_MESSAGE(v.has_value(), "fails at a");
+        }
+
+        {
+            INFO("Fails because next token in sequence is a dash however not followed by number.");
+            // failure
+            std::stringstream ss;
+            ss << "-abc";
+            auto v = acc::int_()(ss);
+            INFO(v.error());
+            CHECK_FALSE_MESSAGE(v.has_value(), "fails at -");
         }
     }
 

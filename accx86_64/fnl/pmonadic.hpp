@@ -152,13 +152,20 @@ parser<int> int_(const std::string& error_message) {
             auto v = digit_parser(ss);
             if (v.has_value() && !ss.eof()) {
                 ret += ('0' + v.value());
+            } else if (ss.peek() == '-') {
+                ret += ss.peek();
+                ss.get();
             } else {
                 break;
             }
         };
 
-        if (ret.empty()) return std::unexpected(error_message);
-        return std::stoi(ret);
+        try {
+            int i = std::stoi(ret);
+            return i;
+        } catch (const std::invalid_argument&) {
+            return std::unexpected(error_message);
+        };
     };
 }
 
