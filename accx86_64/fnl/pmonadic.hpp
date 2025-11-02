@@ -147,7 +147,6 @@ parser<int> int_(const std::string& error_message) {
     return [=](std::istream& ss) -> result<int> {
         auto digit_parser = digit_();
         std::string ret = "";
-
         while (true) {
             auto v = digit_parser(ss);
             if (v.has_value() && !ss.eof()) {
@@ -155,15 +154,13 @@ parser<int> int_(const std::string& error_message) {
             } else if (auto v = match_('-')(ss)) {
                 ret += v.value();
             } else {
-                break;
+                try {
+                    int i = std::stoi(ret);
+                    return i;
+                } catch (const std::invalid_argument&) {
+                    return std::unexpected(error_message);
+                };
             }
-        };
-
-        try {
-            int i = std::stoi(ret);
-            return i;
-        } catch (const std::invalid_argument&) {
-            return std::unexpected(error_message);
         };
     };
 }
