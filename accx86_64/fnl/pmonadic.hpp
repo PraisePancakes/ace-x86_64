@@ -8,11 +8,6 @@
 namespace acc {
 
 template <typename T>
-struct result_fwd {
-    using type = std::expected<T, std::string>;
-};
-
-template <typename T>
 struct result : std::expected<T, std::string> {
     using base = std::expected<T, std::string>;
     using base::base;
