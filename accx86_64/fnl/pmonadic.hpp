@@ -8,7 +8,23 @@
 namespace acc {
 
 template <typename T>
-using result = std::expected<T, std::string>;
+struct result_fwd {
+    using type = std::expected<T, std::string>;
+};
+
+template <typename T>
+struct result : std::expected<T, std::string> {
+    using base = std::expected<T, std::string>;
+    using base::base;
+    using base::operator bool;
+    using base::value;
+
+    template <typename F>
+        requires(std::is_invocable_v<F, T>)
+    auto transform(F&& f) {
+        return std::invoke(f, this->value());
+    }
+};
 
 template <typename T>
 struct parser : std::function<result<T>(std::istream&)> {

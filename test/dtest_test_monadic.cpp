@@ -197,6 +197,30 @@ TEST_CASE("Monadic Parser Test") {
         }
     }
 
+    // ./testing -tc=*Monadic* -sc=*Many* --no-capture -s
+    SUBCASE("Many") {
+        {
+            INFO("Calls the parser many times until failure. This unit returns either an empty { vector<T>, std::string } or populated { vector<T>, std::string }");
+            std::stringstream ss;
+            ss << "0123456789";
+            auto v = acc::many_(acc::digit_())(ss);
+
+            auto new_v = v.transform([](auto v) {
+                std::string ret;
+                for (int i = 0; i < v.first.size(); i++) {
+                    ret += std::to_string(v.first[i]);
+                }
+                return ret;
+            });
+
+            CHECK(v.has_value());
+            CHECK(new_v == "0123456789");
+            for (std::size_t i = 0; i < 9; i++) {
+                CHECK(v.value().first[i] == i);
+            }
+        }
+    }
+
     // ./testing -tc=*Monadic* -sc=*Sequence* --no-capture -s
     SUBCASE("Sequence") {
         {
