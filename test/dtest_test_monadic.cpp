@@ -12,7 +12,7 @@ TEST_CASE("Monadic Parser Test") {
             std::stringstream ss;
             ss << "12a";
             auto v = acc::digit_()(ss);
-            std::cout << "DIGIT FOUND :  " << v.value() << "\n";
+            INFO("DIGIT FOUND : ", v.value());
             CHECK_EQ(v.value(), 1);
         }
 
@@ -27,29 +27,98 @@ TEST_CASE("Monadic Parser Test") {
         }
     }
 
-    // ./testing -tc=*Monadic* -sc=*Number* --no-capture -s
-    SUBCASE("Number") {
+    // ./testing -tc=*Monadic* -sc=*Letter* --no-capture -s
+    SUBCASE("Letter") {
         {
-            INFO("Finds positive number in sequence of tokens, and returns that positive number.");
+            INFO("Finds first letter in sequence of tokens, and returns that FIRST letter.");
+            // success
+            std::stringstream ss;
+            ss << "a12";
+            auto v = acc::letter_()(ss);
+            INFO("LETTER FOUND : ", v.value());
+            CHECK_EQ(v.value(), 'a');
+        }
+
+        {
+            INFO("Fails because next token in sequence is not a letter.");
+            // failure
+            std::stringstream ss;
+            ss << "12b";
+            auto v = acc::letter_()(ss);
+            INFO(v.error());
+            CHECK_FALSE_MESSAGE(v.has_value(), "fails at 1");
+        }
+    }
+
+    // ./testing -tc=*Monadic* -sc=*Letters* --no-capture -s
+    SUBCASE("Letters") {
+        {
+            INFO("Finds sequence of letters in sequence of tokens, and returns that sequence.");
+            // success
+            std::stringstream ss;
+            ss << "abcdefg12";
+            auto v = acc::letters_()(ss);
+            INFO("LETTERS FOUND : ", v.value());
+            CHECK_EQ(v.value(), "abcdefg");
+        }
+
+        {
+            INFO("Fails because next token in sequence is not a letter nor sequence of letters.");
+            // failure
+            std::stringstream ss;
+            ss << "12b";
+            auto v = acc::letters_()(ss);
+            INFO(v.error());
+            CHECK_FALSE_MESSAGE(v.has_value(), "fails at 1");
+        }
+    }
+
+    // ./testing -tc=*Monadic* -sc=*Alnum* --no-capture -s
+    SUBCASE("Alnum") {
+        {
+            INFO("Finds sequence of alnum in sequence of tokens, and returns that sequence.");
+            // success
+            std::stringstream ss;
+            ss << "abcdefg12./.--=";
+            auto v = acc::alnum_()(ss);
+            INFO("ALNUMS FOUND : ", v.value());
+            CHECK_EQ(v.value(), "abcdefg12");
+        }
+
+        {
+            INFO("Fails because next token in sequence is not alnum.");
+            // failure
+            std::stringstream ss;
+            ss << ".-=123x";
+            auto v = acc::alnum_()(ss);
+            INFO(v.error());
+            CHECK_FALSE_MESSAGE(v.has_value(), "fails at .");
+        }
+    }
+
+    // ./testing -tc=*Monadic* -sc=*Integer* --no-capture -s
+    SUBCASE("Integer") {
+        {
+            INFO("Finds positive integer in sequence of tokens, and returns that positive integer.");
             // success
             std::stringstream ss;
             ss << "12a";
             auto v = acc::int_()(ss);
-            std::cout << "NUMBER FOUND :  " << v.value() << "\n";
+            INFO("INTEGER FOUND : ", v.value());
             CHECK_EQ(v.value(), 12);
         }
         {
-            INFO("Finds negative number in sequence of tokens, and returns that negative number.");
+            INFO("Finds negative integer in sequence of tokens, and returns that negative integer.");
             // success
             std::stringstream ss;
             ss << "-12a";
             auto v = acc::int_()(ss);
-            std::cout << "NUMBER FOUND :  " << v.value() << "\n";
+            INFO("INTEGER FOUND : ", v.value());
             CHECK_EQ(v.value(), -12);
         }
 
         {
-            INFO("Fails because next token in sequence is not a number.");
+            INFO("Fails because next token in sequence is not an integer.");
             // failure
             std::stringstream ss;
             ss << "a12b";
@@ -120,10 +189,24 @@ TEST_CASE("Monadic Parser Test") {
     SUBCASE("Both") {
         {
             std::stringstream ss;
-            ss << "hello123";
-            auto v = acc::either_2(acc::match_("hello")(ss), acc::match_("world")(ss));
+            ss << "hello-123";
+            auto v = acc::both_(acc::match_("hello"), acc::int_())(ss);
             CHECK(v.has_value());
-            CHECK(v.value() == "world");
+            CHECK(std::get<0>(v.value()) == "hello");
+            CHECK(std::get<1>(v.value()) == -123);
+        }
+    }
+
+    // ./testing -tc=*Monadic* -sc=*Sequence* --no-capture -s
+    SUBCASE("Sequence") {
+        {
+            std::stringstream ss;
+            ss << "hello-123";
+            auto v = acc::sequ_(acc::match_("hello"), acc::match_('-'), acc::int_())(ss);
+            CHECK(v.has_value());
+            CHECK(std::get<0>(v.value()) == "hello");
+            CHECK(std::get<1>(v.value()) == '-');
+            CHECK(std::get<2>(v.value()) == 123);
         }
     }
 
