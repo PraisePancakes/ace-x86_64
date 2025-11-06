@@ -160,6 +160,19 @@ parser<std::string> match_(std::string s) {
     return match_(s, "match_ parser error expected " + s);
 };
 
+template <typename T>
+parser<T> satisfies_(parser<T> const& prsr, const std::string& error) {
+    return [=](std::istream& s) -> result<T> {
+        auto v = prsr(s);
+        if (v.has_value()) return v.value();
+        return std::unexpected(error);
+    };
+}
+template <typename T>
+parser<T> satisfies_(parser<T> const& prsr) {
+    return satisfies_(prsr, "parser failed to match.");
+}
+
 parser<int> digit_(const std::string& error_message) {
     return [=](std::istream& s) -> result<int> {
         char v = s.get();

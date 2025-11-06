@@ -163,6 +163,25 @@ TEST_CASE("Monadic Parser Test") {
             CHECK_FALSE_MESSAGE(hello.has_value(), "should pass as a failure because hello is not in string");
         }
     }
+    // ./testing -tc=*Monadic* -sc=*Satisfies* --no-capture -s
+    SUBCASE("Satisfies") {
+        {
+            // success
+            std::stringstream ss;
+            ss << "hellohellohello";
+            auto has_hello = acc::satisfies_(acc::many_1(acc::match_("hello")))(ss);
+            CHECK(has_hello.has_value());
+        }
+
+        {
+            // failure
+            std::stringstream ss;
+            ss << "WORLDWORLDWORLD";
+            auto has_hello = acc::satisfies_(acc::many_1(acc::match_("hello")))(ss);
+            INFO(has_hello.error());
+            CHECK_FALSE_MESSAGE(has_hello.has_value(), "should pass as a failure because hello is not in string");
+        }
+    }
 
     // ./testing -tc=*Monadic* -sc=*Either* --no-capture -s
     SUBCASE("Either") {
