@@ -138,6 +138,58 @@ TEST_CASE("Monadic Parser Test") {
         }
     }
 
+    // ./testing -tc=*Monadic* -sc=*Double* --no-capture -s
+    SUBCASE("Double") {
+        {
+            INFO("Finds positive double in sequence of tokens, and returns that positive double.");
+            // success
+            std::stringstream ss;
+            ss << "12.423a";
+            auto v = acc::double_()(ss);
+            INFO("DOUBLE FOUND : ", v.value());
+            CHECK_EQ(v.value(), 12.423);
+        }
+        {
+            INFO("Finds negative double in sequence of tokens, and returns that negative double.");
+            // success
+            std::stringstream ss;
+            ss << "-12.1342a";
+            auto v = acc::double_()(ss);
+            INFO("DOUBLE FOUND : ", v.value());
+            CHECK_EQ(v.value(), -12.1342);
+        }
+
+        {
+            INFO("Finds double with period and no digits after.");
+            // success
+            std::stringstream ss;
+            ss << "-12.a";
+            auto v = acc::double_()(ss);
+            INFO("DOUBLE FOUND : ", v.value());
+            CHECK_EQ(v.value(), -12.0);
+        }
+
+        {
+            INFO("Fails because next token in sequence is not an double.");
+            // failure
+            std::stringstream ss;
+            ss << "a12.425b";
+            auto v = acc::double_()(ss);
+            INFO(v.error());
+            CHECK_FALSE_MESSAGE(v.has_value(), "fails at a");
+        }
+
+        {
+            INFO("Fails because next token in sequence is a dash however not followed by double.");
+            // failure
+            std::stringstream ss;
+            ss << "-abc";
+            auto v = acc::double_()(ss);
+            INFO(v.error());
+            CHECK_FALSE_MESSAGE(v.has_value(), "fails at -");
+        }
+    }
+
     // ./testing -tc=*Monadic* -sc=*Match* --no-capture -s
     SUBCASE("Match") {
         {

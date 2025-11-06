@@ -216,6 +216,43 @@ parser<int> int_() {
     return int_("int_ parser error");
 };
 
+parser<double> double_(const std::string& error_message) {
+    return [=](std::istream& ss) -> result<double> {
+        auto digit_parser = digit_();
+        std::string ret = "";
+        while (true) {
+            auto v_lhalf = digit_parser(ss);
+            if (v_lhalf.has_value() && !ss.eof()) {
+                ret += ('0' + v_lhalf.value());
+            } else if (auto negative = match_('-')(ss)) {
+                ret += negative.value();
+            } else {
+                if (auto dot = match_('.')(ss)) {
+                    ret += dot.value();
+                    while (true) {
+                        auto v_rhalf = digit_parser(ss);
+                        if (v_rhalf.has_value() && !ss.eof()) {
+                            ret += ('0' + v_rhalf.value());
+                            continue;
+                        }
+                        break;
+                    }
+                }
+                try {
+                    double d = std::stod(ret);
+                    return d;
+                } catch (const std::invalid_argument&) {
+                    return std::unexpected(error_message);
+                };
+            }
+        }
+    };
+}
+
+parser<double> double_() {
+    return double_("int_ parser error");
+};
+
 parser<char> letter_(const std::string& error_message) {
     return [=](std::istream& ss) -> result<char> {
         auto v = ss.get();
