@@ -32,6 +32,40 @@ constexpr auto either_2(result<T> const& lhs, result<T> const& rhs) {
     return rhs ? rhs : lhs;
 };
 
+template <typename T>
+constexpr acc::parser<T> either_1(parser<T> const& lhs, parser<T> const& rhs, const std::string& error) {
+    return [=](std::istream& ss) -> result<T> {
+        if (auto l = lhs(ss)) {
+            return l;
+        } else if (auto r = rhs(ss)) {
+            return r;
+        }
+        return std::unexpected(error);
+    };
+};
+
+template <typename T>
+constexpr acc::parser<T> either_2(parser<T> const& lhs, parser<T> const& rhs, const std::string& error) {
+    return [=](std::istream& ss) -> result<T> {
+        if (auto r = rhs(ss)) {
+            return r;
+        } else if (auto l = lhs(ss)) {
+            return l;
+        }
+        return std::unexpected(error);
+    };
+};
+
+template <typename T>
+constexpr acc::parser<T> either_1(parser<T> const& lhs, parser<T> const& rhs) {
+    return either_1(lhs, rhs, "neither parsers succeeded.");
+};
+
+template <typename T>
+constexpr acc::parser<T> either_2(parser<T> const& lhs, parser<T> const& rhs) {
+    return either_1(lhs, rhs, "neither parsers succeeded.");
+};
+
 template <typename T, typename U>
 [[nodiscard]] constexpr auto both_(parser<T> const& lhs, parser<U> const& rhs) {
     return [=](std::istream& ss) -> result<std::tuple<T, U>> {
@@ -250,7 +284,7 @@ many_1(const parser<T>& prsr, const std::string& error_message) noexcept {
     return [=](std::istream& ss) -> result<pair_type> {
         auto v = many_(prsr)(ss);
         if (v.has_value()) {
-            if (v.value().first.empty() || v.value().second.empty()) return std::unexpected(error_message);
+            if (v.value().first.empty() && v.value().second.empty()) return std::unexpected(error_message);
             return v.value();
         }
 
@@ -306,10 +340,11 @@ parser<std::pair<char, std::tuple<>>> ignore_(const parser<T>& ps) {
 template <typename T>
 parser<std::pair<char, std::tuple<>>> ignore_(const parser<T>& ps, const std::string& error_message) {
     return [&ps, error_message](std::istream& ss) -> result<std::pair<char, std::tuple<>>> {
+        char c = ss.peek();
         if (!ps(ss)) {
             return std::unexpected(error_message);
         }
-        return std::make_pair(ss.peek(), std::make_tuple());
+        return std::make_pair(c, std::make_tuple());
     };
 };
 

@@ -236,5 +236,17 @@ TEST_CASE("Monadic Parser Test") {
 
     // ./testing -tc=*Monadic* -sc=*Ignore* --no-capture -s
     SUBCASE("Ignore") {
+        std::stringstream ss;
+        ss << "aaaaabbbcaaacc";
+        auto v = acc::many_(acc::either_1(acc::ignore_(acc::match_('a')), acc::ignore_(acc::match_('b'))))(ss);
+        auto new_v = acc::transform_result_(v, [](auto v) {
+            std::string ret;
+            for (auto c : v.first) {
+                ret += c.first;
+            };
+            return ret;
+        });
+        CHECK(v.has_value());
+        CHECK(new_v.value() == "aaaaabbb");
     }
 }
