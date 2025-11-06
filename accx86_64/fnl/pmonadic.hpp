@@ -8,18 +8,7 @@
 namespace acc {
 
 template <typename T>
-struct result : std::expected<T, std::string> {
-    using base = std::expected<T, std::string>;
-    using base::base;
-    using base::operator bool;
-    using base::value;
-
-    template <typename F>
-        requires(std::is_invocable_v<F, T>)
-    auto transform(F&& f) {
-        return std::invoke(f, this->value());
-    }
-};
+using result = std::expected<T, std::string>;
 
 template <typename T>
 struct parser : std::function<result<T>(std::istream&)> {
@@ -301,6 +290,13 @@ transform_(parser<T> const& p, const F& f) noexcept(
         return std::unexpected(v.error());
     };
 }
+
+template <typename T, typename F>
+[[nodiscard]] constexpr acc::result<std::invoke_result_t<F, T>>
+transform_result_(result<T> const& res, const F& f) noexcept(
+    noexcept(std::is_nothrow_invocable_v<F, T>)) {
+    return std::invoke(f, res.value());
+};
 
 template <typename T>
 parser<std::pair<char, std::tuple<>>> ignore_(const parser<T>& ps) {

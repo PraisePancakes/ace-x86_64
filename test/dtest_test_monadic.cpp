@@ -205,7 +205,7 @@ TEST_CASE("Monadic Parser Test") {
             ss << "0123456789";
             auto v = acc::many_(acc::digit_())(ss);
 
-            auto new_v = v.transform([](auto v) {
+            auto new_v = acc::transform_result_(v, [](auto v) {
                 std::string ret;
                 for (int i = 0; i < v.first.size(); i++) {
                     ret += std::to_string(v.first[i]);
@@ -214,7 +214,7 @@ TEST_CASE("Monadic Parser Test") {
             });
 
             CHECK(v.has_value());
-            CHECK(new_v == "0123456789");
+            CHECK(new_v.value() == "0123456789");
             for (std::size_t i = 0; i < 9; i++) {
                 CHECK(v.value().first[i] == i);
             }
