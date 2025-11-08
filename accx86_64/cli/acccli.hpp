@@ -37,133 +37,82 @@ class cli {
     using flag_size_t = std::byte;
     std::vector<std::string> m_input_files;
 
-    enum class FLAGS : std::underlying_type_t<flag_size_t> {
+    enum class CLI_FLAGS : std::underlying_type_t<flag_size_t> {
         ACC = 0x1u,
         SET_DEV = 0x2u,
-        VLEXER = 0x4u,
-        VAST = 0x8u,
-        HELP_DEV = 0x10u,
-        HELP_ALL = 0x20u
+        DLEXER = 0x4u,
+        DAST = 0x8u,
+        HELP_ALL = 0x10u,
+        VERSION = 0x20u,
+        ERRORANEOUS = 0xffu
+
     };
 
     flag_size_t m_build_flags{};
 
     void parse_input_file(std::stringstream& ss) {
-        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-        while (true) {
-            acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-            if (auto v = acc::sequ_(acc::alnum_("invalid file name"),
-                                    acc::match_(".ace", "Unknown file extension."))(ss)) {
-                std::string path = std::apply([](auto&&... args) {
-                    return (args + ...);
-                },
-                                              v.value());
-                m_input_files.push_back(path);
-            } else {
-                if (!acc::eof_()(ss)) {
-                    acc::logger::instance().send(acc::logger::LEVEL::FATAL, v.error(), std::cout);
-                }
-                break;
-            }
-        };
 
-#if ACC__CLI__DEBUG
-        if (m_input_files.size() > 0) {
-            for (auto file : m_input_files) {
-                std::cout << file << std::endl;
-            }
-        }
-#endif
     };
 
     void parse_dev_commands(std::stringstream& ss) {
-        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-        if (acc::match_('[', "missing '[' ")(ss)) {
-            acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-            while (auto v = acc::any_(acc::transform_(acc::match_("-verbose-lexer"), []() { return FLAGS::VLEXER; }),
-                                      acc::transform_(acc::match_("-verbose-ast"), []() { return FLAGS::VAST; }))(ss)) {
-                acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-                m_build_flags |= (flag_size_t)v.value();
-            }
-            if (auto v = acc::match_(']', "missing dev command terminator ']'")(ss)) {
-                return;
-            } else {
-                acc::logger::instance().send(acc::logger::LEVEL::FATAL, v.error(), std::cout);
-                exit(EXIT_FAILURE);
-            }
-        }
+
     };
 
     void parse_commands(std::stringstream& ss) {
-        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-        auto v = acc::any_(acc::transform_(acc::match_("--set-dev"), []() {
-                               return FLAGS::SET_DEV;
-                           }),
-                           acc::transform_(acc::match_("--help"), []() {
-                               return FLAGS::HELP_ALL;
-                           }),
-                           acc::transform_(acc::match_("--help-dev"), []() {
-                               return FLAGS::HELP_DEV;
-                           }))(ss);
-        if (v.has_value()) {
-            m_build_flags |= (flag_size_t)v.value();
-            if (v.value() == FLAGS::SET_DEV) {
-                parse_dev_commands(ss);
-            }
-        }
-    };
 
-    void parse(std::stringstream& ss) {
-        auto v = acc::transform_(acc::match_("acc"), []() { return FLAGS::ACC; })(ss);
-        if (v.has_value()) {
-            m_build_flags |= (flag_size_t)v.value();
-            parse_commands(ss);
-            parse_input_file(ss);
-        }
     };
-
-    void print_usage_devs() {
-        acc::logger::instance().send(logger::LEVEL::INFO,
-                                     R"(FLAGS 
-                --set-dev [-verbose-lexer , -verbose-ast]
-                -verbose-lexer : prints the lexed result of each input file.
-                -verbose-ast : prints the abstract-syntax-tree of each input file.
-                                                                )",
-                                     std::cout);
-    }
 
     void print_usage_all() {
-        print_usage_devs();
         acc::logger::instance().send(logger::LEVEL::INFO, R"(
+            * USAGE
+            * _____
+            * 
+            * acc.exe [COMMANDS] file...
+            * 
             *  BNF
             * ______
             * <protocol>   ::= acc <major>
             * <major>      ::= -((- flag) | f)[-<minor>]
             * <minor>      ::= (flag)[filters]
+            * 
+            * 
+            * COMMANDS
+            * ________
+            * 
+            * [-h, --help] :                                 print usage/options for compilation.
+            * [-sd<options, ...>, --set-dev<options, ...>] : set development debug options ( see below )
+            * options [ dump_tree | dump_ast | duml_asm ]    [ file ]
+            * 
+            * [-v, --version] :                              display compiler version.
+            * 
         )");
     };
 
-    [[nodiscard]] bool constexpr is_set(FLAGS f) const noexcept {
+    [[nodiscard]] bool constexpr is_set(CLI_FLAGS f) const noexcept {
         return ((m_build_flags & (flag_size_t)f) == (flag_size_t)f);
     };
 
+    std::array<std::function<result<CLI_FLAGS>(std::stringstream&)>, 2> cmd_parsers{
+        // ENTRY
+        [](std::stringstream& ss) -> result<CLI_FLAGS> { return acc::transform_(acc::match_("acc", "entry not found."), []() {
+                                                             return CLI_FLAGS::ACC;
+                                                         })(ss); },
+        // COMMANDS
+        [](std::stringstream& ss) -> result<CLI_FLAGS> { return acc::any_(/*COMMAND HELP*/ acc::transform_(acc::either_1(acc::match_("-h"), acc::match_("--help")),
+                                                                                                           []() { return CLI_FLAGS::HELP_ALL; }),
+                                                                          /*COMMAND VERSION*/ acc::transform_(acc::either_1(acc::match_("-v"), acc::match_("--version")), []() { return CLI_FLAGS::VERSION; }))(ss); }};
+
    public:
     cli(std::stringstream&& ss) {
-        parse(ss);
-        if (is_set(FLAGS::ACC)) {
-            if (is_set(FLAGS::HELP_ALL)) {
-                print_usage_all();
-            } else if (is_set(FLAGS::HELP_DEV)) {
-                print_usage_devs();
-            } else if (is_set(FLAGS::SET_DEV)) {
-                if (is_set(FLAGS::VAST)) {
-                    acc::logger::instance().send(logger::LEVEL::INFO, "[DEV FLAG] -verbose-ast has been set", std::cout);
-                }
-                if (is_set(FLAGS::VLEXER)) {
-                    acc::logger::instance().send(logger::LEVEL::INFO, "[DEV FLAG] -verbose-lexer has been set", std::cout);
-                }
-            }
-        }
+        for (auto parser : cmd_parsers) {
+            acc::ignore_(acc::many_(acc::match_(' ')))(ss);
+            auto v = parser(ss);
+            if (v.has_value()) {
+                m_build_flags |= (flag_size_t)v.value();
+            } else {
+                acc::logger::instance().send(acc::logger::LEVEL::FATAL, v.error());
+            };
+        };
     };
 };
 }  // namespace acc

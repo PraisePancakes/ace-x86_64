@@ -52,6 +52,7 @@ constexpr acc::parser<T> either_2(parser<T> const& lhs, parser<T> const& rhs, co
         } else if (auto l = lhs(ss)) {
             return l;
         }
+
         return std::unexpected(error);
     };
 };
@@ -63,7 +64,7 @@ constexpr acc::parser<T> either_1(parser<T> const& lhs, parser<T> const& rhs) {
 
 template <typename T>
 constexpr acc::parser<T> either_2(parser<T> const& lhs, parser<T> const& rhs) {
-    return either_1(lhs, rhs, "neither parsers succeeded.");
+    return either_2(lhs, rhs, "neither parsers succeeded.");
 };
 
 template <typename T, typename U>
@@ -112,11 +113,22 @@ template <typename... Ts>
 // (A , B) -> result<A + B>
 
 template <typename... Ts>
-[[nodiscard]] constexpr auto any_(parser<Ts> const&... ts) {
-    return [=](std::istream& ss) -> auto {
-        return (ts(ss) | ...);
+[[nodiscard]] constexpr parser<std::tuple_element_t<0, std::tuple<Ts...>>> any_(parser<Ts> const&... ts) {
+    return [=](std::istream& ss) -> result<std::tuple_element_t<0, std::tuple<Ts...>>> {
+        std::array<parser<std::tuple_element_t<0, std::tuple<Ts...>>>, sizeof...(Ts)> parsers{ts...};
+        std::string last_error;
+
+        for (auto const& v : parsers) {
+            auto val = v(ss);
+            if (val) {
+                return val;
+            }
+            last_error = val.error();
+        }
+
+        return std::unexpected(last_error);
     };
-};
+}
 
 parser<char> match_(const char c, const std::string& error_message) {
     return [=](std::istream& s) -> result<char> {
@@ -136,19 +148,14 @@ parser<char> match_(const char c) {
 
 parser<std::string> match_(const std::string& s, const std::string& error_message) {
     return [=](std::istream& ss) -> result<std::string> {
-        std::string outbuilder = "";
-        std::streampos pos = ss.tellg();
         for (std::size_t i = 0; i < s.size(); ++i) {
             if (ss.peek() == s[i]) {
                 ss.get();
             } else {
-                ss.seekg(pos);
-                for (std::size_t x = 0; x < s.size(); x++) {
-                    outbuilder += ss.get();
+                while (i--) {
+                    ss.unget();
                 }
-                ss.seekg(pos);
-                std::string error = error_message + " got : " + outbuilder;
-                return std::unexpected(error);
+                return std::unexpected(error_message);
             }
         }
 
@@ -368,6 +375,7 @@ transform_(parser<T> const& p, const F& f) noexcept(
     using U = std::invoke_result_t<F>;
     return [=](std::istream& ss) -> result<U> {
         auto v = p(ss);
+
         if (v.has_value()) {
             return std::invoke(f);
         }

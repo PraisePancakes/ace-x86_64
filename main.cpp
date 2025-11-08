@@ -26,7 +26,7 @@ auto main(int argc, char** argv) -> int {
     for (int i = 1; i < argc; i++) {
 #if ARGV_DEBUG
 
-        std::cout << argv[i] << std::endl;
+        std::cout << argv[i] << ";" << std::endl;
 #endif
         ss << std::string(argv[i]) << " ";
     }

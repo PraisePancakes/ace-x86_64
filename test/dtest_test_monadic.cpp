@@ -270,7 +270,7 @@ TEST_CASE("Monadic Parser Test") {
         {
             std::stringstream ss;
             ss << "hello world";
-            auto v = acc::either_1(acc::match_("hello")(ss), acc::match_("world")(ss));
+            auto v = acc::either_1(acc::match_("hello"), acc::match_("world"))(ss);
             CHECK(v.has_value());
             CHECK(v.value() == "hello");
         }
@@ -318,6 +318,49 @@ TEST_CASE("Monadic Parser Test") {
             for (std::size_t i = 0; i < 9; i++) {
                 CHECK(v.value().first[i] == i);
             }
+        }
+    }
+
+    // ./testing -tc=*Monadic* -sc=*Any* --no-capture -s
+    SUBCASE("Any") {
+        {
+#include <array>
+            std::stringstream ss;
+            ss << "acc -v";
+            std::array<std::function<acc::result<int>(std::stringstream&)>, 2> cmd_parsers{
+                // ENTRY
+                [](std::stringstream& ss) -> acc::result<int> { return acc::transform_(acc::match_("acc", "entry not found."), []() {
+                                                                    return 1;
+                                                                })(ss); },
+                // COMMANDS
+                [](std::stringstream& ss) -> acc::result<int> { return acc::any_(/*COMMAND HELP*/ acc::transform_(acc::either_1(acc::match_("-h"), acc::match_("--help")),
+                                                                                                                  []() { return 2; }),
+                                                                                 /*COMMAND VERSION*/ acc::transform_(acc::either_1(acc::match_("-v"), acc::match_("--version")), []() { return 3; }))(ss); }};
+            for (auto& parser : cmd_parsers) {
+                acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+                auto v = parser(ss);
+                CHECK(v.has_value());
+                if (v.has_value()) {
+                    std::cout << v.value() << "\n";
+                }
+            };
+        }
+    }
+
+    // ./testing -tc=*Monadic* -sc=*Transform* --no-capture -s
+    SUBCASE("Transform") {
+        {
+            std::stringstream ss;
+            ss << "hi mate";
+            auto transformed = acc::transform_(acc::match_("hi mate"), [](auto v) -> std::string {
+                std::string ret;
+                for (auto it = v.rbegin(); it != v.rend(); ++it) {
+                    ret += *it;
+                }
+                return ret;
+            })(ss);
+            CHECK(transformed.has_value());
+            CHECK(transformed.value() == "etam ih");
         }
     }
 
