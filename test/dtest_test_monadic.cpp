@@ -215,6 +215,35 @@ TEST_CASE("Monadic Parser Test") {
             CHECK_FALSE_MESSAGE(hello.has_value(), "should pass as a failure because hello is not in string");
         }
     }
+    // ./testing -tc=*Monadic* -sc=*Number* --no-capture -s
+    SUBCASE("Number") {
+        {
+            // success double
+            std::stringstream ss;
+            ss << "123.43";
+            auto dble = acc::number_<double>()(ss);
+            CHECK(dble.has_value());
+            CHECK(dble.value() == 123.43);
+        }
+
+        {
+            // success int
+            std::stringstream ss;
+            ss << "123.43";
+            auto integer = acc::number_<int>()(ss);
+            CHECK(integer.has_value());
+            CHECK(integer.value() == 123);
+        }
+
+        {
+            // failure for unsupported float
+            std::stringstream ss;
+            ss << "123.43";
+            auto f = acc::number_<float>()(ss);
+            CHECK_FALSE_MESSAGE(f.has_value(), f.error(), "FAILS AT THE MOMENT FOR UNSUPPORTED TYPE ( FLOAT )");
+        }
+    }
+
     // ./testing -tc=*Monadic* -sc=*Satisfies* --no-capture -s
     SUBCASE("Satisfies") {
         {

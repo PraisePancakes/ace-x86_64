@@ -250,10 +250,24 @@ parser<double> double_(const std::string& error_message) {
 }
 
 parser<double> double_() {
-    return double_("int_ parser error");
+    return double_("double_ parser error");
 };
 
-parser<char> letter_(const std::string& error_message) {
+template <typename T>
+    requires(std::is_arithmetic_v<T>)
+parser<T> number_() {
+    return [=](std::istream& is) -> result<T> {
+        if constexpr (std::is_same_v<T, int>) {
+            return int_()(is);
+        } else if constexpr (std::is_same_v<T, double>) {
+            return double_()(is);
+        }
+        return std::unexpected(" arithmetic type not supported yet. ");
+    };
+}
+
+parser<char>
+letter_(const std::string& error_message) {
     return [=](std::istream& ss) -> result<char> {
         auto v = ss.get();
         if (std::isalpha(v)) {
@@ -389,7 +403,7 @@ parser<std::pair<char, std::tuple<>>> ignore_(const parser<T>& ps) {
 
 template <typename T>
 parser<std::pair<char, std::tuple<>>> ignore_(const parser<T>& ps, const std::string& error_message) {
-    return [&ps, error_message](std::istream& ss) -> result<std::pair<char, std::tuple<>>> {
+    return [=](std::istream& ss) -> result<std::pair<char, std::tuple<>>> {
         char c = ss.peek();
         if (!ps(ss)) {
             return std::unexpected(error_message);
