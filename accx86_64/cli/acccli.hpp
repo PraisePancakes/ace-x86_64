@@ -74,7 +74,8 @@ class cli {
                                                })(ss); },
         // COMMANDS
         [this](std::stringstream& ss)
-            -> result<std::function<void()>> { return acc::any_("unkown command, enter \"acc --help\" or \"acc -h\" for usage", /*COMMAND HELP*/ acc::transform_(acc::either_1(acc::match_("-h"), acc::match_("--help")), []() -> std::function<void()> { return acc::cli::dump_usage; }),
+            -> result<std::function<void()>> { return acc::any_(/*ERROR*/ "unknown command, enter \"acc --help\" or \"acc -h\" for usage",
+                                                                /*COMMAND HELP   */ acc::transform_(acc::either_1(acc::match_("-h"), acc::match_("--help")), []() -> std::function<void()> { return acc::cli::dump_usage; }),
                                                                 /*COMMAND VERSION*/ acc::transform_(acc::either_1(acc::match_("-v"), acc::match_("--version")), []() -> std::function<void()> { return acc::cli::dump_version; }))(ss); }};
 
    public:
