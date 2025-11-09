@@ -33,7 +33,12 @@ auto main(int argc, char** argv) -> int {
 #if ARGV_DEBUG
     std::cout << "ARGV DEBUG END\n";
 #endif
-    acc::cli acli(std::move(ss));
+
+    try {
+        acc::cli acli(std::move(ss));
+    } catch (int v) {
+        return v;
+    };
 
     return EXIT_SUCCESS;
 }

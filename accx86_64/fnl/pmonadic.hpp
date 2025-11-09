@@ -130,6 +130,14 @@ template <typename... Ts>
     };
 }
 
+template <typename... Ts>
+[[nodiscard]] constexpr parser<std::tuple_element_t<0, std::tuple<Ts...>>> any_(const std::string& with_error, parser<Ts> const&... ts) {
+    return [=](std::istream& ss) -> result<std::tuple_element_t<0, std::tuple<Ts...>>> {
+        auto v = any_(ts...)(ss);
+        return v.has_value() ? v : std::unexpected(with_error);
+    };
+}
+
 parser<char> match_(const char c, const std::string& error_message) {
     return [=](std::istream& s) -> result<char> {
         char v = s.get();
