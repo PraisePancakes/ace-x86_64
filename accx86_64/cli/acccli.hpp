@@ -35,65 +35,105 @@
 namespace acc {
 
 class cli {
-    using flag_size_t = std::byte;
+    using flag_size_t = std::uint8_t;
     std::vector<std::string> m_input_files;
+    enum class OPTIONS : flag_size_t {
+        DUMP_TREE = 1 << 0,
+        DUMP_TOKENS = 1 << 1,
+        DUMP_ASM = 1 << 2
+    };
     static void dump_usage() {
         acc::logger::instance().send(logger::LEVEL::INFO, R"(
-            * USAGE
-            * _____
-            * 
-            * acc.exe [COMMANDS] file...
-            * 
-            *  BNF
-            * ______
-            * <protocol>   ::= acc <major>
-            * <major>      ::= -((- flag) | f)[-<minor>]
-            * <minor>      ::= (flag)[filters]
-            * 
-            * 
-            * COMMANDS
-            * ________
-            * 
-            * [-h, --help]                                 : Print usage/options for compilation.
-            * [-sd<options, ...>, --set-dev<options, ...>] : Set development debug options ( see below )
-            * options [ dump_tree | dump_ast | duml_asm ]    [ file ]
-            * 
-            * [-v, --version]                              : Display compiler version.
-            * [-o, --output]<file>                         : Place the output into <file>
-            * 
+* USAGE
+* _____
+* 
+* acc.exe [COMMANDS] file...
+* 
+*  BNF
+* ______
+* <protocol>   ::= acc <major>
+* <major>      ::= -((- flag) | f)[-<minor>]
+* <minor>      ::= (flag)[filters]
+* 
+* 
+* COMMANDS
+* ________
+* 
+* [-h || --help]                                                      : Print usage/options for compilation.
+* [-sd<[options, ...], [file]> || --set-dev<[options, ...], [file]>]  : Set development debug options ( see below )
+*       options [ --dump-tree | --dump-tokens | --dump-asm ] 
+* 
+* [-v || --version]                                                   : Display compiler version.
+* [-o || --output]<file>                                              : Place the output into <file>
+* 
         )");
     }
 
     static void dump_version() {};
 
-    std::array<std::function<result<std::function<void()>>(std::stringstream&)>, 2> cmd_parsers{
-        // ENTRY
-        [](std::stringstream& ss)
-            -> result<std::function<void()>> { return acc::transform_(acc::match_("acc", "entry not found."), []() -> std::function<void()> {
-                                                   return NOOP__CALLABLE;
-                                               })(ss); },
-        // COMMANDS
-        [this](std::stringstream& ss)
-            -> result<std::function<void()>> { return acc::any_(/*ERROR*/ "unknown command, enter \"acc --help\" or \"acc -h\" for usage",
-                                                                /*COMMAND HELP   */ acc::transform_(acc::either_1(acc::match_("-h"), acc::match_("--help")), []() -> std::function<void()> { return acc::cli::dump_usage; }),
-                                                                /*COMMAND VERSION*/ acc::transform_(acc::either_1(acc::match_("-v"), acc::match_("--version")), []() -> std::function<void()> { return acc::cli::dump_version; }))(ss); }};
+    bool is_set(OPTIONS o) {
+        return ((this->m_build_options & (flag_size_t)o) == (flag_size_t)o);
+    };
+
+    std::uint8_t m_build_options{0};
+    std::string m_dump_path;
+
+    void parse_info(std::stringstream& ss) {
+        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+        auto help_or_version = acc::any_(acc::transform_(acc::either_1(acc::match_("-h"),
+                                                                       acc::match_("--help")),
+                                                         []() -> std::function<void()> { return acc::cli::dump_usage; }),
+                                         acc::transform_(
+                                             acc::either_1(acc::match_("-v"),
+                                                           acc::match_("--version")),
+                                             []() -> std::function<void()> { return acc::cli::dump_version; }))(ss);
+        if (help_or_version.has_value()) {
+            help_or_version.value()();
+        };
+    };
+
+    void parse_dev(std::stringstream& ss) {
+        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+
+        auto sd_or_set_dev = acc::either_1(acc::match_("-sd"),
+                                           acc::match_("--set-dev"))(ss);
+        if (sd_or_set_dev) {
+            acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+            auto dev_seq = acc::many_(acc::any_(
+                acc::transform_(acc::match_("--dump-tree "),
+                                []() -> OPTIONS { return OPTIONS::DUMP_TREE; }),
+                acc::transform_(acc::match_("--dump-tokens "),
+                                []() -> OPTIONS { return OPTIONS::DUMP_TOKENS; }),
+                acc::transform_(acc::match_("--dump-asm "),
+                                []() -> OPTIONS { return OPTIONS::DUMP_ASM; })))(ss);
+
+            if (dev_seq) {
+                auto options_vec = dev_seq.value().first;
+                for (auto const& o : options_vec) {
+                    this->m_build_options |= (flag_size_t)o;
+                }
+            }
+        }
+    };
+
+    void parse_acc_flags(std::stringstream& ss) {
+        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+        auto found_entry = acc::match_("acc", "No valid entry found")(ss);
+
+        if (found_entry) {
+            parse_info(ss);
+            parse_dev(ss);
+            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_TREE);
+        }
+    };
 
    public:
     cli(std::stringstream&& ss) {
         try {
-            for (auto parser : cmd_parsers) {
-                acc::ignore_(acc::many_(acc::match_(' ')))(ss);
-                auto v = parser(ss);
-                if (v.has_value()) {
-                    v.value()();
-                } else {
-                    acc::logger::instance().send(acc::logger::LEVEL::FATAL, v.error());
-                    throw 42;
-                };
-            };
+            parse_acc_flags(ss);
         } catch (...) {
             throw 1;
         };
-    }
+    };
 };
 }  // namespace acc

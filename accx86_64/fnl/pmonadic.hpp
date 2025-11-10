@@ -85,9 +85,9 @@ template <typename T, typename U>
 };
 
 template <typename... Ts>
-[[nodiscard]] constexpr auto sequ_(Ts&&... ps) {
+[[nodiscard]] constexpr auto sequ_(Ts&&... ps) -> parser<std::tuple<typename std::decay_t<decltype(ps)>::value_type...>> {
+    using OutTupleT = std::tuple<typename std::decay_t<decltype(ps)>::value_type...>;
     return [xt = std::make_tuple(ps...)](std::istream& ss) {
-        using OutTupleT = std::tuple<typename std::decay_t<decltype(ps)>::value_type...>;
         return [&]<std::size_t... I>(std::index_sequence<I...>)
                    -> result<OutTupleT> {
             bool success = true;
@@ -173,6 +173,27 @@ parser<std::string> match_(const std::string& s, const std::string& error_messag
 
 parser<std::string> match_(std::string s) {
     return match_(s, "match_ parser error expected " + s);
+};
+
+parser<std::string> check_(const std::string& s) {
+    return [=](std::istream& ss) -> result<std::string> {
+        std::size_t i = 0;
+        for (i = 0; i < s.size(); ++i) {
+            if (ss.peek() == s[i]) {
+                ss.get();
+            } else {
+                while (i--) {
+                    ss.unget();
+                }
+                return std::unexpected(" CHECK_ error ");
+            }
+        }
+
+        while (i--) {
+            ss.unget();
+        }
+        return s;
+    };
 };
 
 template <typename T>
