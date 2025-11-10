@@ -8,7 +8,6 @@
 #include "../fnl/pmonadic.hpp"
 #include "../utils/acclog.hpp"
 
-#define NOOP__CALLABLE []() {}
 #define ACC__CLI__DEBUG true
 /**
  *  BNF
@@ -35,6 +34,11 @@
 namespace acc {
 
 class cli {
+    struct cli_error : std::exception {
+        std::string what;
+        cli_error(std::string& s) : what(s) {};
+    };
+
     using flag_size_t = std::uint8_t;
     std::vector<std::string> m_input_files;
     enum class OPTIONS : flag_size_t {
@@ -123,7 +127,8 @@ class cli {
         if (found_entry) {
             parse_info(ss);
             parse_dev(ss);
-            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_TREE);
+        } else {
+            throw cli_error(found_entry.error());
         }
     };
 
@@ -131,8 +136,9 @@ class cli {
     cli(std::stringstream&& ss) {
         try {
             parse_acc_flags(ss);
-        } catch (...) {
-            throw 1;
+        } catch (cli_error& err) {
+            acc::logger::instance().send(logger::LEVEL::FATAL, err.what);
+            throw 69420;
         };
     };
 };

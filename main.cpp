@@ -36,8 +36,8 @@ auto main(int argc, char** argv) -> int {
 
     try {
         acc::cli acli(std::move(ss));
-    } catch (int v) {
-        return v;
+    } catch (int) {
+        return EXIT_FAILURE;
     };
 
     return EXIT_SUCCESS;
