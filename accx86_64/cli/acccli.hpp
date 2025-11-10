@@ -31,23 +31,9 @@
  * acc              --help
  * acc              --help-dev
  */
-namespace acc {
-
-class cli {
-    struct cli_error : std::exception {
-        std::string what;
-        cli_error(std::string& s) : what(s) {};
-    };
-
-    using flag_size_t = std::uint8_t;
-    std::vector<std::string> m_input_files;
-    enum class OPTIONS : flag_size_t {
-        DUMP_TREE = 1 << 0,
-        DUMP_TOKENS = 1 << 1,
-        DUMP_ASM = 1 << 2
-    };
-    static void dump_usage() {
-        acc::logger::instance().send(logger::LEVEL::INFO, R"(
+namespace acc::iface {
+static void dump_usage() {
+    acc::logger::instance().send(logger::LEVEL::INFO, R"(
 * USAGE
 * _____
 * 
@@ -71,9 +57,22 @@ class cli {
 * [-o || --output]<file>                                              : Place the output into <file>
 * 
         )");
-    }
+}
 
-    static void dump_version() {};
+static void dump_version() {};
+class cli {
+    struct cli_error : std::exception {
+        std::string what;
+        cli_error(std::string& s) : what(s) {};
+    };
+
+    using flag_size_t = std::uint8_t;
+    std::vector<std::string> m_input_files;
+    enum class OPTIONS : flag_size_t {
+        DUMP_TREE = 1 << 0,
+        DUMP_TOKENS = 1 << 1,
+        DUMP_ASM = 1 << 2
+    };
 
     bool is_set(OPTIONS o) {
         return ((this->m_build_options & (flag_size_t)o) == (flag_size_t)o);
@@ -86,23 +85,22 @@ class cli {
         acc::ignore_ws_()(ss);
         auto help_or_version = acc::any_(acc::transform_(acc::either_1(acc::match_("-h"),
                                                                        acc::match_("--help")),
-                                                         []() -> std::function<void()> { return acc::cli::dump_usage; }),
+                                                         []() -> std::function<void()> { return acc::iface::dump_usage; }),
                                          acc::transform_(
                                              acc::either_1(acc::match_("-v"),
                                                            acc::match_("--version")),
-                                             []() -> std::function<void()> { return acc::cli::dump_version; }))(ss);
+                                             []() -> std::function<void()> { return acc::iface::dump_version; }))(ss);
         if (help_or_version.has_value()) {
             help_or_version.value()();
         };
     };
 
     void parse_dev(std::stringstream& ss) {
-        auto ignore_ws = acc::many_(acc::ignore_(acc::match_(' ')));
-        ignore_ws(ss);
+        acc::ignore_ws_()(ss);
         auto sd_or_set_dev = acc::either_1(acc::match_("-sd"),
                                            acc::match_("--set-dev"));
 
-        auto dev_seq = acc::sequ_(sd_or_set_dev, ignore_ws,
+        auto dev_seq = acc::sequ_(sd_or_set_dev, acc::ignore_ws_(),
                                   acc::many_(acc::any_(acc::transform_(acc::match_("--dump-tree "),
                                                                        []() -> OPTIONS { return OPTIONS::DUMP_TREE; }),
                                                        acc::transform_(acc::match_("--dump-tokens "),
@@ -119,7 +117,7 @@ class cli {
     };
 
     void parse_acc_flags(std::stringstream& ss) {
-        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+        acc::ignore_ws_()(ss);
         auto found_entry = acc::match_("acc", "No valid entry found")(ss);
 
         if (found_entry) {
@@ -141,4 +139,4 @@ class cli {
         };
     };
 };
-}  // namespace acc
+}  // namespace acc::iface

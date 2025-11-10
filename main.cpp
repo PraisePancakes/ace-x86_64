@@ -35,7 +35,7 @@ auto main(int argc, char** argv) -> int {
 #endif
 
     try {
-        acc::cli acli(std::move(ss));
+        acc::iface::cli acli(std::move(ss));
     } catch (int) {
         return EXIT_FAILURE;
     };
