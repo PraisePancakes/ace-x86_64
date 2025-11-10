@@ -83,7 +83,7 @@ class cli {
     std::string m_dump_path;
 
     void parse_info(std::stringstream& ss) {
-        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
+        acc::ignore_ws_()(ss);
         auto help_or_version = acc::any_(acc::transform_(acc::either_1(acc::match_("-h"),
                                                                        acc::match_("--help")),
                                                          []() -> std::function<void()> { return acc::cli::dump_usage; }),
@@ -97,25 +97,23 @@ class cli {
     };
 
     void parse_dev(std::stringstream& ss) {
-        acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-
+        auto ignore_ws = acc::many_(acc::ignore_(acc::match_(' ')));
+        ignore_ws(ss);
         auto sd_or_set_dev = acc::either_1(acc::match_("-sd"),
-                                           acc::match_("--set-dev"))(ss);
-        if (sd_or_set_dev) {
-            acc::many_(acc::ignore_(acc::match_(' ')))(ss);
-            auto dev_seq = acc::many_(acc::any_(
-                acc::transform_(acc::match_("--dump-tree "),
-                                []() -> OPTIONS { return OPTIONS::DUMP_TREE; }),
-                acc::transform_(acc::match_("--dump-tokens "),
-                                []() -> OPTIONS { return OPTIONS::DUMP_TOKENS; }),
-                acc::transform_(acc::match_("--dump-asm "),
-                                []() -> OPTIONS { return OPTIONS::DUMP_ASM; })))(ss);
+                                           acc::match_("--set-dev"));
 
-            if (dev_seq) {
-                auto options_vec = dev_seq.value().first;
-                for (auto const& o : options_vec) {
-                    this->m_build_options |= (flag_size_t)o;
-                }
+        auto dev_seq = acc::sequ_(sd_or_set_dev, ignore_ws,
+                                  acc::many_(acc::any_(acc::transform_(acc::match_("--dump-tree "),
+                                                                       []() -> OPTIONS { return OPTIONS::DUMP_TREE; }),
+                                                       acc::transform_(acc::match_("--dump-tokens "),
+                                                                       []() -> OPTIONS { return OPTIONS::DUMP_TOKENS; }),
+                                                       acc::transform_(acc::match_("--dump-asm "),
+                                                                       []() -> OPTIONS { return OPTIONS::DUMP_ASM; }))))(ss);
+
+        if (dev_seq) {
+            auto options_vec = std::get<2>(dev_seq.value()).first;
+            for (auto const& o : options_vec) {
+                this->m_build_options |= (flag_size_t)o;
             }
         }
     };
@@ -136,6 +134,7 @@ class cli {
     cli(std::stringstream&& ss) {
         try {
             parse_acc_flags(ss);
+            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_TREE);
         } catch (cli_error& err) {
             acc::logger::instance().send(logger::LEVEL::FATAL, err.what);
             throw 69420;

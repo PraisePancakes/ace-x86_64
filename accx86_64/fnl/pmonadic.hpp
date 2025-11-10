@@ -156,14 +156,16 @@ parser<char> match_(const char c) {
 
 parser<std::string> match_(const std::string& s, const std::string& error_message) {
     return [=](std::istream& ss) -> result<std::string> {
+        std::string for_err = "";
         for (std::size_t i = 0; i < s.size(); ++i) {
+            for_err += ss.peek();
             if (ss.peek() == s[i]) {
                 ss.get();
             } else {
                 while (i--) {
                     ss.unget();
                 }
-                return std::unexpected(error_message);
+                return std::unexpected(error_message + " got : " + for_err);
             }
         }
 
@@ -446,6 +448,12 @@ parser<std::pair<char, std::tuple<>>> ignore_(const parser<T>& ps, const std::st
             return std::unexpected(error_message);
         }
         return std::make_pair(c, std::make_tuple());
+    };
+};
+
+acc::parser<std::pair<std::vector<std::pair<char, std::tuple<>>>, std::string>> ignore_ws_() {
+    return [=](std::istream& ss) -> result<std::pair<std::vector<std::pair<char, std::tuple<>>>, std::string>> {
+        return acc::many_(acc::ignore_(acc::match_(' ')))(ss);
     };
 };
 
