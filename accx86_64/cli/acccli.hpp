@@ -121,13 +121,11 @@ class cli {
 
         if (dev_seq_parser) {
             const auto options_vec = std::get<2>(dev_seq_parser.value()).first;
-            this->m_build_options |= (flag_size_t)-1;
+            this->m_build_options |= ((options_vec.size() == 0) * (flag_size_t)-1);
 
             for (auto const o : options_vec) {
                 this->m_build_options ^= (((flag_size_t)-1 & ((flag_size_t)o)));
             };
-
-            this->m_build_options = ((this->m_build_options == (flag_size_t)-1) * (flag_size_t)-1 | (~this->m_build_options));
 
             this->m_dump_path = std::apply([](auto&&... tuple_args) {
                 return (tuple_args + ...);
