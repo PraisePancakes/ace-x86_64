@@ -124,7 +124,7 @@ class cli {
             this->m_build_options |= (flag_size_t)-1;
 
             for (auto const o : options_vec) {
-                this->m_build_options &= (~(this->m_build_options ^ (~(flag_size_t)o)));
+                this->m_build_options ^= (((flag_size_t)-1 & ((flag_size_t)o)));
             };
 
             this->m_build_options = ((this->m_build_options == (flag_size_t)-1) * (flag_size_t)-1 | (~this->m_build_options));
@@ -154,8 +154,9 @@ class cli {
         try {
             parse_acc_flags(ss);
             std::cout << std::boolalpha << is_set(OPTIONS::DUMP_TREE) << "\n";
-            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_ASM) << "\n";
             std::cout << std::boolalpha << is_set(OPTIONS::DUMP_TOKENS) << "\n";
+            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_ASM) << "\n";
+
         } catch (cli_error& err) {
             acc::logger::instance().send(logger::LEVEL::FATAL, err.what);
             throw 69420;
