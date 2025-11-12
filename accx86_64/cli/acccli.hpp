@@ -102,12 +102,27 @@ class cli {
 
     void parse_translation(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
+        const auto file_parser = acc::transform_(acc::sequ_(acc::letters_(), acc::match_('.'), acc::match_("acc", "Ace cannot translate a file type that does not implement the .acc extension")), [](auto v) {
+            return std::apply([](auto&&... tuple_args) {
+                return (tuple_args + ...);
+            },
+                              v);
+        });
+        const auto input_parser = acc::many_(acc::sequ_(acc::ignore_ws_(), file_parser, acc::ignore_ws_()));
+        const auto output_parser = acc::transform_(acc::sequ_(acc::any_(acc::match_("-s"), acc::match_("-o")), acc::letters_()), [](auto seq) {
+            return std::pair<std::string, std::string>{std::get<0>(seq), std::get<1>(seq)};
+        });
+
+        const auto translation_seq_parser = acc::sequ_(output_parser, input_parser)(ss);
+        if (translation_seq_parser) {
+            
+        }
     }
 
     void parse_dev(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
-        const auto sd_or_set_dev = acc::either_1(acc::match_("-sd"),
-                                                 acc::match_("--set-dev"));
+        const auto set_dev = acc::either_1(acc::match_("-sd"),
+                                           acc::match_("--set-dev"));
         const auto options_parser = acc::many_(acc::any_(acc::transform_(acc::match_("--dump-tree "),
                                                                          []() -> OPTIONS { return OPTIONS::DUMP_TREE; }),
                                                          acc::transform_(acc::match_("--dump-tokens "),
@@ -117,7 +132,7 @@ class cli {
 
         const auto file_parser = acc::sequ_(acc::letters_(), acc::match_('.'), acc::letters_());
 
-        const auto dev_seq_parser = acc::sequ_(sd_or_set_dev, acc::ignore_ws_(), options_parser, acc::ignore_ws_(), file_parser)(ss);
+        const auto dev_seq_parser = acc::sequ_(set_dev, acc::ignore_ws_(), options_parser, acc::ignore_ws_(), file_parser)(ss);
 
         if (dev_seq_parser) {
             const auto options_vec = std::get<2>(dev_seq_parser.value()).first;
@@ -150,10 +165,6 @@ class cli {
     cli(std::stringstream&& ss) {
         try {
             parse_acc_flags(ss);
-            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_TREE) << "\n";
-            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_TOKENS) << "\n";
-            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_ASM) << "\n";
-
         } catch (cli_error& err) {
             acc::logger::instance().send(logger::LEVEL::FATAL, err.what);
             throw 69420;
