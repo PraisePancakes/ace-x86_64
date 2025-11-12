@@ -79,7 +79,7 @@ class cli {
     };
 
     std::uint8_t m_build_options{0};
-    std::string m_dump_path;
+    std::optional<std::string> m_dump_path;
 
     void parse_info(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
@@ -97,22 +97,34 @@ class cli {
 
     void parse_dev(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
-        auto sd_or_set_dev = acc::either_1(acc::match_("-sd"),
-                                           acc::match_("--set-dev"));
+        const auto sd_or_set_dev = acc::either_1(acc::match_("-sd"),
+                                                 acc::match_("--set-dev"));
+        const auto options_parser = acc::many_(acc::any_(acc::transform_(acc::match_("--dump-tree "),
+                                                                         []() -> OPTIONS { return OPTIONS::DUMP_TREE; }),
+                                                         acc::transform_(acc::match_("--dump-tokens "),
+                                                                         []() -> OPTIONS { return OPTIONS::DUMP_TOKENS; }),
+                                                         acc::transform_(acc::match_("--dump-asm "),
+                                                                         []() -> OPTIONS { return OPTIONS::DUMP_ASM; })));
 
-        auto dev_seq = acc::sequ_(sd_or_set_dev, acc::ignore_ws_(),
-                                  acc::many_(acc::any_(acc::transform_(acc::match_("--dump-tree "),
-                                                                       []() -> OPTIONS { return OPTIONS::DUMP_TREE; }),
-                                                       acc::transform_(acc::match_("--dump-tokens "),
-                                                                       []() -> OPTIONS { return OPTIONS::DUMP_TOKENS; }),
-                                                       acc::transform_(acc::match_("--dump-asm "),
-                                                                       []() -> OPTIONS { return OPTIONS::DUMP_ASM; }))))(ss);
+        const auto file_parser = acc::sequ_(acc::letters_(), acc::match_('.'), acc::letters_());
 
-        if (dev_seq) {
-            auto options_vec = std::get<2>(dev_seq.value()).first;
-            for (auto const& o : options_vec) {
-                this->m_build_options |= (flag_size_t)o;
+        const auto dev_seq_parser = acc::sequ_(sd_or_set_dev, acc::ignore_ws_(), options_parser, acc::ignore_ws_(), file_parser)(ss);
+
+        if (dev_seq_parser) {
+            const auto options_vec = std::get<2>(dev_seq_parser.value()).first;
+            if (options_vec.size() == 0) {
+                this->m_build_options |= ((flag_size_t)OPTIONS::DUMP_TREE |
+                                          (flag_size_t)OPTIONS::DUMP_TOKENS |
+                                          (flag_size_t)OPTIONS::DUMP_ASM);
+            } else {
+                for (auto const o : options_vec) {
+                    this->m_build_options |= (flag_size_t)o;
+                }
             }
+            this->m_dump_path = std::apply([](auto&&... tuple_args) {
+                return (tuple_args + ...);
+            },
+                                           std::get<4>(dev_seq_parser.value()));
         }
     };
 
