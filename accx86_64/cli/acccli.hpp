@@ -37,7 +37,7 @@ static void dump_usage() {
 * USAGE
 * _____
 * 
-* acc.exe [COMMANDS] file...
+* acc.exe [META COMMANDS][TRANSLATION COMMANDS] input_files...
 * 
 *  BNF
 * ______
@@ -46,15 +46,20 @@ static void dump_usage() {
 * <minor>      ::= (flag)[filters]
 * 
 * 
-* COMMANDS
-* ________
+* META COMMANDS
+* _____________
 * 
 * [-h || --help]                                                      : Print usage/options for compilation.
 * [-sd<[options, ...], [file]> || --set-dev<[options, ...], [file]>]  : Set development debug options ( see below )
 *       options [ --dump-tree | --dump-tokens | --dump-asm ] 
 * 
 * [-v || --version]                                                   : Display compiler version.
-* [-o || --output]<file>                                              : Place the output into <file>
+*
+* TRANSLATION COMMANDS
+* ____________________
+*
+* [-o || --output(exec)]<file>                                        : Place the translated output into <file> (executable)
+* [-s || --asm]<file>                                                 : Place translated assembly into <file>
 * 
         )");
 }
@@ -79,7 +84,7 @@ class cli {
     };
 
     std::uint8_t m_build_options{0};
-    std::optional<std::string> m_dump_path;
+    std::optional<std::string> m_dump_path;  // if set use the path else dump to stdout
 
     void parse_info(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
@@ -94,6 +99,10 @@ class cli {
             help_or_version.value()();
         };
     };
+
+    void parse_translation(std::stringstream& ss) {
+        acc::ignore_ws_()(ss);
+    }
 
     void parse_dev(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
@@ -112,15 +121,14 @@ class cli {
 
         if (dev_seq_parser) {
             const auto options_vec = std::get<2>(dev_seq_parser.value()).first;
-            if (options_vec.size() == 0) {
-                this->m_build_options |= ((flag_size_t)OPTIONS::DUMP_TREE |
-                                          (flag_size_t)OPTIONS::DUMP_TOKENS |
-                                          (flag_size_t)OPTIONS::DUMP_ASM);
-            } else {
-                for (auto const o : options_vec) {
-                    this->m_build_options |= (flag_size_t)o;
-                }
-            }
+            this->m_build_options |= (flag_size_t)-1;
+
+            for (auto const o : options_vec) {
+                this->m_build_options &= (~(this->m_build_options ^ (~(flag_size_t)o)));
+            };
+
+            this->m_build_options = ((this->m_build_options == (flag_size_t)-1) * (flag_size_t)-1 | (~this->m_build_options));
+
             this->m_dump_path = std::apply([](auto&&... tuple_args) {
                 return (tuple_args + ...);
             },
@@ -135,6 +143,7 @@ class cli {
         if (found_entry) {
             parse_info(ss);
             parse_dev(ss);
+            parse_translation(ss);
         } else {
             throw cli_error(found_entry.error());
         }
@@ -144,7 +153,9 @@ class cli {
     cli(std::stringstream&& ss) {
         try {
             parse_acc_flags(ss);
-            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_TREE);
+            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_TREE) << "\n";
+            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_ASM) << "\n";
+            std::cout << std::boolalpha << is_set(OPTIONS::DUMP_TOKENS) << "\n";
         } catch (cli_error& err) {
             acc::logger::instance().send(logger::LEVEL::FATAL, err.what);
             throw 69420;
