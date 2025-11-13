@@ -84,6 +84,7 @@ class cli {
     };
 
     std::uint8_t m_build_options{0};
+    std::pair<std::string, std::string> m_output_info;
     std::optional<std::string> m_dump_path;  // if set use the path else dump to stdout
 
     void parse_info(std::stringstream& ss) {
@@ -102,20 +103,42 @@ class cli {
 
     void parse_translation(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
-        const auto file_parser = acc::transform_(acc::sequ_(acc::letters_(), acc::match_('.'), acc::match_("acc", "Ace cannot translate a file type that does not implement the .acc extension")), [](auto v) {
-            return std::apply([](auto&&... tuple_args) {
-                return (tuple_args + ...);
-            },
-                              v);
-        });
-        const auto input_parser = acc::many_(acc::sequ_(acc::ignore_ws_(), file_parser, acc::ignore_ws_()));
-        const auto output_parser = acc::transform_(acc::sequ_(acc::any_(acc::match_("-s"), acc::match_("-o")), acc::letters_()), [](auto seq) {
-            return std::pair<std::string, std::string>{std::get<0>(seq), std::get<1>(seq)};
-        });
+        const auto file_parser = acc::transform_(acc::sequ_(acc::letters_(),
+                                                            acc::match_('.'),
+                                                            acc::match_("acc", "Ace cannot translate a file type that does not implement the .acc extension")),
+                                                 [](auto seq) {
+                                                     return std::apply([](auto&&... tuple_args) {
+                                                         return (tuple_args + ...);
+                                                     },
+                                                                       seq);
+                                                 });
+
+        const auto input_parser = acc::transform_(acc::many_(acc::sequ_(acc::ignore_ws_(),
+                                                                        file_parser,
+                                                                        acc::ignore_ws_())),
+                                                  [](auto many) {
+                                                      std::vector<std::string> input_files;
+                                                      for (auto each : many.first) {
+                                                          const std::string file = std::get<1>(each);
+                                                          input_files.push_back(file);
+                                                      }
+                                                      return input_files;
+                                                  });
+
+        const auto output_parser = acc::transform_(acc::sequ_(acc::any_(acc::match_("-s"),
+                                                                        acc::match_("-o")),
+                                                              acc::letters_()),
+                                                   [](auto seq) {
+                                                       using out_type = std::string;
+                                                       using out_file = std::string;
+                                                       return std::pair<out_type, out_file>{std::get<0>(seq),
+                                                                                            std::get<1>(seq)};
+                                                   });
 
         const auto translation_seq_parser = acc::sequ_(output_parser, input_parser)(ss);
         if (translation_seq_parser) {
-            
+            m_output_info = std::get<0>(translation_seq_parser.value());
+            m_input_files = std::get<1>(translation_seq_parser.value());
         }
     }
 
