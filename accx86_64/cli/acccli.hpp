@@ -104,18 +104,21 @@ class cli {
     void parse_translation(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
 
-        // const auto prefix_parser = acc::transform_(acc::sequ_(
-        //                                                acc::letters_(),
-        //                                                acc::match_('.'),
-        //                                                acc::match_("acc", "Ace cannot translate a file type that does not implement the .acc extension")),
-        //                                            [](auto seq) {
-        //                                                return std::apply([](auto&&... tuple_args) {
-        //                                                    return (tuple_args + ...);
-        //                                                },
-        //                                                                  seq);
-        //                                            });
+        const auto prefix_parser = acc::transform_(acc::many_(acc::transform_(acc::sequ_(acc::letters_(), acc::match_('/')),
+                                                                              [](auto seq) {
+                                                                                  return std::get<0>(seq) + std::get<1>(seq);
+                                                                              })),
+                                                   [](auto many) {
+                                                       std::string prefix = "";
+                                                       for (auto each : many.first) {
+                                                           std::cout << "EACH : " << each << "\n";
+                                                           prefix += each;
+                                                       }
+                                                       return prefix;
+                                                   });
 
         const auto file_parser = acc::transform_(acc::sequ_(
+                                                     prefix_parser,
                                                      acc::letters_(),
                                                      acc::match_('.'),
                                                      acc::match_("acc", "Ace cannot translate a file type that does not implement the .acc extension")),
@@ -133,7 +136,6 @@ class cli {
                                                       std::vector<std::string> input_files;
                                                       for (auto each : many.first) {
                                                           const std::string file = std::get<1>(each);
-                                                          std::cout << "HERHEHRHER" << file;
                                                           input_files.push_back(file);
                                                       }
                                                       return input_files;

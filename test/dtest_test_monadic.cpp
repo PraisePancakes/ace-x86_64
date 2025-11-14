@@ -343,14 +343,11 @@ TEST_CASE("Monadic Parser Test") {
         {
             std::stringstream ss;
             ss << "hello-123";
-
-            auto v = acc::sequ_(acc::match_("hello"), acc::match_('-'), acc::int_())(ss);
-
-            REQUIRE(v.has_value());
-
-            CHECK(std::get<0>(v.value()) == "hello");
-            CHECK(std::get<1>(v.value()) == '-');
-            CHECK(std::get<2>(v.value()) == 123);
+            acc::match_("hello")(ss);
+            auto v = acc::sequ_(acc::match_('-'), acc::letters_())(ss);
+            auto p = acc::sequ_(acc::match_('-'), acc::number_<int>())(ss);
+            REQUIRE(p.has_value());
+            CHECK_FALSE(v.has_value());
         }
     }
 
