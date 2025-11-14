@@ -68,7 +68,7 @@ static void dump_version() {};
 class cli {
     struct cli_error : std::exception {
         std::string what;
-        cli_error(std::string& s) : what(s) {};
+        cli_error(const std::string& s) : what(s) {};
     };
 
     using flag_size_t = std::uint8_t;
@@ -103,9 +103,22 @@ class cli {
 
     void parse_translation(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
-        const auto file_parser = acc::transform_(acc::sequ_(acc::letters_(),
-                                                            acc::match_('.'),
-                                                            acc::match_("acc", "Ace cannot translate a file type that does not implement the .acc extension")),
+
+        // const auto prefix_parser = acc::transform_(acc::sequ_(
+        //                                                acc::letters_(),
+        //                                                acc::match_('.'),
+        //                                                acc::match_("acc", "Ace cannot translate a file type that does not implement the .acc extension")),
+        //                                            [](auto seq) {
+        //                                                return std::apply([](auto&&... tuple_args) {
+        //                                                    return (tuple_args + ...);
+        //                                                },
+        //                                                                  seq);
+        //                                            });
+
+        const auto file_parser = acc::transform_(acc::sequ_(
+                                                     acc::letters_(),
+                                                     acc::match_('.'),
+                                                     acc::match_("acc", "Ace cannot translate a file type that does not implement the .acc extension")),
                                                  [](auto seq) {
                                                      return std::apply([](auto&&... tuple_args) {
                                                          return (tuple_args + ...);
@@ -120,6 +133,7 @@ class cli {
                                                       std::vector<std::string> input_files;
                                                       for (auto each : many.first) {
                                                           const std::string file = std::get<1>(each);
+                                                          std::cout << "HERHEHRHER" << file;
                                                           input_files.push_back(file);
                                                       }
                                                       return input_files;
@@ -127,25 +141,29 @@ class cli {
 
         const auto output_parser = acc::transform_(acc::sequ_(acc::any_(acc::match_("-s"),
                                                                         acc::match_("-o")),
+                                                              acc::ignore_ws_(),
                                                               acc::letters_()),
                                                    [](auto seq) {
                                                        using out_type = std::string;
                                                        using out_file = std::string;
                                                        return std::pair<out_type, out_file>{std::get<0>(seq),
-                                                                                            std::get<1>(seq)};
+                                                                                            std::get<2>(seq)};
                                                    });
 
         const auto translation_seq_parser = acc::sequ_(output_parser, input_parser)(ss);
-        if (translation_seq_parser) {
-            m_output_info = std::get<0>(translation_seq_parser.value());
-            m_input_files = std::get<1>(translation_seq_parser.value());
-        }
+        if (!translation_seq_parser) throw cli_error(translation_seq_parser.error());
+
+        m_output_info = std::get<0>(translation_seq_parser.value());
+        m_input_files = std::get<1>(translation_seq_parser.value());
     }
 
-    void parse_dev(std::stringstream& ss) {
+    void
+    parse_dev(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
         const auto set_dev = acc::either_1(acc::match_("-sd"),
-                                           acc::match_("--set-dev"));
+                                           acc::match_("--set-dev"))(ss);
+        if (!set_dev) return;
+
         const auto options_parser = acc::many_(acc::any_(acc::transform_(acc::match_("--dump-tree "),
                                                                          []() -> OPTIONS { return OPTIONS::DUMP_TREE; }),
                                                          acc::transform_(acc::match_("--dump-tokens "),
@@ -155,39 +173,30 @@ class cli {
 
         const auto file_parser = acc::sequ_(acc::letters_(), acc::match_('.'), acc::letters_());
 
-        const auto dev_seq_parser = acc::sequ_(set_dev, acc::ignore_ws_(), options_parser, acc::ignore_ws_(), file_parser)(ss);
+        const auto dev_seq_parser = acc::sequ_(acc::ignore_ws_(), options_parser, acc::ignore_ws_(), file_parser)(ss);
+        if (!dev_seq_parser) throw cli_error(dev_seq_parser.error());
 
-        if (dev_seq_parser) {
-            const auto options_vec = std::get<2>(dev_seq_parser.value()).first;
-            this->m_build_options |= ((options_vec.size() == 0) * (flag_size_t)-1);
-            for (auto const o : options_vec) {
-                this->m_build_options |= (flag_size_t)o;
-            };
+        const auto options_vec = std::get<1>(dev_seq_parser.value()).first;
+        this->m_build_options |= ((options_vec.size() == 0) * (flag_size_t)-1);
+        for (auto const o : options_vec) {
+            this->m_build_options |= (flag_size_t)o;
+        };
 
-            this->m_dump_path = std::apply([](auto&&... tuple_args) {
-                return (tuple_args + ...);
-            },
-                                           std::get<4>(dev_seq_parser.value()));
-        }
-    };
-
-    void parse_acc_flags(std::stringstream& ss) {
-        acc::ignore_ws_()(ss);
-        auto found_entry = acc::match_("acc", "No valid entry found")(ss);
-
-        if (found_entry) {
-            parse_info(ss);
-            parse_dev(ss);
-            parse_translation(ss);
-        } else {
-            throw cli_error(found_entry.error());
-        }
+        this->m_dump_path = std::apply([](auto&&... tuple_args) {
+            return (tuple_args + ...);
+        },
+                                       std::get<3>(dev_seq_parser.value()));
     };
 
    public:
     cli(std::stringstream&& ss) {
         try {
-            parse_acc_flags(ss);
+            acc::ignore_ws_()(ss);
+            auto found_entry = acc::match_("acc", "No valid entry found")(ss);
+            if (!found_entry) throw cli_error(found_entry.error());
+            parse_info(ss);
+            parse_dev(ss);
+            parse_translation(ss);
         } catch (cli_error& err) {
             acc::logger::instance().send(logger::LEVEL::FATAL, err.what);
             throw 69420;
