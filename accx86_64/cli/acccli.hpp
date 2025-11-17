@@ -1,11 +1,15 @@
 #pragma once
 #include <cassert>
 #include <cstdint>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <unordered_map>
 
 #include "../fnl/pmonadic.hpp"
+#include "../frontend/acclexer.hpp"
+#include "../frontend/accparser.hpp"
+#include "../frontend/statics/ro_tokenmap.hpp"
 #include "../utils/acclog.hpp"
 #include "monaparsers.hpp"
 
@@ -88,7 +92,7 @@ class cli {
     std::pair<std::string, std::string> m_output_info;
     std::optional<std::string> m_dump_path;  // if set use the path else dump to stdout
 
-    void parse_info(std::stringstream& ss) {
+    void parse_info_cmd(std::stringstream& ss) noexcept {
         acc::ignore_ws_()(ss);
         auto help_or_version = acc::any_(acc::transform_(acc::either_1(acc::match_("-h"),
                                                                        acc::match_("--help")),
@@ -102,11 +106,11 @@ class cli {
         };
     };
 
-    void parse_translation(std::stringstream& ss) {
+    void parse_translation_cmd(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
 
         const auto input_parser = acc::transform_(acc::many_(acc::sequ_(acc::ignore_ws_(),
-                                                                        acc::monadic::file_parser(),
+                                                                        acc::mona::file_parser(),
                                                                         acc::ignore_ws_())),
                                                   [](auto many) {
                                                       std::vector<std::string> input_files;
@@ -116,7 +120,6 @@ class cli {
                                                       }
                                                       return input_files;
                                                   });
-
         const auto output_parser = acc::transform_(acc::sequ_(acc::any_(acc::match_("-s"),
                                                                         acc::match_("-o")),
                                                               acc::ignore_ws_(),
@@ -136,8 +139,9 @@ class cli {
     }
 
     void
-    parse_dev(std::stringstream& ss) {
+    parse_dev_cmd(std::stringstream& ss) {
         acc::ignore_ws_()(ss);
+
         const auto set_dev = acc::either_1(acc::match_("-sd"),
                                            acc::match_("--set-dev"))(ss);
         if (!set_dev) return;
@@ -148,10 +152,8 @@ class cli {
                                                                          []() -> OPTIONS { return OPTIONS::DUMP_TOKENS; }),
                                                          acc::transform_(acc::match_("--dump-asm "),
                                                                          []() -> OPTIONS { return OPTIONS::DUMP_ASM; })));
+        const auto dev_seq_parser = acc::sequ_(acc::ignore_ws_(), options_parser, acc::ignore_ws_(), acc::mona::file_parser())(ss);
 
-        const auto file_parser = acc::sequ_(acc::letters_(), acc::match_('.'), acc::letters_());
-
-        const auto dev_seq_parser = acc::sequ_(acc::ignore_ws_(), options_parser, acc::ignore_ws_(), file_parser)(ss);
         if (!dev_seq_parser) throw cli_error(dev_seq_parser.error());
 
         const auto options_vec = std::get<1>(dev_seq_parser.value()).first;
@@ -160,25 +162,59 @@ class cli {
             this->m_build_options |= (flag_size_t)o;
         };
 
-        this->m_dump_path = std::apply([](auto&&... tuple_args) {
-            return (tuple_args + ...);
-        },
-                                       std::get<3>(dev_seq_parser.value()));
+        this->m_dump_path = std::get<3>(dev_seq_parser.value());
+    };
+
+    void execute_cmd_events() {
+        for (auto path : this->m_input_files) {
+            std::ifstream ifs;
+            std::stringstream ss;
+
+            ifs.open(path, std::ios_base::in);
+
+            if (ifs.is_open()) {
+                ss << ifs.rdbuf();
+                auto lexer = acc::acc_lexer(ss.str(), acc::globals::token_map);
+                const auto tokens = lexer.lex();
+                if (is_set(OPTIONS::DUMP_TOKENS)) {
+                    if (m_dump_path.has_value()) {
+                        std::ofstream ofs;
+                        ofs.open(m_dump_path.value());
+                        if (ofs.is_open()) {
+                            for (auto tok : tokens) {
+                                tok.write_token(ofs);
+                            }
+                        }
+                    } else {
+                        for (auto tok : tokens) {
+                            tok.write_token(std::cout);
+                        }
+                    };
+                }
+                auto parser = acc::acc_parser(std::move(tokens)); 
+            } else {
+                std::cout << "FAILED";
+            }
+        };
     };
 
    public:
     cli(std::stringstream&& ss) {
+        acc::ignore_ws_()(ss);
+        auto found_entry = acc::match_("acc", "No valid entry found")(ss);
+        if (!found_entry) throw cli_error(found_entry.error());
+        parse_info_cmd(ss);
+
         try {
-            acc::ignore_ws_()(ss);
-            auto found_entry = acc::match_("acc", "No valid entry found")(ss);
-            if (!found_entry) throw cli_error(found_entry.error());
-            parse_info(ss);
-            parse_dev(ss);
-            parse_translation(ss);
+            parse_dev_cmd(ss);
+
+            parse_translation_cmd(ss);
         } catch (cli_error& err) {
             acc::logger::instance().send(logger::LEVEL::FATAL, err.what);
             throw 69420;
         };
+
+        execute_cmd_events();
     };
 };
 }  // namespace acc::iface

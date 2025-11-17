@@ -163,9 +163,9 @@ class printer {
                        [this](const acc::node::FuncStmt* fstmt) {
                            print_green("( FUNC )");
                            std::cout << acc::ansi::foreground_yellow << "TYPE : " << acc::ansi::reset << std::endl;
-                           fstmt->type.print_token();
+                           fstmt->type.write_token(std::cout);
                            std::cout << acc::ansi::foreground_yellow << "NAME : " << acc::ansi::reset << std::endl;
-                           fstmt->name.print_token();
+                           fstmt->name.write_token(std::cout);
                            std::cout << acc::ansi::foreground_yellow << "PARAMS : " << acc::ansi::reset << std::endl;
                            for (auto& p : fstmt->params) {
                                print_statement(p);

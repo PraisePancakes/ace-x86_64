@@ -6,10 +6,10 @@
 
 TEST_CASE("Parser Analysis") {
     SUBCASE("Parse Declaration") {
-        acc::lexer lxr(R"(
+        acc::acc_lexer lxr(R"(
                 int x : mut = 4;
             )",
-                       acc::globals::token_map);
+                           acc::globals::token_map);
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
@@ -24,13 +24,13 @@ TEST_CASE("Parser Analysis") {
     }
 
     SUBCASE("Parse Block") {
-        acc::lexer lxr(R"(
+        acc::acc_lexer lxr(R"(
                 int y = 3;
                 {
                     int x : mut = 4;
                 };
             )",
-                       acc::globals::token_map);
+                           acc::globals::token_map);
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
@@ -53,7 +53,7 @@ TEST_CASE("Parser Analysis") {
 #define COMPLEX_PARSE_TEST_WITH_ERR false
 #if COMPLEX_PARSE_TEST_WITH_ERR
     SUBCASE("complex ast print ( with errors )") {
-        acc::lexer lxr(R"(
+        acc::acc_lexer lxr(R"(
                int x : mut = 4;
                x = 5;
 
@@ -77,7 +77,7 @@ TEST_CASE("Parser Analysis") {
 
 
             )",
-                       acc::globals::token_map);
+                           acc::globals::token_map);
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
@@ -87,7 +87,7 @@ TEST_CASE("Parser Analysis") {
 #endif
 #if !COMPLEX_PARSE_TEST_WITH_ERR
     SUBCASE("complex ast print ( without errors )") {
-        acc::lexer lxr(R"(
+        acc::acc_lexer lxr(R"(
                int x : mut = 4;
                x = 5;
 
@@ -108,7 +108,7 @@ TEST_CASE("Parser Analysis") {
                };
 
             )",
-                       acc::globals::token_map);
+                           acc::globals::token_map);
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
@@ -119,14 +119,14 @@ TEST_CASE("Parser Analysis") {
 
     // ./testing -tc=*Parser* -sc=*functions*-definition-w-default* --no-capture
     SUBCASE("functions-definition-w-default") {
-        acc::lexer lxr(R"(
+        acc::acc_lexer lxr(R"(
             int f(int x : mut = 3, int y : mut = 2) {
                 int z = x + 4;
                 int h = x + y;
             };
 
             )",
-                       acc::globals::token_map);
+                           acc::globals::token_map);
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
@@ -143,7 +143,7 @@ TEST_CASE("Parser Analysis") {
     }
     // ./testing -tc=*Parser* -sc=*functions*-definition-wo-default* --no-capture
     SUBCASE("functions-definition-wo-default") {
-        acc::lexer lxr(R"(
+        acc::acc_lexer lxr(R"(
                 int z = 4;
                 int x = 2;
                 int h(int x : mut, int y) {
@@ -151,7 +151,7 @@ TEST_CASE("Parser Analysis") {
                      
                 };
             )",
-                       acc::globals::token_map);
+                           acc::globals::token_map);
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);

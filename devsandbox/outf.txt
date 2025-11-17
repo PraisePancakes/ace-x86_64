@@ -1,0 +1,30 @@
+TOKEN TYPE ID (x2ul) [TK_RESERVED_TYPE]
+location (row, col) < 3 , 0 > [STRING] int
+TOKEN TYPE ID (xFCul) [TK_IDENTIFIER]
+location (row, col) < 5 , 0 > [STRING] y
+TOKEN TYPE ID (=) [TK_EQUALS]
+location (row, col) < 7 , 0 > [CHAR] =
+TOKEN TYPE ID (xFEul) [TK_LITERAL_INT]
+location (row, col) < 9 , 0 > [INT] 3
+TOKEN TYPE ID (;) [TK_SEMI]
+location (row, col) < 10 , 0 > [CHAR] ;
+TOKEN TYPE ID ({) [TK_CURL_L]
+location (row, col) < 3 , 1 > [CHAR] {
+TOKEN TYPE ID (x2ul) [TK_RESERVED_TYPE]
+location (row, col) < 5 , 2 > [STRING] int
+TOKEN TYPE ID (xFCul) [TK_IDENTIFIER]
+location (row, col) < 7 , 2 > [STRING] x
+TOKEN TYPE ID (:) [TK_COLON]
+location (row, col) < 9 , 2 > [CHAR] :
+TOKEN TYPE ID (x1ul) [TK_RESERVED]
+location (row, col) < 11 , 2 > [STRING] mut
+TOKEN TYPE ID (=) [TK_EQUALS]
+location (row, col) < 13 , 2 > [CHAR] =
+TOKEN TYPE ID (xFEul) [TK_LITERAL_INT]
+location (row, col) < 15 , 2 > [INT] 4
+TOKEN TYPE ID (;) [TK_SEMI]
+location (row, col) < 16 , 2 > [CHAR] ;
+TOKEN TYPE ID (}) [TK_CURL_R]
+location (row, col) < 3 , 3 > [CHAR] }
+TOKEN TYPE ID (;) [TK_SEMI]
+location (row, col) < 4 , 3 > [CHAR] ;

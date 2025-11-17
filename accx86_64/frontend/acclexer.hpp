@@ -13,7 +13,7 @@
 namespace acc {
 // the two basic units of a set of tokens is an identifier and a number everything else is up to the user.
 
-class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
+class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     std::size_t m_x{0};
     std::size_t m_y{0};
     std::vector<token> m_output;
@@ -121,18 +121,20 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
             this->m_start = this->m_end;
         }
     }
+    std::vector<token> ret{};
 
    public:
-    lexer() {};
-    lexer(
+    acc_lexer() {};
+    acc_lexer(
         std::string_view sv,
         const std::unordered_map<std::variant<std::string, char>, std::uint64_t>& tmap)
         : acc::fsm_storage<std::string_view>(sv),
           token_map(tmap) {
           };
-
+    [[nodiscard]] const std::vector<token>& view_tokens() const noexcept {
+        return ret;
+    }
     std::vector<token> lex() {
-        std::vector<token> ret{};
         while (!this->is_end()) {
             skip_comments();
             m_x++;
@@ -151,6 +153,6 @@ class lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
         return ret;
     }
 
-    ~lexer() {};
+    ~acc_lexer() {};
 };
 }  // namespace acc

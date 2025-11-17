@@ -43,17 +43,17 @@ struct [[nodiscard]] token {
         return ret.substr(1, ret.size() - 2);
     }
 
-    void print_token() const noexcept {
-        std::cout << "TOKEN TYPE ID (" << to_literal(type) << ")"
-                  << " [" << to_string(type) << "]\n";
-        std::cout << "location (row, col) < " << location.first << " , " << location.second << " > ";
+    void write_token(std::ostream& out) const noexcept {
+        out << "TOKEN TYPE ID (" << to_literal(type) << ")"
+            << " [" << to_string(type) << "]\n";
+        out << "location (row, col) < " << location.first << " , " << location.second << " > ";
         std::visit(internal::visitor{
-                       [](char c) { std::cout << "[CHAR] " << c << std::endl; },
-                       [](std::string s) { std::cout << "[STRING] " << s << std::endl; },
-                       [](int i) { std::cout << "[INT] " << i << std::endl; },
-                       [](float f) { std::cout << "[FLOAT] " << f << std::endl; },
-                       [](double d) { std::cout << "[DOUBLE] " << d << std::endl; },
-                       [](bool b) { std::cout << "[BOOL] " << std::boolalpha << b << std::endl; }},
+                       [&out](char c) { out << "[CHAR] " << c << std::endl; },
+                       [&out](std::string s) { out << "[STRING] " << s << std::endl; },
+                       [&out](int i) { out << "[INT] " << i << std::endl; },
+                       [&out](float f) { out << "[FLOAT] " << f << std::endl; },
+                       [&out](double d) { out << "[DOUBLE] " << d << std::endl; },
+                       [&out](bool b) { out << "[BOOL] " << std::boolalpha << b << std::endl; }},
                    value);
     };
 

@@ -1,14 +1,18 @@
 #pragma once
 #include "../fnl/pmonadic.hpp"
-namespace acc::monadic {
+namespace acc::mona {
 
 class {
    public:
     static auto operator()() {
-        return acc::transform_(acc::many_(acc::transform_(acc::sequ_(acc::letters_(), acc::match_('/')),
-                                                          [](auto seq) {
-                                                              return std::get<0>(seq) + std::get<1>(seq);
-                                                          })),
+        return acc::transform_(acc::many_(acc::either_1(acc::transform_(acc::sequ_(acc::letters_(), acc::match_('/')),
+                                                                        [](auto seq) {
+                                                                            return std::get<0>(seq) + std::get<1>(seq);
+                                                                        }),
+                                                        acc::transform_(acc::sequ_(acc::match_(".."), acc::match_('/')),
+                                                                        [](auto seq) {
+                                                                            return std::get<0>(seq) + std::get<1>(seq);
+                                                                        }))),
                                [](auto many) {
                                    std::string prefix = "";
                                    for (auto each : many.first) {
@@ -27,7 +31,7 @@ class {
                                    prefix_parser(),
                                    acc::letters_(),
                                    acc::match_('.'),
-                                   acc::match_("acc", "Ace cannot translate a file type that does not implement the .acc extension")),
+                                   acc::letters_("Extension type not supported")),
                                [](auto seq) {
                                    return std::apply([](auto&&... tuple_args) {
                                        return (tuple_args + ...);
@@ -36,4 +40,4 @@ class {
                                });
     }
 } constexpr file_parser;
-}  // namespace acc::monadic
+}  // namespace acc::mona

@@ -4,7 +4,7 @@
 #include "doctest.hpp"
 
 TEST_CASE("Lexical Division") {
-    acc::lexer lexe(R"(
+    acc::acc_lexer lexe(R"(
         if 
         else 
         while 
@@ -82,7 +82,7 @@ TEST_CASE("Lexical Division") {
 }
 
 TEST_CASE("Skip Comments") {
-    acc::lexer lexe(R"(
+    acc::acc_lexer lexe(R"(
             int x = 3; //5
             // this is a comment that should get skipped
             /*

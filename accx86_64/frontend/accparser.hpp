@@ -340,6 +340,13 @@ class [[nodiscard]] acc_parser
         acc::logger::instance().send(acc::logger::LEVEL::ERROR, msg.str());
     };
 
+    void panic() {
+        while (!check_it(TK_CURL_R, TK_SEMI) && !this->is_end()) {
+            DISCARD(advance());
+        }
+        DISCARD(advance());
+    };
+
    public:
     acc_parser(const std::vector<acc::token>& toks)
         : acc::fsm_storage<std::vector<acc::token>>(toks), m_env{nullptr} {
@@ -348,13 +355,6 @@ class [[nodiscard]] acc_parser
     void print_ast() {
         acc::printer printer(m_env->get_root()->get_items());
         printer.print();
-    };
-
-    void panic() {
-        while (!check_it(TK_CURL_R, TK_SEMI) && !this->is_end()) {
-            DISCARD(advance());
-        }
-        DISCARD(advance());
     };
 
     acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* create_environment() {
