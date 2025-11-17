@@ -9,3 +9,7 @@ TODO implement x86 asm generator (at&t-syntax, intel syntax)
 TODO implement x86 assembler
 TODO implement ARM generator 
 TODO implement ARM assembler
+
+
+TODO implement ACC standard build system
+TODO implement ACC standard package manager
