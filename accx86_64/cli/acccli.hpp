@@ -191,7 +191,7 @@ class cli {
                         }
                     };
                 }
-                auto parser = acc::acc_parser(std::move(tokens)); 
+                auto parser = acc::acc_parser(std::move(tokens));
             } else {
                 std::cout << "FAILED";
             }
