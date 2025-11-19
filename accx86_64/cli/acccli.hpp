@@ -152,7 +152,7 @@ class cli {
                                                                          []() -> OPTIONS { return OPTIONS::DUMP_TOKENS; }),
                                                          acc::transform_(acc::match_("--dump-asm "),
                                                                          []() -> OPTIONS { return OPTIONS::DUMP_ASM; })));
-        const auto dev_seq_parser = acc::sequ_(acc::ignore_ws_(), options_parser, acc::ignore_ws_(), acc::mona::file_parser())(ss);
+        const auto dev_seq_parser = acc::sequ_(acc::ignore_ws_(), options_parser, acc::ignore_ws_())(ss);
 
         if (!dev_seq_parser) throw cli_error(dev_seq_parser.error());
 
@@ -161,11 +161,15 @@ class cli {
         for (auto const o : options_vec) {
             this->m_build_options |= (flag_size_t)o;
         };
-
-        this->m_dump_path = std::get<3>(dev_seq_parser.value());
+        const auto dump_parser = acc::mona::file_parser()(ss);
+        if (dump_parser) {
+            this->m_dump_path = dump_parser.value();
+        };
     };
 
     void execute_cmd_events() {
+        // for each path do ( 1 : dump sd info outstream , 2 : compile )
+
         for (auto path : this->m_input_files) {
             std::ifstream ifs;
             std::stringstream ss;
@@ -177,6 +181,7 @@ class cli {
                 auto lexer = acc::acc_lexer(ss.str(), acc::globals::token_map);
                 const auto tokens = lexer.lex();
                 if (is_set(OPTIONS::DUMP_TOKENS)) {
+                    // auto os = m_dump.value_or(std::cout)
                     if (m_dump_path.has_value()) {
                         std::ofstream ofs;
                         ofs.open(m_dump_path.value());
