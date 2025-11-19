@@ -30,7 +30,6 @@ struct inker {
 
     std::ostream& os;
     inker(std::ostream& os) : os(os) {};
-    std::ostream& get_outstream() noexcept { return os; };
     ~inker() = default;
 };
 

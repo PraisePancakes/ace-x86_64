@@ -24,12 +24,12 @@ class printer {
                            inker.print_green(" [ BINARY ] ");
                            inker.print_depth(m_depth, ' ');
                            std::cout << "|";
-                           print_expression(bxpr->lhs, inker.get_outstream());
+                           print_expression(bxpr->lhs, inker.os);
                            inker.print_depth(m_depth, ' ');
                            inker.print_red(bxpr->op.word);
                            inker.print_depth(m_depth, ' ');
                            std::cout << "|";
-                           print_expression(bxpr->rhs, inker.get_outstream());
+                           print_expression(bxpr->rhs, inker.os);
                        },
                        [this, &inker](const acc::node::LiteralExpr* lxpr) {
                            inker.print_green(" [ LITERAL ] ");
@@ -41,13 +41,13 @@ class printer {
                            inker.print_green(" [ UNARY ] ");
 
                            inker.print_red(uexpr->op.word);
-                           print_expression(uexpr->expr, inker.get_outstream());
+                           print_expression(uexpr->expr, inker.os);
                        },
                        [this, &inker](const acc::node::GroupingExpr* gexpr) {
                            inker.print_green(" [ GROUP ] ");
                            inker.print_depth(m_depth, ' ');
                            inker.print_blue("|");
-                           print_expression(gexpr->expr, inker.get_outstream());
+                           print_expression(gexpr->expr, inker.os);
                        },
                        [this, &inker](const acc::node::VariableExpr* vexpr) {
                            inker.print_green(" [ VARIABLE ] ");
@@ -71,11 +71,11 @@ class printer {
                        [this, &inker](const acc::node::IfStmt* ifstmt) {
                            inker.print_green("( IF )");
                            std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
-                           print_expression(ifstmt->condition, inker.get_outstream());
-                           this->print_statement(ifstmt->then, inker.get_outstream());
+                           print_expression(ifstmt->condition, inker.os);
+                           this->print_statement(ifstmt->then, inker.os);
                            if (ifstmt->else_.has_value()) {
                                inker.print_green("( ELSE )");
-                               this->print_statement(ifstmt->else_.value(), inker.get_outstream());
+                               this->print_statement(ifstmt->else_.value(), inker.os);
                            }
                        },
                        [this, &inker](const acc::node::DeclarationStmt* declstmt) {
@@ -89,44 +89,44 @@ class printer {
                            inker.print_yellow("HISTORY : [");
                            for (const auto& v : declstmt->history) {
                                inker.print_blue(" { ");
-                               print_expression(v, inker.get_outstream());
+                               print_expression(v, inker.os);
                                inker.print_blue(" }, ");
                            }
                            inker.print_yellow("]");
                            if (declstmt->expr.has_value()) {
                                inker.print_yellow("CURRENT VALUE : {");
-                               this->print_expression(declstmt->expr.value(), inker.get_outstream());
+                               this->print_expression(declstmt->expr.value(), inker.os);
                                inker.print_yellow("}");
                            }
                        },
                        [this, &inker](const acc::node::ExpressionStmt* xprstmt) {
                            inker.print_green("( EXPRESSION )");
-                           this->print_expression(xprstmt->expr, inker.get_outstream());
+                           this->print_expression(xprstmt->expr, inker.os);
                        },
                        [this, &inker](const acc::node::WhileStmt* whilestmt) {
                            inker.print_green("\n\n( WHILE )\n\n");
                            inker.print_yellow("CONDITION : ");
-                           print_statement(whilestmt->condition, inker.get_outstream());
+                           print_statement(whilestmt->condition, inker.os);
                            inker.print_yellow("BODY : ");
-                           this->print_statement(whilestmt->body, inker.get_outstream());
+                           this->print_statement(whilestmt->body, inker.os);
                        },
                        [this, &inker](const acc::node::BlockStmt* bstmt) {
                            inker.print_green("( BLOCK )");
                            inker.print_yellow("BODY :");
                            for (const auto& s : bstmt->stmts) {
-                               this->print_statement(s, inker.get_outstream());
+                               this->print_statement(s, inker.os);
                            }
                        },
                        [this, &inker](const acc::node::ForStmt* cxpr) {
                            inker.print_green("( FOR )");
                            std::cout << acc::ansi::foreground_yellow << "INIT : " << acc::ansi::reset << std::endl;
-                           print_statement(cxpr->init, inker.get_outstream());
+                           print_statement(cxpr->init, inker.os);
                            std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
-                           print_statement(cxpr->condition, inker.get_outstream());
+                           print_statement(cxpr->condition, inker.os);
                            std::cout << acc::ansi::foreground_yellow << "EXPR : " << acc::ansi::reset << std::endl;
-                           print_expression(cxpr->expr, inker.get_outstream());
+                           print_expression(cxpr->expr, inker.os);
                            inker.print_yellow("BODY :");
-                           print_statement(cxpr->body, inker.get_outstream());
+                           print_statement(cxpr->body, inker.os);
                        },
                        [this, &inker](const acc::node::FuncStmt* fstmt) {
                            inker.print_green("( FUNC )");
@@ -136,10 +136,10 @@ class printer {
                            fstmt->name.write_token(std::cout);
                            std::cout << acc::ansi::foreground_yellow << "PARAMS : " << acc::ansi::reset << std::endl;
                            for (auto& p : fstmt->params) {
-                               print_statement(p, inker.get_outstream());
+                               print_statement(p, inker.os);
                            };
                            inker.print_yellow("BODY :");
-                           print_statement(fstmt->body, inker.get_outstream());
+                           print_statement(fstmt->body, inker.os);
                        }},
                    stmt);
         m_depth--;
