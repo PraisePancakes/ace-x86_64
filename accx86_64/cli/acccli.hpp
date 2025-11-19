@@ -184,7 +184,7 @@ class cli {
                 auto parser = acc::acc_parser(std::move(tokens));
                 const auto statements = parser.parse();
             } else {
-                std::cout << "FAILED";
+                std::cout << "FAILED";  // handle error
             }
         };
     };

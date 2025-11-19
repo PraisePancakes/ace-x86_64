@@ -23,12 +23,12 @@ class printer {
                        [this, &inker](const acc::node::BinaryExpr* bxpr) {
                            inker.print_green(" [ BINARY ] ");
                            inker.print_depth(m_depth, ' ');
-                           std::cout << "|";
+                           inker.print_blue("|");
                            print_expression(bxpr->lhs, inker.os);
                            inker.print_depth(m_depth, ' ');
                            inker.print_red(bxpr->op.word);
                            inker.print_depth(m_depth, ' ');
-                           std::cout << "|";
+                           inker.print_blue("|");
                            print_expression(bxpr->rhs, inker.os);
                        },
                        [this, &inker](const acc::node::LiteralExpr* lxpr) {
@@ -70,7 +70,7 @@ class printer {
         std::visit(internal::visitor{
                        [this, &inker](const acc::node::IfStmt* ifstmt) {
                            inker.print_green("( IF )");
-                           std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
+                           inker.print_yellow("CONDITION : ");
                            print_expression(ifstmt->condition, inker.os);
                            this->print_statement(ifstmt->then, inker.os);
                            if (ifstmt->else_.has_value()) {
@@ -119,22 +119,22 @@ class printer {
                        },
                        [this, &inker](const acc::node::ForStmt* cxpr) {
                            inker.print_green("( FOR )");
-                           std::cout << acc::ansi::foreground_yellow << "INIT : " << acc::ansi::reset << std::endl;
+                           inker.print_yellow("INIT : ");
                            print_statement(cxpr->init, inker.os);
-                           std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
+                           inker.print_yellow("CONDITION : ");
                            print_statement(cxpr->condition, inker.os);
-                           std::cout << acc::ansi::foreground_yellow << "EXPR : " << acc::ansi::reset << std::endl;
+                           inker.print_yellow("EXPR : ");
                            print_expression(cxpr->expr, inker.os);
                            inker.print_yellow("BODY :");
                            print_statement(cxpr->body, inker.os);
                        },
                        [this, &inker](const acc::node::FuncStmt* fstmt) {
                            inker.print_green("( FUNC )");
-                           std::cout << acc::ansi::foreground_yellow << "TYPE : " << acc::ansi::reset << std::endl;
-                           fstmt->type.write_token(std::cout);
-                           std::cout << acc::ansi::foreground_yellow << "NAME : " << acc::ansi::reset << std::endl;
-                           fstmt->name.write_token(std::cout);
-                           std::cout << acc::ansi::foreground_yellow << "PARAMS : " << acc::ansi::reset << std::endl;
+                           inker.print_yellow("TYPE : ");
+                           fstmt->type.write_token(inker.os);
+                           inker.print_yellow("NAME : ");
+                           fstmt->name.write_token(inker.os);
+                           inker.print_yellow("PARAMS : ");
                            for (auto& p : fstmt->params) {
                                print_statement(p, inker.os);
                            };
