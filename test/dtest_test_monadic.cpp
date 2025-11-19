@@ -271,8 +271,16 @@ TEST_CASE("Monadic Parser Test") {
             std::stringstream ss;
             ss << "hello world";
             auto v = acc::either_1(acc::match_("hello"), acc::match_("world"))(ss);
-            CHECK(v.has_value());
+            REQUIRE(v.has_value());
             CHECK(v.value() == "hello");
+        }
+
+        // either_1 (lhs) fail
+        {
+            std::stringstream ss;
+            ss << "hello world";
+            auto v = acc::either_1(acc::match_("f"), acc::match_("a"))(ss);
+            REQUIRE_FALSE_MESSAGE(v.has_value(), v.error());
         }
 
         // either_2 (rhs)

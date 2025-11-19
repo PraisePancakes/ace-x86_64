@@ -91,7 +91,7 @@ struct DeclarationStmt {
     // const by default
     std::byte cv_qual_flags{0};  // 0000 0000 -lsb = const : lsb << 1 = volatile
 
-    // DEBUG ONLY
+    // DEBUG
     std::vector<ExprVariant> history;
     //
 

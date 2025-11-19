@@ -3,7 +3,7 @@
 
 namespace acc::utils {
 
-struct color_printer {
+struct inker {
     template <typename... Args>
     void print_green(Args&&... args) noexcept {
         (((os << acc::ansi::foreground_green << args << acc::ansi::reset), ...) << "\n");
@@ -21,9 +21,17 @@ struct color_printer {
     void print_blue(Args&&... args) noexcept {
         (((os << acc::ansi::foreground_blue << args << acc::ansi::reset), ...) << std::endl);
     }
+
+    void print_depth(std::size_t N, const char c) const noexcept {
+        while (N--) {
+            std::cout << c;
+        }
+    }
+
     std::ostream& os;
-    color_printer(std::ostream& os) : os(os) {};
-    ~color_printer() = default;
+    inker(std::ostream& os) : os(os) {};
+    std::ostream& get_outstream() noexcept { return os; };
+    ~inker() = default;
 };
 
 }  // namespace acc::utils

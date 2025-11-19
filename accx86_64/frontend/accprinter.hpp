@@ -4,6 +4,7 @@
 
 #include "../utils/ansi.hpp"
 #include "../utils/eval.hpp"
+#include "../utils/inker.hpp"
 #include "accast.hpp"
 
 // TO DO make this shit not shit :(
@@ -12,82 +13,49 @@ class printer {
     std::size_t m_depth = 0;
     std::vector<acc::StmtVariant> stmts;
 
-    template <typename... Args>
-    void print_green(Args&&... args) const noexcept {
-        (((std::cout << acc::ansi::foreground_green << args << acc::ansi::reset), ...) << std::endl);
-    }
-    template <typename... Args>
-    void print_yellow(Args&&... args) const noexcept {
-        (((std::cout << acc::ansi::foreground_yellow << args << acc::ansi::reset), ...) << std::endl);
-    }
-    template <typename... Args>
-    void print_red(Args&&... args) const noexcept {
-        (((std::cout << acc::ansi::foreground_light_red << args << acc::ansi::reset), ...) << std::endl);
-    }
-
-    template <typename... Args>
-    void print_blue(Args&&... args) const noexcept {
-        (((std::cout << acc::ansi::foreground_blue << args << acc::ansi::reset), ...) << std::endl);
-    }
-
-    void print_depth(std::size_t N, const char c) const noexcept {
-        while (N--) {
-            std::cout << c;
-        }
-    }
-
-    /*
-    [EXPRESSION]
-    |
-    ----[LITERAL]
-    +
-
-
-
-
-    */
    public:
-    void print_expression(const acc::ExprVariant expr) {
+    void print_expression(const acc::ExprVariant expr, std::ostream& os) {
         // non owning view of nodes
+        acc::utils::inker inker(os);
         m_depth++;
-        print_depth(m_depth, '-');
+        inker.print_depth(m_depth, '-');
         std::visit(internal::visitor{
-                       [this](const acc::node::BinaryExpr* bxpr) {
-                           print_green(" [ BINARY ] ");
-                           print_depth(m_depth, ' ');
+                       [this, &inker](const acc::node::BinaryExpr* bxpr) {
+                           inker.print_green(" [ BINARY ] ");
+                           inker.print_depth(m_depth, ' ');
                            std::cout << "|";
-                           print_expression(bxpr->lhs);
-                           print_depth(m_depth, ' ');
-                           print_red(bxpr->op.word);
-                           print_depth(m_depth, ' ');
+                           print_expression(bxpr->lhs, inker.get_outstream());
+                           inker.print_depth(m_depth, ' ');
+                           inker.print_red(bxpr->op.word);
+                           inker.print_depth(m_depth, ' ');
                            std::cout << "|";
-                           print_expression(bxpr->rhs);
+                           print_expression(bxpr->rhs, inker.get_outstream());
                        },
-                       [this](const acc::node::LiteralExpr* lxpr) {
-                           print_green(" [ LITERAL ] ");
-                           print_depth(m_depth, ' ');
+                       [this, &inker](const acc::node::LiteralExpr* lxpr) {
+                           inker.print_green(" [ LITERAL ] ");
+                           inker.print_depth(m_depth, ' ');
 
-                           print_yellow(lxpr->embedded.word);
+                           inker.print_yellow(lxpr->embedded.word);
                        },
-                       [this](const acc::node::UnaryExpr* uexpr) {
-                           print_green(" [ UNARY ] ");
+                       [this, &inker](const acc::node::UnaryExpr* uexpr) {
+                           inker.print_green(" [ UNARY ] ");
 
-                           print_red(uexpr->op.word);
-                           print_expression(uexpr->expr);
+                           inker.print_red(uexpr->op.word);
+                           print_expression(uexpr->expr, inker.get_outstream());
                        },
-                       [this](const acc::node::GroupingExpr* gexpr) {
-                           print_green(" [ GROUP ] ");
-                           print_depth(m_depth, ' ');
-                           std::cout << "|";
-                           print_expression(gexpr->expr);
+                       [this, &inker](const acc::node::GroupingExpr* gexpr) {
+                           inker.print_green(" [ GROUP ] ");
+                           inker.print_depth(m_depth, ' ');
+                           inker.print_blue("|");
+                           print_expression(gexpr->expr, inker.get_outstream());
                        },
-                       [this](const acc::node::VariableExpr* vexpr) {
-                           print_green(" [ VARIABLE ] ");
-                           print_depth(m_depth, ' ');
+                       [this, &inker](const acc::node::VariableExpr* vexpr) {
+                           inker.print_green(" [ VARIABLE ] ");
+                           inker.print_depth(m_depth, ' ');
 
-                           print_yellow(vexpr->name.word);
+                           inker.print_yellow(vexpr->name.word);
                        },
-                       [this]([[maybe_unused]] const acc::node::CallExpr* cexpr) {
+                       [this, &inker]([[maybe_unused]] const acc::node::CallExpr* cexpr) {
 
                        },
                    },
@@ -95,92 +63,92 @@ class printer {
         m_depth--;
     };
 
-    void print_statement(const acc::StmtVariant stmt) {
+    void print_statement(const acc::StmtVariant stmt, std::ostream& os) {
+        acc::utils::inker inker(os);
         m_depth++;
-        print_depth(m_depth, '-');
+        inker.print_depth(m_depth, '-');
         std::visit(internal::visitor{
-                       [this](const acc::node::IfStmt* ifstmt) {
-                           print_green("( IF )");
+                       [this, &inker](const acc::node::IfStmt* ifstmt) {
+                           inker.print_green("( IF )");
                            std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
-                           print_expression(ifstmt->condition);
-                           this->print_statement(ifstmt->then);
+                           print_expression(ifstmt->condition, inker.get_outstream());
+                           this->print_statement(ifstmt->then, inker.get_outstream());
                            if (ifstmt->else_.has_value()) {
-                               print_green("( ELSE )");
-                               this->print_statement(ifstmt->else_.value());
+                               inker.print_green("( ELSE )");
+                               this->print_statement(ifstmt->else_.value(), inker.get_outstream());
                            }
                        },
-                       [this](const acc::node::DeclarationStmt* declstmt) {
+                       [this, &inker](const acc::node::DeclarationStmt* declstmt) {
                            bool has_const = declstmt->has_const(declstmt->cv_qual_flags);
                            bool has_volatile = declstmt->has_volatile(declstmt->cv_qual_flags);
 
-                           print_green("( DECLARATION )");
-                           print_yellow("TYPE : ", declstmt->type.word);
-                           print_yellow("QUALIFIERS : [ ", (has_const ? "const" : " "), " ", (has_volatile ? "volatile" : " "), "]");
-                           print_yellow("ID : ", declstmt->name.word);
-                           print_yellow("HISTORY : [");
+                           inker.print_green("( DECLARATION )");
+                           inker.print_yellow("TYPE : ", declstmt->type.word);
+                           inker.print_yellow("QUALIFIERS : [ ", (has_const ? "const" : " "), " ", (has_volatile ? "volatile" : " "), "]");
+                           inker.print_yellow("ID : ", declstmt->name.word);
+                           inker.print_yellow("HISTORY : [");
                            for (const auto& v : declstmt->history) {
-                               print_blue(" { ");
-                               print_expression(v);
-                               print_blue(" }, ");
+                               inker.print_blue(" { ");
+                               print_expression(v, inker.get_outstream());
+                               inker.print_blue(" }, ");
                            }
-                           print_yellow("]");
+                           inker.print_yellow("]");
                            if (declstmt->expr.has_value()) {
-                               print_yellow("CURRENT VALUE : {");
-                               this->print_expression(declstmt->expr.value());
-                               print_yellow("}");
+                               inker.print_yellow("CURRENT VALUE : {");
+                               this->print_expression(declstmt->expr.value(), inker.get_outstream());
+                               inker.print_yellow("}");
                            }
                        },
-                       [this](const acc::node::ExpressionStmt* xprstmt) {
-                           print_green("( EXPRESSION )");
-                           this->print_expression(xprstmt->expr);
+                       [this, &inker](const acc::node::ExpressionStmt* xprstmt) {
+                           inker.print_green("( EXPRESSION )");
+                           this->print_expression(xprstmt->expr, inker.get_outstream());
                        },
-                       [this](const acc::node::WhileStmt* whilestmt) {
-                           std::cout << acc::ansi::foreground_green << "\n\n( WHILE )\n\n"
-                                     << acc::ansi::reset << std::endl;
-                           std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
-                           print_statement(whilestmt->condition);
-                           std::cout << acc::ansi::foreground_yellow << "BODY : " << acc::ansi::reset << std::endl;
-                           this->print_statement(whilestmt->body);
+                       [this, &inker](const acc::node::WhileStmt* whilestmt) {
+                           inker.print_green("\n\n( WHILE )\n\n");
+                           inker.print_yellow("CONDITION : ");
+                           print_statement(whilestmt->condition, inker.get_outstream());
+                           inker.print_yellow("BODY : ");
+                           this->print_statement(whilestmt->body, inker.get_outstream());
                        },
-                       [this](const acc::node::BlockStmt* bstmt) {
-                           print_green("( BLOCK )");
-                           print_yellow("BODY :");
+                       [this, &inker](const acc::node::BlockStmt* bstmt) {
+                           inker.print_green("( BLOCK )");
+                           inker.print_yellow("BODY :");
                            for (const auto& s : bstmt->stmts) {
-                               this->print_statement(s);
+                               this->print_statement(s, inker.get_outstream());
                            }
                        },
-                       [this](const acc::node::ForStmt* cxpr) {
-                           print_green("( FOR )");
+                       [this, &inker](const acc::node::ForStmt* cxpr) {
+                           inker.print_green("( FOR )");
                            std::cout << acc::ansi::foreground_yellow << "INIT : " << acc::ansi::reset << std::endl;
-                           print_statement(cxpr->init);
+                           print_statement(cxpr->init, inker.get_outstream());
                            std::cout << acc::ansi::foreground_yellow << "CONDITION : " << acc::ansi::reset << std::endl;
-                           print_statement(cxpr->condition);
+                           print_statement(cxpr->condition, inker.get_outstream());
                            std::cout << acc::ansi::foreground_yellow << "EXPR : " << acc::ansi::reset << std::endl;
-                           print_expression(cxpr->expr);
-                           print_yellow("BODY :");
-                           print_statement(cxpr->body);
+                           print_expression(cxpr->expr, inker.get_outstream());
+                           inker.print_yellow("BODY :");
+                           print_statement(cxpr->body, inker.get_outstream());
                        },
-                       [this](const acc::node::FuncStmt* fstmt) {
-                           print_green("( FUNC )");
+                       [this, &inker](const acc::node::FuncStmt* fstmt) {
+                           inker.print_green("( FUNC )");
                            std::cout << acc::ansi::foreground_yellow << "TYPE : " << acc::ansi::reset << std::endl;
                            fstmt->type.write_token(std::cout);
                            std::cout << acc::ansi::foreground_yellow << "NAME : " << acc::ansi::reset << std::endl;
                            fstmt->name.write_token(std::cout);
                            std::cout << acc::ansi::foreground_yellow << "PARAMS : " << acc::ansi::reset << std::endl;
                            for (auto& p : fstmt->params) {
-                               print_statement(p);
+                               print_statement(p, inker.get_outstream());
                            };
-                           print_yellow("BODY :");
-                           print_statement(fstmt->body);
+                           inker.print_yellow("BODY :");
+                           print_statement(fstmt->body, inker.get_outstream());
                        }},
                    stmt);
         m_depth--;
     };
 
     printer(const std::vector<acc::StmtVariant>& st) : stmts(st) {};
-    void print() {
+    void print(std::ostream& os) {
         for (const auto& s : stmts) {
-            print_statement(s);
+            print_statement(s, os);
         }
     };
 };

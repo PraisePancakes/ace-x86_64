@@ -113,7 +113,7 @@ TEST_CASE("Parser Analysis") {
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
-        prs.print_ast();
+        prs.print_ast(std::cout);
     }
 #endif
 
@@ -132,7 +132,7 @@ TEST_CASE("Parser Analysis") {
         acc::acc_parser prs(ts);
         auto v = prs.parse();
         auto* fstmt = std::get<acc::node::FuncStmt*>(v[0]);
-        prs.print_ast();
+        prs.print_ast(std::cout);
         REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
         REQUIRE(fstmt->type.word == "int");
         REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
@@ -156,7 +156,7 @@ TEST_CASE("Parser Analysis") {
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
-        prs.print_ast();
+        prs.print_ast(std::cout);
         if (v.size() > 0) {
             auto* fstmt = std::get<acc::node::FuncStmt*>(v[2]);
             REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);

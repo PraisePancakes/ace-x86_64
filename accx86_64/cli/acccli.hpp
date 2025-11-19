@@ -88,6 +88,8 @@ class cli {
         return ((this->m_build_options & (flag_size_t)o) == (flag_size_t)o);
     };
 
+    // std::unordered_map<OPTIONS, printer*> dispatcher;
+
     std::uint8_t m_build_options{0};
     std::pair<std::string, std::string> m_output_info;
     std::optional<std::string> m_dump_path;  // if set use the path else dump to stdout
@@ -172,31 +174,15 @@ class cli {
 
         for (auto path : this->m_input_files) {
             std::ifstream ifs;
-            std::stringstream ss;
-
             ifs.open(path, std::ios_base::in);
 
             if (ifs.is_open()) {
+                std::stringstream ss;
                 ss << ifs.rdbuf();
                 auto lexer = acc::acc_lexer(ss.str(), acc::globals::token_map);
                 const auto tokens = lexer.lex();
-                if (is_set(OPTIONS::DUMP_TOKENS)) {
-                    // auto os = m_dump.value_or(std::cout)
-                    if (m_dump_path.has_value()) {
-                        std::ofstream ofs;
-                        ofs.open(m_dump_path.value());
-                        if (ofs.is_open()) {
-                            for (auto tok : tokens) {
-                                tok.write_token(ofs);
-                            }
-                        }
-                    } else {
-                        for (auto tok : tokens) {
-                            tok.write_token(std::cout);
-                        }
-                    };
-                }
                 auto parser = acc::acc_parser(std::move(tokens));
+                const auto statements = parser.parse();
             } else {
                 std::cout << "FAILED";
             }

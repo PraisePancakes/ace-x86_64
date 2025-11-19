@@ -347,16 +347,6 @@ class [[nodiscard]] acc_parser
         DISCARD(advance());
     };
 
-   public:
-    acc_parser(const std::vector<acc::token>& toks)
-        : acc::fsm_storage<std::vector<acc::token>>(toks), m_env{nullptr} {
-
-          };
-    void print_ast() {
-        acc::printer printer(m_env->get_root()->get_items());
-        printer.print();
-    };
-
     acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* create_environment() {
         auto* new_env = new acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>();
         new_env->set_parent(m_env);
@@ -376,6 +366,16 @@ class [[nodiscard]] acc_parser
         };
 
         return bounded->get_items();
+    };
+
+   public:
+    acc_parser(const std::vector<acc::token>& toks)
+        : acc::fsm_storage<std::vector<acc::token>>(toks), m_env{nullptr} {
+
+          };
+    void print_ast(std::ostream& os) {
+        acc::printer printer(m_env->get_root()->get_items());
+        printer.print(os);
     };
 
     std::vector<acc::StmtVariant> parse() {

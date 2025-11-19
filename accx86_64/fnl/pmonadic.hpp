@@ -36,29 +36,25 @@ constexpr auto either_2(result<T> const& lhs, result<T> const& rhs) {
 template <typename T>
 constexpr acc::parser<T> either_1(parser<T> const& lhs, parser<T> const& rhs, const std::string& error) {
     return [=](std::istream& ss) -> result<T> {
-        std::string last_error;
         if (auto l = lhs(ss)) {
             return l;
         } else if (auto r = rhs(ss)) {
-            last_error += r.error();
             return r;
         }
-        return std::unexpected(error + " : " + last_error);
+        return std::unexpected(error + " : " + rhs(ss).error() + " or " + lhs(ss).error());
     };
 };
 
 template <typename T>
 constexpr acc::parser<T> either_2(parser<T> const& lhs, parser<T> const& rhs, const std::string& error) {
     return [=](std::istream& ss) -> result<T> {
-        std::string last_error;
         if (auto r = rhs(ss)) {
             return r;
         } else if (auto l = lhs(ss)) {
-            last_error = l.error();
             return l;
         }
 
-        return std::unexpected(error + " : " + last_error);
+        return std::unexpected(error + " : " + lhs(ss).error() + " or " + rhs(ss).error());
     };
 };
 
@@ -455,6 +451,7 @@ template <typename T>
 parser<std::pair<char, std::tuple<>>> ignore_(const parser<T>& ps, const std::string& error_message) {
     return [=](std::istream& ss) -> result<std::pair<char, std::tuple<>>> {
         char c = ss.peek();
+        std::cout << c << "\n";
         if (!ps(ss)) {
             return std::unexpected(error_message);
         }
