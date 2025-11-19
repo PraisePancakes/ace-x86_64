@@ -4,8 +4,8 @@
 
 #include "../../utils/inker.hpp"
 #include "../accast.hpp"
+#include "token_printer.hpp"
 
-// TO DO make this shit not shit :(
 namespace acc {
 class ast_printer {
     std::size_t m_depth = 0;
@@ -129,9 +129,9 @@ class ast_printer {
                        [this, &inker](const acc::node::FuncStmt* fstmt) {
                            inker.print_green("( FUNC )");
                            inker.print_yellow("TYPE : ");
-                           fstmt->type.write_token(inker.os);
+                           acc::token_printer::write_token(inker.os, fstmt->type);
                            inker.print_yellow("NAME : ");
-                           fstmt->name.write_token(inker.os);
+                           acc::token_printer::write_token(inker.os, fstmt->name);
                            inker.print_yellow("PARAMS : ");
                            for (auto& p : fstmt->params) {
                                print_statement(p, inker.os);
@@ -142,9 +142,9 @@ class ast_printer {
                    stmt);
         m_depth--;
     };
-
-    ast_printer(const std::vector<acc::StmtVariant>& st) : stmts(st) {};
-    void print(std::ostream& os) {
+    std::ostream& os;
+    ast_printer(std::ostream& os) : os(os) {};
+    void dump(const std::vector<acc::StmtVariant>& stmts) {
         for (const auto& s : stmts) {
             print_statement(s, os);
         }

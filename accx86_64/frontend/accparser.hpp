@@ -373,10 +373,7 @@ class [[nodiscard]] acc_parser
         : acc::fsm_storage<std::vector<acc::token>>(toks), m_env{nullptr} {
 
           };
-    void print_ast(std::ostream& os) {
-        acc::ast_printer printer(m_env->get_root()->get_items());
-        printer.print(os);
-    };
+
 
     std::vector<acc::StmtVariant> parse() {
         auto* new_env = create_environment();

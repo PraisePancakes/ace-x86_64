@@ -1,5 +1,6 @@
 #include "../accx86_64/frontend/acclexer.hpp"
 #include "../accx86_64/frontend/accparser.hpp"
+#include "../accx86_64/frontend/printers/ast_printer.hpp"
 #include "../accx86_64/frontend/statics/tkxmacro.hpp"
 #include "../accx86_64/utils/eval.hpp"
 #include "doctest.hpp"
@@ -113,7 +114,8 @@ TEST_CASE("Parser Analysis") {
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
-        prs.print_ast(std::cout);
+        acc::ast_printer printer(std::cout);
+        printer.dump(v);
     }
 #endif
 
@@ -132,7 +134,8 @@ TEST_CASE("Parser Analysis") {
         acc::acc_parser prs(ts);
         auto v = prs.parse();
         auto* fstmt = std::get<acc::node::FuncStmt*>(v[0]);
-        prs.print_ast(std::cout);
+        acc::ast_printer printer(std::cout);
+        printer.dump(v);
         REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
         REQUIRE(fstmt->type.word == "int");
         REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
@@ -156,7 +159,8 @@ TEST_CASE("Parser Analysis") {
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
-        prs.print_ast(std::cout);
+        acc::ast_printer printer(std::cout);
+        printer.dump(v);
         if (v.size() > 0) {
             auto* fstmt = std::get<acc::node::FuncStmt*>(v[2]);
             REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);

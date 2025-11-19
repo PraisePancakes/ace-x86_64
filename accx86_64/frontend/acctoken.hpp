@@ -15,48 +15,6 @@ struct [[nodiscard]] token {
     token_type_t type;
     value_type value;
 
-    constexpr static inline const char* to_string(token_type_t type) noexcept {
-        switch (type) {
-#define TOKEN_DEF(NAME, VALUE) \
-    case NAME:                 \
-        return #NAME;
-            TOKEN_DEFs
-#undef TOKEN_DEF
-                default : return "UNKNOWN_TYPE";
-        }
-    }
-
-    constexpr static const char* to_stringized(token_type_t type) noexcept {
-        switch (type) {
-#define TOKEN_DEF(NAME, VALUE) \
-    case NAME:                 \
-        return #VALUE;
-            TOKEN_DEFs
-#undef TOKEN_DEF
-                default : return "UNKNOWN_LITERAL";
-        }
-    }
-
-    constexpr static inline std::string to_literal(token_type_t type) noexcept {
-        const char* lit = to_stringized(type);
-        std::string ret{lit};
-        return ret.substr(1, ret.size() - 2);
-    }
-
-    void write_token(std::ostream& out) const noexcept {
-        out << "TOKEN TYPE ID (" << to_literal(type) << ")"
-            << " [" << to_string(type) << "]\n";
-        out << "location (row, col) < " << location.first << " , " << location.second << " > ";
-        std::visit(internal::visitor{
-                       [&out](char c) { out << "[CHAR] " << c << std::endl; },
-                       [&out](std::string s) { out << "[STRING] " << s << std::endl; },
-                       [&out](int i) { out << "[INT] " << i << std::endl; },
-                       [&out](float f) { out << "[FLOAT] " << f << std::endl; },
-                       [&out](double d) { out << "[DOUBLE] " << d << std::endl; },
-                       [&out](bool b) { out << "[BOOL] " << std::boolalpha << b << std::endl; }},
-                   value);
-    };
-
     token() = default;
     token(const std::string& word, token_type_t type, value_type val) : word(word), location(0, 0), type(type), value(val) {};
     token(const std::string& word, std::pair<int, int> l, token_type_t type, value_type val) : word(word), location(l), type(type), value(val) {};

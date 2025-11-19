@@ -88,8 +88,6 @@ class cli {
         return ((this->m_build_options & (flag_size_t)o) == (flag_size_t)o);
     };
 
-    // std::unordered_map<OPTIONS, printer*> dispatcher;
-
     std::uint8_t m_build_options{0};
     std::pair<std::string, std::string> m_output_info;
     std::optional<std::string> m_dump_path;  // if set use the path else dump to stdout
@@ -171,6 +169,15 @@ class cli {
 
     void execute_cmd_events() {
         // for each path do ( 1 : dump sd info outstream , 2 : compile )
+        std::optional<std::ofstream> dump = (m_dump_path.has_value() ? ([this]() -> std::optional<std::ofstream> {
+            std::ofstream ofs;
+            ofs.open(m_dump_path.value());
+            return ofs;
+        }())
+                                                                     : std::nullopt);
+
+        acc::ast_printer ast_printer((dump.has_value() ? dump.value() : std::cout));
+        acc::token_printer token_printer((dump.has_value() ? dump.value() : std::cout));
 
         for (auto path : this->m_input_files) {
             std::ifstream ifs;
@@ -181,8 +188,14 @@ class cli {
                 ss << ifs.rdbuf();
                 auto lexer = acc::acc_lexer(ss.str(), acc::globals::token_map);
                 const auto tokens = lexer.lex();
+                if (is_set(OPTIONS::DUMP_TOKENS)) {
+                    token_printer.dump(tokens);
+                }
                 auto parser = acc::acc_parser(std::move(tokens));
                 const auto statements = parser.parse();
+                if (is_set(OPTIONS::DUMP_TREE)) {
+                    ast_printer.dump(statements);
+                }
             } else {
                 std::cout << "FAILED";  // handle error
             }
