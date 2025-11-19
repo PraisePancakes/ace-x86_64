@@ -2,14 +2,12 @@
 #include <iostream>
 #include <vector>
 
-#include "../utils/ansi.hpp"
-#include "../utils/eval.hpp"
-#include "../utils/inker.hpp"
-#include "accast.hpp"
+#include "../../utils/inker.hpp"
+#include "../accast.hpp"
 
 // TO DO make this shit not shit :(
 namespace acc {
-class printer {
+class ast_printer {
     std::size_t m_depth = 0;
     std::vector<acc::StmtVariant> stmts;
 
@@ -145,7 +143,7 @@ class printer {
         m_depth--;
     };
 
-    printer(const std::vector<acc::StmtVariant>& st) : stmts(st) {};
+    ast_printer(const std::vector<acc::StmtVariant>& st) : stmts(st) {};
     void print(std::ostream& os) {
         for (const auto& s : stmts) {
             print_statement(s, os);

@@ -12,8 +12,8 @@
 #include "accast.hpp"
 #include "accenv.hpp"
 #include "accparserror.hpp"
-#include "accprinter.hpp"
 #include "acctoken.hpp"
+#include "printers/ast_printer.hpp"
 #include "statics/ro_accprec.hpp"
 #include "storage.hpp"
 
@@ -374,7 +374,7 @@ class [[nodiscard]] acc_parser
 
           };
     void print_ast(std::ostream& os) {
-        acc::printer printer(m_env->get_root()->get_items());
+        acc::ast_printer printer(m_env->get_root()->get_items());
         printer.print(os);
     };
 
