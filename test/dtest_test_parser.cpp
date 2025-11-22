@@ -139,7 +139,7 @@ TEST_CASE("Parser Analysis") {
         REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
         REQUIRE(fstmt->type.word == "int");
         REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
-            auto p1 = std::get<acc::node::DeclarationStmt*>(stmt->params[0]);
+            auto p1 = stmt->params[0];
             bool has_const = p1->has_const(p1->cv_qual_flags);
             return !has_const;
         }());
@@ -167,7 +167,7 @@ TEST_CASE("Parser Analysis") {
             REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
             REQUIRE(fstmt->type.word == "int");
             REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
-                auto p1 = std::get<acc::node::DeclarationStmt*>(stmt->params[0]);
+                auto p1 = stmt->params[0];
                 bool has_const = p1->has_const(p1->cv_qual_flags);
                 return !has_const;
             }());

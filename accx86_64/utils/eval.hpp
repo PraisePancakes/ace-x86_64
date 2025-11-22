@@ -65,7 +65,9 @@ class expr_eval {
                               [&]([[maybe_unused]] acc::node::CallExpr* cxpr) -> acc::token::value_type {
                                   return {};
                               },
-                          },
+                              [&](auto) -> acc::token::value_type {
+                                  return {};
+                              }},
                           exp);
     };  // namespace acc::interp
 

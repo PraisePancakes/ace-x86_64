@@ -16,7 +16,6 @@ class {
                                [](auto many) {
                                    std::string prefix = "";
                                    for (auto each : many.first) {
-                                       std::cout << "EACH : " << each << "\n";
                                        prefix += each;
                                    }
                                    return prefix;

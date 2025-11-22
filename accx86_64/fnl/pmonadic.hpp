@@ -451,7 +451,6 @@ template <typename T>
 parser<std::pair<char, std::tuple<>>> ignore_(const parser<T>& ps, const std::string& error_message) {
     return [=](std::istream& ss) -> result<std::pair<char, std::tuple<>>> {
         char c = ss.peek();
-        std::cout << c << "\n";
         if (!ps(ss)) {
             return std::unexpected(error_message);
         }
@@ -476,4 +475,4 @@ acc::parser<std::pair<std::vector<std::pair<char, std::tuple<>>>, std::string>> 
 
 // create any_ which will take a variadic parser<Ts>... and convert them to parsers, result will be any parser that succeeds else return unexpected.
 
-}  // namespace acc
+};  // namespace acc

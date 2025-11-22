@@ -65,7 +65,7 @@ class [[nodiscard]] acc_parser
         return true;
     }
 
-    acc::ExprVariant parse_primary() {
+    acc::ExprVariant parse_primary_expression() {
         if (match_any(TK_LITERAL_INT,
                       TK_LITERAL_STRING,
                       TK_LITERAL_DOUBLE,
@@ -84,20 +84,21 @@ class [[nodiscard]] acc_parser
         throw acc::parser_error(this->peek(), " unknown primary literal ");
     }
 
-    acc::ExprVariant parse_unary() {
+    acc::ExprVariant parse_unary_expression() {
         if (match_any(TK_BANG, TK_STAR)) {
             auto op = this->peek_prev();
             auto expr = parse_expr();
             return new acc::node::UnaryExpr{.op = op, .expr = expr};
         }
-        return parse_primary();
+        return parse_primary_expression();
     };
 
-    acc::ExprVariant parse_variable() {
+    acc::ExprVariant parse_variable_expression() {
         const auto id_tok = this->peek_prev();
-        return new acc::node::VariableExpr{.name = id_tok};
+        return new acc::node::VariableExpr{.name = id_tok, .deduced = std::monostate{}};
     };
 
+    // anything to do with an identifier in an expression e.g a = 4 or a() or anything gets resolved here
     acc::ExprVariant parse_id_expression() {
         while (match_it(acc::GLOBAL_TOKENS::TK_IDENTIFIER)) {
             const auto id_tok = this->peek_prev();
@@ -117,12 +118,35 @@ class [[nodiscard]] acc_parser
                 return expr;
             }
 
-            if (m_env->get<acc::node::DeclarationStmt*>(peek_prev().word)->expr.has_value())
-                return m_env->get<acc::node::DeclarationStmt*>(peek_prev().word)->expr.value();
-            return parse_variable();
+            /*
+            // id's that arent a function call being used to evaluate an expression
+            ie : a + 4 or 4 * 3 - z and which its value can be deduced in an evaluation context.
+            Hence why we get the expr.value() to return.
+            */
+            if (m_env->get<acc::node::DeclarationStmt*>(id)->expr.has_value())
+                return m_env->get<acc::node::DeclarationStmt*>(id)->expr.value();
+
+            // check if function call here to evaluate else return parse_variable_expression();
+            if (match_it(acc::GLOBAL_TOKENS::TK_PAREN_L)) {
+                try {
+                    auto* func_info = m_env->get<acc::node::FuncStmt*>(id);
+                    while (!match_it(TK_PAREN_R)) {
+                       //replace all undeduced variables within func_info
+                    }
+                    //evaluate and return func_info->body with newly replaced args.
+                } catch (std::runtime_error& err) {
+                    throw parser_error(id_tok, " failed to resolve function with id ");
+                };
+            };
+            /*
+             id's that cannot be deduced because its in an unevaluated context such as a function definition
+             e.g: int f(int h, int y) { int z = h + y; };
+             we dont know what h and y are therefore we just make them variables to be deduced at call site.
+            */
+            return parse_variable_expression();
         }
 
-        return parse_unary();
+        return parse_unary_expression();
     }
 
     // 1  *  2 + 3
@@ -273,13 +297,13 @@ class [[nodiscard]] acc_parser
         auto* func_decl = new acc::node::FuncStmt{
             .type = peek_prev(),
             .name = advance(),
-            .params = [this]() -> std::vector<acc::StmtVariant> {
-                std::vector<acc::StmtVariant> ret;
+            .params = [this]() -> std::vector<acc::node::DeclarationStmt*> {
+                std::vector<acc::node::DeclarationStmt*> ret;
                 if (match_it(TK_PAREN_L)) {
                     in_params = true;
                     while (!match_it(TK_PAREN_R)) {
                         DISCARD(advance());
-                        ret.push_back(parse_variable_declaration());
+                        ret.push_back(std::get<acc::node::DeclarationStmt*>(parse_variable_declaration()));
                         if (!match_it(TK_COMMA) && peek().type != TK_PAREN_R)
                             throw acc::parser_error(peek(), "missing param seperator ',' ");
                     }

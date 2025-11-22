@@ -65,6 +65,7 @@ const static std::unordered_map<std::variant<std::string, char>, std::uint64_t> 
 
     // --- Reserved keywords ---
     {"mut", ((acc::GLOBAL_TOKENS::TK_RESERVED << TOKEN_TYPE_SHIFTER) | FLAG_RESERVED)},
+    {"return", ((acc::GLOBAL_TOKENS::TK_RESERVED << TOKEN_TYPE_SHIFTER) | FLAG_RESERVED)},
     {"if", ((acc::GLOBAL_TOKENS::TK_RESERVED << TOKEN_TYPE_SHIFTER) | FLAG_RESERVED)},
     {"else", ((acc::GLOBAL_TOKENS::TK_RESERVED << TOKEN_TYPE_SHIFTER) | FLAG_RESERVED)},
     {"while", ((acc::GLOBAL_TOKENS::TK_RESERVED << TOKEN_TYPE_SHIFTER) | FLAG_RESERVED)},

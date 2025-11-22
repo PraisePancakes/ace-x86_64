@@ -38,10 +38,10 @@ TEST_CASE("Lexical Division") {
         !=
         $
         !
-
+        return
          
         )",
-                    acc::globals::token_map);
+                        acc::globals::token_map);
 
     auto toks = lexe.lex();
 
@@ -79,6 +79,7 @@ TEST_CASE("Lexical Division") {
     CHECK(toks[30].type == acc::GLOBAL_TOKENS::TK_BANG_EQ);
     CHECK(toks[31].type == acc::GLOBAL_TOKENS::TK_DOLLA);
     CHECK(toks[32].type == acc::GLOBAL_TOKENS::TK_BANG);
+    CHECK(toks[33].type == acc::GLOBAL_TOKENS::TK_RESERVED);
 }
 
 TEST_CASE("Skip Comments") {
@@ -92,7 +93,7 @@ TEST_CASE("Skip Comments") {
             /* and this */
             int y = 5; //5
         )",
-                    acc::globals::token_map);
+                        acc::globals::token_map);
     auto toks = lexe.lex();
     REQUIRE(toks.size() == 10);
 }

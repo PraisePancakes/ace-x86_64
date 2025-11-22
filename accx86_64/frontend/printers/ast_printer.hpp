@@ -56,7 +56,9 @@ class ast_printer {
                        [this, &inker]([[maybe_unused]] const acc::node::CallExpr* cexpr) {
 
                        },
-                   },
+                       [](std::monostate) {
+
+                       }},
                    expr);
         m_depth--;
     };
@@ -138,6 +140,9 @@ class ast_printer {
                            };
                            inker.print_yellow("BODY :");
                            print_statement(fstmt->body, inker.os);
+                       },
+                       [](std::monostate) {
+
                        }},
                    stmt);
         m_depth--;
@@ -150,4 +155,4 @@ class ast_printer {
         }
     };
 };
-}  // namespace acc
+}  // namespace acc::output

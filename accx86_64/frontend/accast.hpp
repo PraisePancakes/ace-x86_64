@@ -38,14 +38,16 @@ struct FuncStmt;
 //                                        uptr<node::GroupingExpr>>;
 
 // TO DO implement assignment expression
-using ExprVariant = std::variant<node::BinaryExpr*,
+using ExprVariant = std::variant<std::monostate,
+                                 node::BinaryExpr*,
                                  node::UnaryExpr*,
                                  node::LiteralExpr*,
                                  node::GroupingExpr*,
                                  node::CallExpr*,
                                  node::VariableExpr*>;
 
-using StmtVariant = std::variant<node::IfStmt*,
+using StmtVariant = std::variant<std::monostate,
+                                 node::IfStmt*,
                                  node::WhileStmt*,
                                  node::BlockStmt*,
                                  node::ForStmt*,
@@ -83,6 +85,7 @@ struct CallExpr {
 
 struct VariableExpr {
     acc::token name;
+    ExprVariant deduced;
 };
 
 struct DeclarationStmt {
@@ -138,13 +141,14 @@ struct ForStmt {
 
 /*
     int f() {};
-    int f1() => 2;
+    int f1() => return 2;
+    int f2(int z, int y) => return z + y;
 */
 
 struct FuncStmt {
     acc::token type;
     acc::token name;
-    std::vector<StmtVariant> params;
+    std::vector<DeclarationStmt*> params;
     StmtVariant body;  // arrow or block
 };
 

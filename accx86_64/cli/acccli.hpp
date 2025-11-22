@@ -195,6 +195,7 @@ class cli {
                 auto parser = acc::acc_parser(std::move(tokens));
                 const auto statements = parser.parse();
                 if (is_set(OPTIONS::DUMP_TREE)) {
+                    
                     ast_printer.dump(statements);
                 }
                 if (is_set(OPTIONS::DUMP_ASM)) {
