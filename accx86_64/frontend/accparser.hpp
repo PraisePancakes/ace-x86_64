@@ -22,7 +22,7 @@ namespace acc {
 
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
-    acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* m_env;
+    acc::environment<std::string, acc::StmtVariant>* m_env;
     bool in_params = false;
 
     template <traits::acc_matchable T>
@@ -106,19 +106,19 @@ class [[nodiscard]] acc_parser
             if (!this->m_env->resolve(id)) throw parser_error(id_tok, " unresolved identifier at ");
 
             if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
-                if (acc::node::DeclarationStmt::has_const(this->m_env->get(id)->cv_qual_flags)) {
+                if (acc::node::DeclarationStmt::has_const(this->m_env->get<acc::node::DeclarationStmt*>(id)->cv_qual_flags)) {
                     throw parser_error(id_tok, " assignment to const-qualified lvalue with ");
                 }
                 auto expr = parse_expr();
 
-                m_env->get(id)->expr = expr;
-                m_env->get(id)->history.push_back(expr);
+                m_env->get<acc::node::DeclarationStmt*>(id)->expr = expr;
+                m_env->get<acc::node::DeclarationStmt*>(id)->history.push_back(expr);
 
                 return expr;
             }
 
-            if (m_env->get(peek_prev().word)->expr.has_value())
-                return m_env->get(peek_prev().word)->expr.value();
+            if (m_env->get<acc::node::DeclarationStmt*>(peek_prev().word)->expr.has_value())
+                return m_env->get<acc::node::DeclarationStmt*>(peek_prev().word)->expr.value();
             return parse_variable();
         }
 
@@ -174,34 +174,9 @@ class [[nodiscard]] acc_parser
     };
 
     // int x : mut = 4;
-    acc::StmtVariant parse_variable_declaration() {
-        // have type
 
-        acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = peek_prev(),
-                                                                          .name = advance(),
-                                                                          .cv_qual_flags = get_cv_sig(),
-                                                                          .history = {},
-                                                                          .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)
-                                                                                       ? std::optional<acc::ExprVariant>(parse_expr())
-                                                                                       : std::optional<acc::ExprVariant>(std::nullopt))};
-
-        /* DEBUG INFO */
-        if (m_env->resolve(decl->name.word) == m_env) {
-            throw acc::parser_error(decl->name, "scope resolved an ambiguous identifier ");
-        }
-
-        m_env->set(decl->name.word, decl);
-        if (auto* ptr = m_env->resolve(decl->name.word)) {
-            if (decl->expr.has_value()) {
-                ptr->get(decl->name.word)->history.push_back(decl->expr.value());
-            }
-        }
-        /* DEBUG INFO */
-
-        return decl;
-    }
     acc::StmtVariant
-    parse_block(acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* bounded) {
+    parse_block(acc::environment<std::string, acc::StmtVariant>* bounded) {
         acc::node::BlockStmt* block = new acc::node::BlockStmt{.stmts = parse(bounded)};
         if (!match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
             throw acc::parser_error(this->peek_prev(), " open block without closing '}' with ");
@@ -258,6 +233,34 @@ class [[nodiscard]] acc_parser
         }
         throw acc::parser_error(peek_prev(), " error parsing iteration statement ");
     };
+
+    acc::StmtVariant parse_variable_declaration() {
+        // have type
+
+        acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = peek_prev(),
+                                                                          .name = advance(),
+                                                                          .cv_qual_flags = get_cv_sig(),
+                                                                          .history = {},
+                                                                          .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)
+                                                                                       ? std::optional<acc::ExprVariant>(parse_expr())
+                                                                                       : std::optional<acc::ExprVariant>(std::nullopt))};
+
+        /* DEBUG INFO */
+        if (m_env->resolve(decl->name.word) == m_env) {
+            throw acc::parser_error(decl->name, "scope resolved an ambiguous identifier ");
+        }
+
+        m_env->set(decl->name.word, decl);
+        if (auto* ptr = m_env->resolve(decl->name.word)) {
+            if (decl->expr.has_value()) {
+                ptr->get<acc::node::DeclarationStmt*>(decl->name.word)->history.push_back(decl->expr.value());
+            }
+        }
+
+        /* DEBUG INFO */
+
+        return decl;
+    }
     /*
         int f(int x, int y) {
     x = 4;
@@ -267,7 +270,7 @@ class [[nodiscard]] acc_parser
     */
     acc::StmtVariant parse_function_declaration() {
         auto* this_func_env = create_environment();
-        return new acc::node::FuncStmt{
+        auto* func_decl = new acc::node::FuncStmt{
             .type = peek_prev(),
             .name = advance(),
             .params = [this]() -> std::vector<acc::StmtVariant> {
@@ -289,6 +292,13 @@ class [[nodiscard]] acc_parser
                 }
                 throw acc::parser_error(peek(), " missing function definition ");
             }()};
+        if (m_env->resolve(func_decl->name.word) == m_env) {
+            throw acc::parser_error(func_decl->name, "scope resolved an ambiguous identifier ");
+        }
+
+        m_env->set(func_decl->name.word, func_decl);
+
+        return func_decl;
     }
 
     // either pass token or embedded string
@@ -347,14 +357,14 @@ class [[nodiscard]] acc_parser
         DISCARD(advance());
     };
 
-    acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* create_environment() {
-        auto* new_env = new acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>();
+    acc::environment<std::string, acc::StmtVariant>* create_environment() {
+        auto* new_env = new acc::environment<std::string, acc::StmtVariant>();
         new_env->set_parent(m_env);
         m_env = new_env;
         return new_env;
     };
 
-    std::vector<acc::StmtVariant> parse(acc::environment<std::string, acc::node::DeclarationStmt*, acc::StmtVariant>* bounded) {
+    std::vector<acc::StmtVariant> parse(acc::environment<std::string, acc::StmtVariant>* bounded) {
         while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
             try {
                 bounded->get_items().push_back(parse_stmt());
@@ -373,7 +383,6 @@ class [[nodiscard]] acc_parser
         : acc::fsm_storage<std::vector<acc::token>>(toks), m_env{nullptr} {
 
           };
-
 
     std::vector<acc::StmtVariant> parse() {
         auto* new_env = create_environment();

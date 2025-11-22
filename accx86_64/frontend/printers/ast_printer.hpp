@@ -6,7 +6,7 @@
 #include "../accast.hpp"
 #include "token_printer.hpp"
 
-namespace acc {
+namespace acc::output {
 class ast_printer {
     std::size_t m_depth = 0;
     std::vector<acc::StmtVariant> stmts;
@@ -129,9 +129,9 @@ class ast_printer {
                        [this, &inker](const acc::node::FuncStmt* fstmt) {
                            inker.print_green("( FUNC )");
                            inker.print_yellow("TYPE : ");
-                           acc::token_printer::write_token(inker.os, fstmt->type);
+                           acc::output::token_printer::write_token(inker.os, fstmt->type);
                            inker.print_yellow("NAME : ");
-                           acc::token_printer::write_token(inker.os, fstmt->name);
+                           acc::output::token_printer::write_token(inker.os, fstmt->name);
                            inker.print_yellow("PARAMS : ");
                            for (auto& p : fstmt->params) {
                                print_statement(p, inker.os);

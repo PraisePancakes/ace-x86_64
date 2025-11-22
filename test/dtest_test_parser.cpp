@@ -114,7 +114,7 @@ TEST_CASE("Parser Analysis") {
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
-        acc::ast_printer printer(std::cout);
+        acc::output::ast_printer printer(std::cout);
         printer.dump(v);
     }
 #endif
@@ -134,7 +134,7 @@ TEST_CASE("Parser Analysis") {
         acc::acc_parser prs(ts);
         auto v = prs.parse();
         auto* fstmt = std::get<acc::node::FuncStmt*>(v[0]);
-        acc::ast_printer printer(std::cout);
+        acc::output::ast_printer printer(std::cout);
         printer.dump(v);
         REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
         REQUIRE(fstmt->type.word == "int");
@@ -149,17 +149,18 @@ TEST_CASE("Parser Analysis") {
         acc::acc_lexer lxr(R"(
                 int z = 4;
                 int x = 2;
-                int h(int x : mut, int y) {
-                    int z = x + y;
+                int h(int h : mut, int y) {
+                    int z = h + y;
                      
                 };
+             
             )",
                            acc::globals::token_map);
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
-        acc::ast_printer printer(std::cout);
+        acc::output::ast_printer printer(std::cout);
         printer.dump(v);
         if (v.size() > 0) {
             auto* fstmt = std::get<acc::node::FuncStmt*>(v[2]);

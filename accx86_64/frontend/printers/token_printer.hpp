@@ -4,7 +4,7 @@
 
 #include "../acctoken.hpp"
 
-namespace acc {
+namespace acc::output {
 class token_printer {
     using token_type_t = acc::GLOBAL_TOKENS;
     std::vector<acc::token> tokens;

@@ -176,8 +176,9 @@ class cli {
         }())
                                                                      : std::nullopt);
 
-        acc::ast_printer ast_printer((dump.has_value() ? dump.value() : std::cout));
-        acc::token_printer token_printer((dump.has_value() ? dump.value() : std::cout));
+        acc::output::ast_printer ast_printer((dump.has_value() ? dump.value() : std::cout));
+        acc::output::token_printer token_printer((dump.has_value() ? dump.value() : std::cout));
+        // acc::output::asm_printer asm_printer((dump.has_value() ? dump.value() : std::cout));
 
         for (auto path : this->m_input_files) {
             std::ifstream ifs;
@@ -195,6 +196,9 @@ class cli {
                 const auto statements = parser.parse();
                 if (is_set(OPTIONS::DUMP_TREE)) {
                     ast_printer.dump(statements);
+                }
+                if (is_set(OPTIONS::DUMP_ASM)) {
+                    // asm_printer.dump(statements);
                 }
             } else {
                 std::cout << "FAILED";  // handle error
