@@ -171,6 +171,7 @@ TEST_CASE("Parser Analysis") {
                 bool has_const = p1->has_const(p1->cv_qual_flags);
                 return !has_const;
             }());
+            REQUIRE(std::get<acc::node::BlockStmt*>(fstmt->body)->env->get_items().size() == 1);
         }
     }
 }

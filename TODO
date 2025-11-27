@@ -1,7 +1,10 @@
 TODO implement more cli elements
-TODO implement printer as visitor pattern IE : visitLexerPrinter, visitParserPrinter, visitAsmPrinter etc...
+TODO reimplement parser and ast structure
+-- manage AST ownership better (RAII, smart pointers, move semantics)
+
+
 TODO implement assignment expression
-TODO manage AST ownership better (RAII, smart pointers, moving)
+
 TODO parse function calls
 TODO add more vistors to eval
 TODO implement interpreter via eval

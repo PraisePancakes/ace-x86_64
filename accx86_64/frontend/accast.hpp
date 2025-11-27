@@ -142,8 +142,14 @@ struct ForStmt {
 
 /*
     int f() {};
-    int f1() => return 2;
-    int f2(int z, int y) => return z + y;
+    int f1 = () => return 2;
+    int f2 = (int z, int y) => return z + y;
+    .
+    .
+    .
+    int x = f();
+    int y = f1();
+    int z = f2(1, 2);
 */
 
 struct FuncStmt {
