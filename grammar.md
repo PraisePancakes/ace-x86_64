@@ -13,11 +13,13 @@
 
 <for> ::= "for" "(" [ <expr> ] ";" [ <expression> ] ";" [ <expr> ] ")" <statement>
 
-<func> ::= "func" <identifier> "(" [ <param_list> ] ")" <block>
+<func> ::= "func" <identifier> "(" [ <param_list> ] ")" ( <block> | <arrow> "return" <expr> )
 
 <param_list> ::= <identifier> { "," <identifier> }
 
-<decl> ::= "var" <identifier> [ "=" <expression> ]
+<decl> ::= <type> <identifier> [":" <qual> ] [ "=" <expression> ]
+<type> ::= "int" | "float" | "double" | "long" | "long long" | "unsigned" | "char" | "bool"
+<qual> ::= "mut" | "volatile" | "mut" "volatile" | "volatile" "mut"
 
 <expr> ::= <expression>   // alias for clarity
 
