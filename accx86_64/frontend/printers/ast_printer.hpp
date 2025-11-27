@@ -113,7 +113,7 @@ class ast_printer {
                        [this, &inker](const acc::node::BlockStmt* bstmt) {
                            inker.print_green("( BLOCK )");
                            inker.print_yellow("BODY :");
-                           for (const auto& s : bstmt->stmts) {
+                           for (const auto& s : bstmt->env->get_items()) {
                                this->print_statement(s, inker.os);
                            }
                        },

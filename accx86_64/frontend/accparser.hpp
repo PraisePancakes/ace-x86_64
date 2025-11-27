@@ -131,9 +131,9 @@ class [[nodiscard]] acc_parser
                 try {
                     auto* func_info = m_env->get<acc::node::FuncStmt*>(id);
                     while (!match_it(TK_PAREN_R)) {
-                       //replace all undeduced variables within func_info
+                        // replace all undeduced variables within func_info
                     }
-                    //evaluate and return func_info->body with newly replaced args.
+                    // evaluate and return func_info->body with newly replaced args.
                 } catch (std::runtime_error& err) {
                     throw parser_error(id_tok, " failed to resolve function with id ");
                 };
@@ -201,7 +201,7 @@ class [[nodiscard]] acc_parser
 
     acc::StmtVariant
     parse_block(acc::environment<std::string, acc::StmtVariant>* bounded) {
-        acc::node::BlockStmt* block = new acc::node::BlockStmt{.stmts = parse(bounded)};
+        acc::node::BlockStmt* block = new acc::node::BlockStmt{.env = parse(bounded)};
         if (!match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
             throw acc::parser_error(this->peek_prev(), " open block without closing '}' with ");
         }
@@ -211,7 +211,7 @@ class [[nodiscard]] acc_parser
     };
     acc::StmtVariant
     parse_block() {
-        acc::node::BlockStmt* block = new acc::node::BlockStmt{.stmts = parse()};
+        acc::node::BlockStmt* block = new acc::node::BlockStmt{.env = parse()};
         if (!match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
             throw acc::parser_error(this->peek_prev(), " open block without closing '}' with ");
         }
@@ -381,14 +381,7 @@ class [[nodiscard]] acc_parser
         DISCARD(advance());
     };
 
-    acc::environment<std::string, acc::StmtVariant>* create_environment() {
-        auto* new_env = new acc::environment<std::string, acc::StmtVariant>();
-        new_env->set_parent(m_env);
-        m_env = new_env;
-        return new_env;
-    };
-
-    std::vector<acc::StmtVariant> parse(acc::environment<std::string, acc::StmtVariant>* bounded) {
+    acc::environment<std::string, acc::StmtVariant>* parse(acc::environment<std::string, acc::StmtVariant>* bounded) {
         while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
             try {
                 bounded->get_items().push_back(parse_stmt());
@@ -399,7 +392,14 @@ class [[nodiscard]] acc_parser
             };
         };
 
-        return bounded->get_items();
+        return bounded;
+    };
+
+    acc::environment<std::string, acc::StmtVariant>* create_environment() {
+        auto* new_env = new acc::environment<std::string, acc::StmtVariant>();
+        new_env->set_parent(m_env);
+        m_env = new_env;
+        return new_env;
     };
 
    public:
@@ -408,7 +408,7 @@ class [[nodiscard]] acc_parser
 
           };
 
-    std::vector<acc::StmtVariant> parse() {
+    acc::environment<std::string, acc::StmtVariant>* parse() {
         auto* new_env = create_environment();
 
         while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
@@ -420,7 +420,7 @@ class [[nodiscard]] acc_parser
             };
         };
 
-        return new_env->get_items();
+        return new_env;
     };
 
     acc_parser(const acc_parser&) = delete;

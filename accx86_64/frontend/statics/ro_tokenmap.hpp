@@ -7,7 +7,7 @@
 #include "tkxmacro.hpp"
 
 namespace acc::globals {
-constexpr std::uint8_t TOKEN_TYPE_SHIFTER = 5;
+constexpr static std::uint8_t TOKEN_TYPE_SHIFTER = 5;
 
 enum token_flags_ : std::uint8_t {
     FLAG_DELIM = 1 << 0,

@@ -7,7 +7,7 @@
 #include "visitor.hpp"
 
 namespace acc::interp {
-class expr_eval {
+class expr_eval final {
     [[nodiscard]] auto to_literal(acc::token::value_type var) const noexcept {
         return std::visit([](const auto v) -> acc::token::value_type { return v; }, var);
     };
@@ -72,7 +72,7 @@ class expr_eval {
     };  // namespace acc::interp
 
    public:
-    expr_eval() {};
+    expr_eval() = default;
 
     template <typename T>
     T as(acc::StmtVariant expr) {
@@ -83,6 +83,6 @@ class expr_eval {
     T as(acc::ExprVariant expr) {
         return std::get<T>(evaluate(expr));
     }
-    ~expr_eval() {};
+    ~expr_eval() = default;
 };
 };  // namespace acc::interp

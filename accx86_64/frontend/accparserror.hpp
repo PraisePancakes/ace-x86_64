@@ -10,6 +10,6 @@ struct parser_error : std::exception {
     std::string what;
 
     parser_error(acc::token t, const std::string& w) : token(t), what(w) {};
-    ~parser_error() {};
+    virtual ~parser_error() = default;
 };
 }  // namespace acc

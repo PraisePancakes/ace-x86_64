@@ -15,7 +15,7 @@ TEST_CASE("Parser Analysis") {
         acc::acc_parser prs(ts);
         auto v = prs.parse();
 
-        const auto* var = std::get<acc::node::DeclarationStmt*>(v[0]);
+        const auto* var = std::get<acc::node::DeclarationStmt*>(v->get_items()[0]);
 
         CHECK(var->name.word == "x");
         CHECK(var->type.word == "int");
@@ -36,15 +36,15 @@ TEST_CASE("Parser Analysis") {
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
-        const auto* var_y = std::get<acc::node::DeclarationStmt*>(v[0]);
+        const auto* var_y = std::get<acc::node::DeclarationStmt*>(v->get_items()[0]);
         CHECK(var_y->name.word == "y");
         CHECK(var_y->type.word == "int");
         CHECK(var_y->has_const(var_y->cv_qual_flags));
         CHECK(!var_y->has_volatile(var_y->cv_qual_flags));
         CHECK(acc::interp::expr_eval{}.as<int>(var_y->expr.value()) == 3);
 
-        const auto* block = std::get<acc::node::BlockStmt*>(v[1]);
-        const auto* blx = std::get<acc::node::DeclarationStmt*>(block->stmts[0]);
+        const auto* block = std::get<acc::node::BlockStmt*>(v->get_items()[1]);
+        const auto* blx = std::get<acc::node::DeclarationStmt*>(block->env->get_items()[0]);
         CHECK(blx->name.word == "x");
         CHECK(blx->type.word == "int");
         CHECK(!blx->has_const(blx->cv_qual_flags));
@@ -115,7 +115,7 @@ TEST_CASE("Parser Analysis") {
         acc::acc_parser prs(ts);
         auto v = prs.parse();
         acc::output::ast_printer printer(std::cout);
-        printer.dump(v);
+        printer.dump(v->get_items());
     }
 #endif
 
@@ -133,9 +133,9 @@ TEST_CASE("Parser Analysis") {
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
-        auto* fstmt = std::get<acc::node::FuncStmt*>(v[0]);
+        auto* fstmt = std::get<acc::node::FuncStmt*>(v->get_items()[0]);
         acc::output::ast_printer printer(std::cout);
-        printer.dump(v);
+        printer.dump(v->get_items());
         REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
         REQUIRE(fstmt->type.word == "int");
         REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
@@ -161,9 +161,9 @@ TEST_CASE("Parser Analysis") {
         acc::acc_parser prs(ts);
         auto v = prs.parse();
         acc::output::ast_printer printer(std::cout);
-        printer.dump(v);
-        if (v.size() > 0) {
-            auto* fstmt = std::get<acc::node::FuncStmt*>(v[2]);
+        printer.dump(v->get_items());
+        if (v->get_items().size() > 0) {
+            auto* fstmt = std::get<acc::node::FuncStmt*>(v->get_items()[2]);
             REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
             REQUIRE(fstmt->type.word == "int");
             REQUIRE([stmt = std::as_const(fstmt)]() -> bool {

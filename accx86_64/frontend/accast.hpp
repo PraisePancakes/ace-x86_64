@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <variant>
 
+#include "accenv.hpp"
 #include "acctoken.hpp"
 
 namespace acc {
@@ -130,7 +131,7 @@ struct WhileStmt {
     StmtVariant body;
 };
 struct BlockStmt {
-    std::vector<StmtVariant> stmts;
+    acc::environment<std::string, acc::StmtVariant>* env;
 };
 struct ForStmt {
     StmtVariant init;

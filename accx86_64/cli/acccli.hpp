@@ -193,10 +193,9 @@ class cli {
                     token_printer.dump(tokens);
                 }
                 auto parser = acc::acc_parser(std::move(tokens));
-                const auto statements = parser.parse();
+                const auto env = parser.parse();
                 if (is_set(OPTIONS::DUMP_TREE)) {
-                    
-                    ast_printer.dump(statements);
+                    ast_printer.dump(env->get_items());
                 }
                 if (is_set(OPTIONS::DUMP_ASM)) {
                     // asm_printer.dump(statements);

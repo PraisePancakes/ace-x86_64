@@ -45,7 +45,7 @@ TEST_CASE("Lexical Division") {
 
     auto toks = lexe.lex();
 
-    REQUIRE(toks.size() == 33);
+    REQUIRE(toks.size() == 34);
     CHECK(toks[0].type == acc::GLOBAL_TOKENS::TK_RESERVED);
     CHECK(toks[1].type == acc::GLOBAL_TOKENS::TK_RESERVED);
     CHECK(toks[2].type == acc::GLOBAL_TOKENS::TK_RESERVED);
