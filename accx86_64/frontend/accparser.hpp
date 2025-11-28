@@ -94,7 +94,7 @@ class [[nodiscard]] acc_parser
         return parse_primary_expression();
     };
 
-    acc::ExprVariant parse_variable_expression() {
+    acc::ExprVariant parse_variable_expression() const {
         const auto id_tok = this->peek_prev();
         return new acc::node::VariableExpr{.name = id_tok, .deduced = std::monostate{}};
     };
@@ -175,7 +175,7 @@ class [[nodiscard]] acc_parser
         return expr;
     }
 
-    static void report_error(const acc::parser_error& error) noexcept {
+    void report_error(const acc::parser_error& error) const noexcept {
         std::stringstream msg;
         msg << error.what
             << "'" << error.token.word << "'"
@@ -198,7 +198,6 @@ class [[nodiscard]] acc_parser
     auto* create_environment() const {
         auto* env = new environment_t();
         env->set_parent(m_env);
-
         return env;
     };
 
@@ -216,13 +215,13 @@ class [[nodiscard]] acc_parser
                     if (!acc::node::DeclarationStmt::has_const(cv_sig)) {
                         throw acc::parser_error(this->peek_prev(), "duplicate mut qualifier");
                     }
-                    (cv_sig = ((cv_sig) & (~std::byte{1})));
+                    acc::node::DeclarationStmt::remove_const(cv_sig);
                 }
                 if (this->peek_prev().word == "volatile") {
                     if (acc::node::DeclarationStmt::has_volatile(cv_sig)) {
                         throw acc::parser_error(this->peek_prev(), "duplicate volatile qualifier");
                     }
-                    (cv_sig |= acc::node::DeclarationStmt::mask_volatile());
+                    acc::node::DeclarationStmt::set_volatile(cv_sig);
                 }
             }
         }
@@ -237,7 +236,7 @@ class [[nodiscard]] acc_parser
                                                                           .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)
                                                                                        ? std::optional<acc::ExprVariant>(parse_expr())
                                                                                        : std::optional<acc::ExprVariant>(std::nullopt))};
-        if (!match_it(TK_SEMI)) throw acc::parser_error(peek_prev(), "Missing semi ';' ");
+        if (!match_it(TK_SEMI) && !in_params) throw acc::parser_error(peek_prev(), "Missing semi ';' ");
 
         /* DEBUG INFO */
         if (m_env->resolve(decl->name.word) == m_env) {
@@ -290,7 +289,22 @@ class [[nodiscard]] acc_parser
     };
 
     acc::StmtVariant parse_function_declaration() {
-        return std::monostate{};
+        return new acc::node::FuncStmt{.type = peek_prev(),
+                                       .name = advance(),
+                                       .params = [this]() -> std::vector<acc::node::DeclarationStmt*> {
+                                           std::vector<acc::node::DeclarationStmt*> params;
+                                           if (match_it(TK_PAREN_L)) {
+                                               this->in_params = true;
+                                               while (!match_it(TK_PAREN_R)) {
+                                                   DISCARD(advance());
+                                                   params.push_back(std::get<acc::node::DeclarationStmt*>(this->parse_variable_declaration()));
+                                                   if (!match_it(TK_COMMA) && peek().type != TK_PAREN_R)
+                                                       throw acc::parser_error(peek(), "missing param seperator ',' ");
+                                               }
+                                           }
+                                           return params;
+                                       }(),
+                                       .body = parse_statement()};
     };
 
     acc::StmtVariant parse_identifier_statement() {

@@ -121,59 +121,59 @@ TEST_CASE("Parser Analysis") {
     }
 #endif
 
-    // // ./testing -tc=*Parser* -sc=*functions*-definition-w-default* --no-capture
-    // SUBCASE("functions-definition-w-default") {
-    //     acc::acc_lexer lxr(R"(
-    //         int f(int x : mut = 3, int y : mut = 2) {
-    //             int z = x + 4;
-    //             int h = x + y;
-    //         };
+    // ./testing -tc=*Parser* -sc=*functions*-definition-w-default* --no-capture
+    SUBCASE("functions-definition-w-default") {
+        acc::acc_lexer lxr(R"(
+            int f(int x : mut = 3, int y : mut = 2) {
+                int z = x + 4;
+                int h = x + y;
+            };
 
-    //         )",
-    //                        acc::globals::token_map);
+            )",
+                           acc::globals::token_map);
 
-    //     auto ts = lxr.lex();
-    //     acc::acc_parser prs(ts);
-    //     auto v = prs.parse();
-    //     auto* fstmt = std::get<acc::node::FuncStmt*>(v->get_items()[0]);
-    //     acc::output::ast_printer printer(std::cout);
-    //     printer.dump(v->get_items());
-    //     REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
-    //     REQUIRE(fstmt->type.word == "int");
-    //     REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
-    //         auto p1 = stmt->params[0];
-    //         bool has_const = p1->has_const(p1->cv_qual_flags);
-    //         return !has_const;
-    //     }());
-    // }
-    // // ./testing -tc=*Parser* -sc=*functions*-definition-wo-default* --no-capture
-    // SUBCASE("functions-definition-wo-default") {
-    //     acc::acc_lexer lxr(R"(
-    //             int z = 4;
-    //             int x = 2;
-    //             int h(int h : mut, int y) {
-    //                 int z = h + y;
+        auto ts = lxr.lex();
+        acc::acc_parser prs(ts);
+        auto v = prs.parse();
+        auto* fstmt = std::get<acc::node::FuncStmt*>(v->get_items()[0]);
+        acc::output::ast_printer printer(std::cout);
+        printer.dump(v->get_items());
+        REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
+        REQUIRE(fstmt->type.word == "int");
+        REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
+            auto p1 = stmt->params[0];
+            bool has_const = p1->has_const(p1->cv_qual_flags);
+            return !has_const;
+        }());
+    }
+    // ./testing -tc=*Parser* -sc=*functions*-definition-wo-default* --no-capture
+    SUBCASE("functions-definition-wo-default") {
+        acc::acc_lexer lxr(R"(
+                int z = 4;
+                int x = 2;
+                int h(int h : mut, int y) {
+                    int z = h + y;
 
-    //             };
+                };
 
-    //         )",
-    //                        acc::globals::token_map);
+            )",
+                           acc::globals::token_map);
 
-    //     auto ts = lxr.lex();
-    //     acc::acc_parser prs(ts);
-    //     auto v = prs.parse();
-    //     acc::output::ast_printer printer(std::cout);
-    //     printer.dump(v->get_items());
-    //     if (v->get_items().size() > 0) {
-    //         auto* fstmt = std::get<acc::node::FuncStmt*>(v->get_items()[2]);
-    //         REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
-    //         REQUIRE(fstmt->type.word == "int");
-    //         REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
-    //             auto p1 = stmt->params[0];
-    //             bool has_const = p1->has_const(p1->cv_qual_flags);
-    //             return !has_const;
-    //         }());
-    //         REQUIRE(std::get<acc::node::BlockStmt*>(fstmt->body)->env->get_items().size() == 1);
-    //     }
-    // }
+        auto ts = lxr.lex();
+        acc::acc_parser prs(ts);
+        auto v = prs.parse();
+        acc::output::ast_printer printer(std::cout);
+        printer.dump(v->get_items());
+        if (v->get_items().size() > 0) {
+            auto* fstmt = std::get<acc::node::FuncStmt*>(v->get_items()[2]);
+            REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
+            REQUIRE(fstmt->type.word == "int");
+            REQUIRE([stmt = std::as_const(fstmt)]() -> bool {
+                auto p1 = stmt->params[0];
+                bool has_const = p1->has_const(p1->cv_qual_flags);
+                return !has_const;
+            }());
+            REQUIRE(std::get<acc::node::BlockStmt*>(fstmt->body)->env->get_items().size() == 1);
+        }
+    }
 }
