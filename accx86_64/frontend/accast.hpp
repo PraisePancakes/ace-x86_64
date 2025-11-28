@@ -127,7 +127,7 @@ struct ExpressionStmt {
 };
 
 struct WhileStmt {
-    StmtVariant condition;
+    ExprVariant condition;
     StmtVariant body;
 };
 struct BlockStmt {

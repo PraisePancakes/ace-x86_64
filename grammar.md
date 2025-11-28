@@ -13,7 +13,7 @@
 
 <for> ::= "for" "(" [ <expr> ] ";" [ <expression> ] ";" [ <expr> ] ")" <statement>
 
-<func> ::= "func" <identifier> "(" [ <param_list> ] ")" ( <block> | <arrow> "return" <expr> )
+<func> ::= <type> <identifier> "(" [ <param_list> ] ")" ( <block> | "=>" "return" <expr> )
 
 <param_list> ::= <identifier> { "," <identifier> }
 
@@ -21,16 +21,18 @@
 <type> ::= "int" | "float" | "double" | "long" | "long long" | "unsigned" | "char" | "bool"
 <qual> ::= "mut" | "volatile" | "mut" "volatile" | "volatile" "mut"
 
-<expr> ::= <expression>   // alias for clarity
+// expression statement
+<expr> ::= <expression>   
 
-<expression> ::= <term> { ("+" | "-" | "==" | "!=" | "<" | ">" | "<=" | ">=") <term> }
-
+//handled by pratt parser and prec climbing
+<expression> ::= <assignment>
+<assignment> ::= <identifier> "=" <assignment> | <equality_expr>
+<equality_expr> ::= <term> { ("==" | "!=" | "<" | ">"| "<=" | ">=") <term> }
+<term> { ("+" | "-") <term>  } 
 <term> ::= <factor> { ("*" | "/") <factor> }
-
-<factor> ::= <identifier>
-           | <number>
-           | "(" <expression> ")"
-
-<identifier> ::= /* identifier syntax, e.g. letter (letter|digit)* */
-
-<number> ::= /* number literal */
+<factor> ::= <primary>
+<primary> ::= <identifier> | <number> | <string> | <grouping>
+<identifier> ::= letters 
+<string> ::= "\"" letters "\""
+<grouping> ::= "(" <expression> ")"
+<number> ::= numbers

@@ -106,7 +106,7 @@ class ast_printer {
                        [this, &inker](const acc::node::WhileStmt* whilestmt) {
                            inker.print_green("\n\n( WHILE )\n\n");
                            inker.print_yellow("CONDITION : ");
-                           print_statement(whilestmt->condition, inker.os);
+                           print_expression(whilestmt->condition, inker.os);
                            inker.print_yellow("BODY : ");
                            this->print_statement(whilestmt->body, inker.os);
                        },

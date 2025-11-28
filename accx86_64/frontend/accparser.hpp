@@ -22,7 +22,8 @@ namespace acc {
 
 class [[nodiscard]] acc_parser
     : public acc::fsm_storage<std::vector<acc::token>> {
-    acc::environment<std::string, acc::StmtVariant>* m_env;
+    using environment_t = acc::environment<std::string, acc::StmtVariant>;
+    environment_t* m_env{nullptr};
     bool in_params = false;
 
     template <traits::acc_matchable T>
@@ -100,13 +101,13 @@ class [[nodiscard]] acc_parser
 
     // anything to do with an identifier in an expression e.g a = 4 or a() or anything gets resolved here
     acc::ExprVariant parse_id_expression() {
-        while (match_it(acc::GLOBAL_TOKENS::TK_IDENTIFIER)) {
+        while (match_it(TK_IDENTIFIER)) {
             const auto id_tok = this->peek_prev();
             const std::string id = this->peek_prev().word;
 
             if (!this->m_env->resolve(id)) throw parser_error(id_tok, " unresolved identifier at ");
 
-            if (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)) {
+            if (match_it(TK_EQUALS)) {
                 if (acc::node::DeclarationStmt::has_const(this->m_env->get<acc::node::DeclarationStmt*>(id)->cv_qual_flags)) {
                     throw parser_error(id_tok, " assignment to const-qualified lvalue with ");
                 }
@@ -127,7 +128,7 @@ class [[nodiscard]] acc_parser
                 return m_env->get<acc::node::DeclarationStmt*>(id)->expr.value();
 
             // check if function call here to evaluate else return parse_variable_expression();
-            if (match_it(acc::GLOBAL_TOKENS::TK_PAREN_L)) {
+            if (match_it(TK_PAREN_L)) {
                 try {
                     auto* func_info = m_env->get<acc::node::FuncStmt*>(id);
                     while (!match_it(TK_PAREN_R)) {
@@ -150,7 +151,7 @@ class [[nodiscard]] acc_parser
     }
 
     // 1  *  2 + 3
-    acc::ExprVariant parse_expr_prec(std::size_t min_prec) {
+    acc::ExprVariant parse_expr(std::size_t min_prec = 0) {
         auto lhs_atom = parse_id_expression();
         while (true) {
             auto op = peek();
@@ -162,204 +163,17 @@ class [[nodiscard]] acc_parser
             auto prec = globals::prec_map.at(op.type);
             auto next_min_prec = prec + 1;
             DISCARD(advance());
-            auto rhs_atom = parse_expr_prec(next_min_prec);
+            auto rhs_atom = parse_expr(next_min_prec);
             lhs_atom = new acc::node::BinaryExpr{.lhs = lhs_atom, .rhs = rhs_atom, .op = op};
         }
         return lhs_atom;
     };
 
-    acc::ExprVariant parse_expr() {
-        return parse_expr_prec(0);
-    };
-
     acc::StmtVariant parse_expression_statement() {
-        return new acc::node::ExpressionStmt{.expr = parse_expr()};
+        auto* expr = new acc::node::ExpressionStmt{.expr = parse_expr()};
+        if (!match_it(TK_SEMI)) throw acc::parser_error(peek_prev(), "missing semi ';' ");
+        return expr;
     }
-
-    std::byte get_cv_sig() {
-        std::byte cv_sig{1};
-        if (match_it(acc::GLOBAL_TOKENS::TK_COLON)) {
-            while (match_it("mut") || match_it("volatile")) {
-                if (this->peek_prev().word == "mut") {
-                    if (!acc::node::DeclarationStmt::has_const(cv_sig)) {
-                        throw acc::parser_error(this->peek_prev(), "duplicate mut qualifier");
-                    }
-                    (cv_sig = ((cv_sig) & (~std::byte{1})));
-                }
-                if (this->peek_prev().word == "volatile") {
-                    if (acc::node::DeclarationStmt::has_volatile(cv_sig)) {
-                        throw acc::parser_error(this->peek_prev(), "duplicate volatile qualifier");
-                    }
-                    (cv_sig |= acc::node::DeclarationStmt::mask_volatile());
-                }
-            }
-        }
-        return cv_sig;
-    };
-
-    // int x : mut = 4;
-
-    acc::StmtVariant
-    parse_block(acc::environment<std::string, acc::StmtVariant>* bounded) {
-        acc::node::BlockStmt* block = new acc::node::BlockStmt{.env = parse(bounded)};
-        if (!match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
-            throw acc::parser_error(this->peek_prev(), " open block without closing '}' with ");
-        }
-
-        m_env = bounded->get_parent();
-        return block;
-    };
-    acc::StmtVariant
-    parse_block() {
-        acc::node::BlockStmt* block = new acc::node::BlockStmt{.env = parse()};
-        if (!match_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
-            throw acc::parser_error(this->peek_prev(), " open block without closing '}' with ");
-        }
-
-        m_env = m_env->get_parent();
-        return block;
-    };
-
-    acc::StmtVariant parse_conditional() {
-        // if(true) { return false; };
-        //  if , ternary?!?!?!?
-        return new acc::node::IfStmt{.condition = parse_expr(),
-                                     .then = parse_declaration(),
-                                     .else_ = (match_it("else") ? std::optional<StmtVariant>(parse_declaration())
-                                                                : std::optional<StmtVariant>(std::nullopt))};
-    };
-
-    acc::StmtVariant parse_iteration() {
-        // for and whiles
-        if (peek_prev().word == "while") {
-            return new acc::node::WhileStmt{.condition = [this]() -> acc::StmtVariant {
-                                                if (!match_it(TK_PAREN_L)) throw acc::parser_error(peek(), " missing opening '(' for while condition ");
-                                                auto cond = parse_declaration();
-                                                if (!match_it(TK_PAREN_R)) throw acc::parser_error(peek(), " missing closing ')' for while condition ");
-                                                return cond;
-                                            }(),
-                                            .body = parse_declaration()};
-        }
-
-        if (peek_prev().word == "for") {
-            return new acc::node::ForStmt{.init = [this]() -> acc::StmtVariant {
-                                              if (!match_it(TK_PAREN_L))
-                                                  throw acc::parser_error(peek(), " missing opening '(' for 'for' conditional list ");
-                                              return parse_stmt();
-                                          }(),
-                                          .condition = parse_stmt(),
-                                          .expr = [this]() -> acc::ExprVariant {
-                                              auto expr = parse_expr();
-                                              if (!match_it(TK_PAREN_R)) throw acc::parser_error(peek(), " missing closing ')' for 'for' conditional list ");
-                                              return expr;
-                                          }(),
-                                          .body = parse_declaration()};
-        }
-        throw acc::parser_error(peek_prev(), " error parsing iteration statement ");
-    };
-
-    acc::StmtVariant parse_variable_declaration() {
-        // have type
-
-        acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = peek_prev(),
-                                                                          .name = advance(),
-                                                                          .cv_qual_flags = get_cv_sig(),
-                                                                          .history = {},
-                                                                          .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)
-                                                                                       ? std::optional<acc::ExprVariant>(parse_expr())
-                                                                                       : std::optional<acc::ExprVariant>(std::nullopt))};
-
-        /* DEBUG INFO */
-        if (m_env->resolve(decl->name.word) == m_env) {
-            throw acc::parser_error(decl->name, "scope resolved an ambiguous identifier ");
-        }
-
-        m_env->set(decl->name.word, decl);
-        if (auto* ptr = m_env->resolve(decl->name.word)) {
-            if (decl->expr.has_value()) {
-                ptr->get<acc::node::DeclarationStmt*>(decl->name.word)->history.push_back(decl->expr.value());
-            }
-        }
-
-        /* DEBUG INFO */
-
-        return decl;
-    }
-    /*
-        int f(int x, int y) {
-    x = 4;
-            return x;
-        };
-
-    */
-    acc::StmtVariant parse_function_declaration() {
-        auto* this_func_env = create_environment();
-        auto* func_decl = new acc::node::FuncStmt{
-            .type = peek_prev(),
-            .name = advance(),
-            .params = [this]() -> std::vector<acc::node::DeclarationStmt*> {
-                std::vector<acc::node::DeclarationStmt*> ret;
-                if (match_it(TK_PAREN_L)) {
-                    in_params = true;
-                    while (!match_it(TK_PAREN_R)) {
-                        DISCARD(advance());
-                        ret.push_back(std::get<acc::node::DeclarationStmt*>(parse_variable_declaration()));
-                        if (!match_it(TK_COMMA) && peek().type != TK_PAREN_R)
-                            throw acc::parser_error(peek(), "missing param seperator ',' ");
-                    }
-                }
-                return ret;
-            }(),
-            .body = [this, &this_func_env]() -> acc::StmtVariant {
-                if (match_it(TK_CURL_L)) {
-                    return parse_block(this_func_env);
-                }
-                throw acc::parser_error(peek(), " missing function definition ");
-            }()};
-        if (m_env->resolve(func_decl->name.word) == m_env) {
-            throw acc::parser_error(func_decl->name, "scope resolved an ambiguous identifier ");
-        }
-
-        m_env->set(func_decl->name.word, func_decl);
-
-        return func_decl;
-    }
-
-    // either pass token or embedded string
-
-    // int a : mut = 2;
-    acc::StmtVariant parse_declaration() {
-        // check if the reserved word is a type or any other reserved
-        if (peek().type == acc::GLOBAL_TOKENS::TK_RESERVED) {
-            if (match_it("if")) {
-                return parse_conditional();
-            }
-            if (match_any("while", "for")) {
-                return parse_iteration();
-            }
-        }
-        if (match_it(acc::GLOBAL_TOKENS::TK_RESERVED_TYPE)) {
-            if (peek_next().type == TK_PAREN_L) {
-                return parse_function_declaration();
-            }
-            return parse_variable_declaration();
-        }
-
-        if (match_it(acc::GLOBAL_TOKENS::TK_CURL_L)) {
-            return parse_block();
-        }
-        return parse_expression_statement();
-    }
-
-    acc::StmtVariant parse_stmt() {
-        auto node = parse_declaration();
-
-        if (!match_it(acc::GLOBAL_TOKENS::TK_SEMI)) {
-            throw acc::parser_error(this->peek_prev(), "missing ';' in statement ");
-        }
-
-        return node;
-    };
 
     static void report_error(const acc::parser_error& error) noexcept {
         std::stringstream msg;
@@ -381,25 +195,133 @@ class [[nodiscard]] acc_parser
         DISCARD(advance());
     };
 
-    acc::environment<std::string, acc::StmtVariant>* parse(acc::environment<std::string, acc::StmtVariant>* bounded) {
-        while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
-            try {
-                bounded->get_items().push_back(parse_stmt());
+    auto* create_environment() const {
+        auto* env = new environment_t();
+        env->set_parent(m_env);
 
-            } catch (acc::parser_error const& err) {
-                report_error(err);
-                panic();
-            };
-        };
-
-        return bounded;
+        return env;
     };
 
-    acc::environment<std::string, acc::StmtVariant>* create_environment() {
-        auto* new_env = new acc::environment<std::string, acc::StmtVariant>();
-        new_env->set_parent(m_env);
-        m_env = new_env;
-        return new_env;
+    acc::StmtVariant parse_block() {
+        auto* block = new acc::node::BlockStmt{.env = parse()};
+        match_it(TK_SEMI);
+        return block;
+    };
+
+    std::byte get_cv_sig() {
+        std::byte cv_sig{1};
+        if (match_it(acc::GLOBAL_TOKENS::TK_COLON)) {
+            while (match_any("mut", "volatile")) {
+                if (this->peek_prev().word == "mut") {
+                    if (!acc::node::DeclarationStmt::has_const(cv_sig)) {
+                        throw acc::parser_error(this->peek_prev(), "duplicate mut qualifier");
+                    }
+                    (cv_sig = ((cv_sig) & (~std::byte{1})));
+                }
+                if (this->peek_prev().word == "volatile") {
+                    if (acc::node::DeclarationStmt::has_volatile(cv_sig)) {
+                        throw acc::parser_error(this->peek_prev(), "duplicate volatile qualifier");
+                    }
+                    (cv_sig |= acc::node::DeclarationStmt::mask_volatile());
+                }
+            }
+        }
+        return cv_sig;
+    };
+
+    acc::StmtVariant parse_variable_declaration() {
+        acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = peek_prev(),
+                                                                          .name = advance(),
+                                                                          .cv_qual_flags = get_cv_sig(),
+                                                                          .history = {},
+                                                                          .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)
+                                                                                       ? std::optional<acc::ExprVariant>(parse_expr())
+                                                                                       : std::optional<acc::ExprVariant>(std::nullopt))};
+        if (!match_it(TK_SEMI)) throw acc::parser_error(peek_prev(), "Missing semi ';' ");
+
+        /* DEBUG INFO */
+        if (m_env->resolve(decl->name.word) == m_env) {
+            throw acc::parser_error(decl->name, "scope resolved an ambiguous identifier ");
+        }
+
+        m_env->set(decl->name.word, decl);
+        if (auto* ptr = m_env->resolve(decl->name.word)) {
+            if (decl->expr.has_value()) {
+                ptr->get<acc::node::DeclarationStmt*>(decl->name.word)->history.push_back(decl->expr.value());
+            }
+        }
+        /* DEBUG INFO */
+
+        return decl;
+    };
+
+    acc::StmtVariant parse_conditional() {
+        return new acc::node::IfStmt{.condition = parse_expr(),
+                                     .then = parse_statement(),
+                                     .else_ = (match_it("else") ? std::optional<StmtVariant>(parse_statement())
+                                                                : std::optional<StmtVariant>(std::nullopt))};
+    };
+    acc::StmtVariant parse_iteration() {
+        if (peek_prev().word == "while") {
+            return new acc::node::WhileStmt{.condition = [this]() -> acc::ExprVariant {
+                                                if (!match_it(TK_PAREN_L)) throw acc::parser_error(peek(), " missing opening '(' for while condition ");
+                                                auto cond = parse_expr();
+                                                if (!match_it(TK_PAREN_R)) throw acc::parser_error(peek(), " missing closing ')' for while condition ");
+                                                return cond;
+                                            }(),
+                                            .body = parse_statement()};
+        }
+
+        if (peek_prev().word == "for") {
+            return new acc::node::ForStmt{.init = [this]() -> acc::StmtVariant {
+                                              if (!match_it(TK_PAREN_L))
+                                                  throw acc::parser_error(peek(), " missing opening '(' for 'for' conditional list ");
+                                              return parse_identifier_statement();
+                                          }(),
+                                          .condition = parse_expression_statement(),
+                                          .expr = [this]() -> acc::ExprVariant {
+                                              auto expr = parse_expr();
+                                              if (!match_it(TK_PAREN_R)) throw acc::parser_error(peek(), " missing closing ')' for 'for' conditional list ");
+                                              return expr;
+                                          }(),
+                                          .body = parse_statement()};
+        }
+        throw acc::parser_error(peek_prev(), " error parsing iteration statement ");
+    };
+
+    acc::StmtVariant parse_function_declaration() {
+        return std::monostate{};
+    };
+
+    acc::StmtVariant parse_identifier_statement() {
+        if (match_it(TK_RESERVED_TYPE)) {
+            if (peek_next().type == TK_PAREN_L) {
+                // parse function
+                return parse_function_declaration();
+            }
+
+            // parse var
+            return parse_variable_declaration();
+        }
+
+        return parse_expression_statement();
+    }
+
+    acc::StmtVariant parse_statement() {
+        if (match_it(TK_CURL_L)) {
+            return parse_block();
+        }
+
+        // if, while, for
+        if (check_it(TK_RESERVED)) {
+            if (match_it("if")) {
+                return parse_conditional();
+            }
+            if (match_any("while", "for")) {
+                return parse_iteration();
+            }
+        }
+        return parse_identifier_statement();
     };
 
    public:
@@ -410,15 +332,16 @@ class [[nodiscard]] acc_parser
 
     acc::environment<std::string, acc::StmtVariant>* parse() {
         auto* new_env = create_environment();
-
-        while (!this->is_end() && !check_it(acc::GLOBAL_TOKENS::TK_CURL_R)) {
+        m_env = new_env;
+        while (!is_end() && !match_it(TK_CURL_R)) {
             try {
-                new_env->get_items().push_back(parse_stmt());
+                new_env->get_items().push_back(parse_statement());
             } catch (acc::parser_error const& err) {
                 report_error(err);
                 panic();
             };
         };
+        m_env = new_env->get_parent();
 
         return new_env;
     };
