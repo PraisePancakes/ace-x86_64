@@ -39,7 +39,16 @@ class type_checker final {
                                   }
                                   return std::nullopt;
                               },
-                              [](acc::node::LiteralExpr* expr) {},
+                              [](acc::node::LiteralExpr* expr) {
+                                  switch (expr->embedded.type) {
+                                      case TK_LITERAL_CHAR:
+                                          return TYPES::CHAR;
+                                      case TK_LITERAL_DOUBLE:
+                                          return TYPES::DOUBLE;
+                                      case TK_LITERAL_INT:
+                                          return TYPES::INT;
+                                  }
+                              },
                               [](acc::node::GroupingExpr expr) {},
                               [](acc::node::CallExpr* expr) {},
                               [](acc::node::UnaryExpr* expr) {},

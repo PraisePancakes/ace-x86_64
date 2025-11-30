@@ -57,6 +57,8 @@ const static std::unordered_map<std::variant<std::string, char>, std::uint64_t> 
     {"<=", MAKE_TKREP(TK_LT_EQ, FLAG_DELIM_PAIR, FLAG_BINARY_OP)},
 
     // --- Internal single-byte lexeme class markers ---
+    {(char)0xF7ull, MAKE_TKREP(TK_LITERAL_SHORT, FLAG_NULL)},
+    {(char)0xF8ull, MAKE_TKREP(TK_LITERAL_LONG, FLAG_NULL)},
     {(char)0xF9ull, MAKE_TKREP(TK_LITERAL_CHAR, FLAG_NULL)},
     {(char)0xFAull, MAKE_TKREP(TK_LITERAL_DOUBLE, FLAG_NULL)},
     {(char)0xFBull, MAKE_TKREP(TK_LITERAL_STRING, FLAG_NULL)},
