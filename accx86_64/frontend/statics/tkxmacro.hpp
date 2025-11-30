@@ -29,10 +29,11 @@ namespace acc {
     TOKEN_DEF(TK_GT, '>')                 \
     TOKEN_DEF(TK_SEMI, ';')               \
     TOKEN_DEF(TK_NEWLINE, '\n')           \
-    TOKEN_DEF(TK_BANG_EQ, 0xF6ull)        \
-    TOKEN_DEF(TK_STRICT_EQ, 0xF7ull)      \
-    TOKEN_DEF(TK_GT_EQ, 0xF8ull)          \
-    TOKEN_DEF(TK_LT_EQ, 0xF9ull)          \
+    TOKEN_DEF(TK_BANG_EQ, 0xF5ull)        \
+    TOKEN_DEF(TK_STRICT_EQ, 0xF6ull)      \
+    TOKEN_DEF(TK_GT_EQ, 0xF7ull)          \
+    TOKEN_DEF(TK_LT_EQ, 0xF8ull)          \
+    TOKEN_DEF(TK_LITERAL_CHAR, 0xF9ull)   \
     TOKEN_DEF(TK_LITERAL_DOUBLE, 0xFAull) \
     TOKEN_DEF(TK_LITERAL_STRING, 0xFBull) \
     TOKEN_DEF(TK_IDENTIFIER, 0xFCull)     \

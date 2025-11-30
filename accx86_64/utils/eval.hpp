@@ -72,7 +72,7 @@ class expr_eval final {
     };  // namespace acc::interp
 
    public:
-    expr_eval() = default;
+   
 
     template <typename T>
     T as(acc::StmtVariant expr) {
@@ -83,6 +83,5 @@ class expr_eval final {
     T as(acc::ExprVariant expr) {
         return std::get<T>(evaluate(expr));
     }
-    ~expr_eval() = default;
 };
 };  // namespace acc::interp

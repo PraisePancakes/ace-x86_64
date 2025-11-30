@@ -52,6 +52,18 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
         while (!this->is_end() && !isalpha(this->peek()) && !globals::lexeme_inspector::is_delim(this->peek())) {
             this->advance();
         }
+
+        if (this->peek() == '.') {
+            this->advance();
+            while (!this->is_end() && !isalpha(this->peek()) && !globals::lexeme_inspector::is_delim(this->peek())) {
+                this->advance();
+            }
+            return token{to_substr(),
+                         std::make_pair(m_x, m_y),
+                         acc::GLOBAL_TOKENS::TK_LITERAL_FLOAT,
+                         std::stof(to_substr())};
+        }
+
         return token{to_substr(),
                      std::make_pair(m_x, m_y),
                      acc::GLOBAL_TOKENS::TK_LITERAL_INT,
@@ -76,8 +88,6 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
 
     token lex_it() {
         if (globals::lexeme_inspector::is_delim(this->peek())) {
-            // NOTE:  potential pitfall if pair delimeter cannot be separated into two single delims.
-
             if (globals::lexeme_inspector::is_pair_delim(this->peek(), this->peek_next())) {
                 advance();
                 advance();
@@ -87,6 +97,21 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
                              acc::globals::lexeme_inspector::to_type(word),
                              word};
             }
+
+            if (this->peek() == '\"') {
+                return lex_string();
+            }
+            if (this->peek() == '\'') {
+                advance();
+                advance();
+                if (this->peek() != '\'') throw std::runtime_error("unrecognized character");
+                advance();
+                return token{to_substr(this->m_start, this->m_end + 1),
+                             std::make_pair(m_x, m_y),
+                             acc::GLOBAL_TOKENS::TK_LITERAL_CHAR,
+                             this->peek_prev()};
+            }
+
             return token{to_substr(this->m_start, this->m_end + 1),
                          std::make_pair(m_x, m_y),
                          acc::globals::lexeme_inspector::to_type(this->advance()),
@@ -94,9 +119,6 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
         };
         if (isdigit(this->peek())) {
             return lex_number();
-        }
-        if (this->peek() == '\"') {
-            return lex_string();
         }
 
         return lex_identifier();
@@ -129,8 +151,7 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
         std::string_view sv,
         const std::unordered_map<std::variant<std::string, char>, std::uint64_t>& tmap)
         : acc::fsm_storage<std::string_view>(sv),
-          token_map(tmap) {
-          };
+          token_map(tmap) {};
     [[nodiscard]] const std::vector<token>& view_tokens() const noexcept {
         return ret;
     }

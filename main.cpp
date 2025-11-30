@@ -16,6 +16,7 @@
 
 // int x : mut = 4;
 auto main(int argc, char** argv) -> int {
+    char f = 3.24;
     if (argc <= 1) {
         acc::logger::instance().send(acc::logger::LEVEL::FATAL, "no input files determined for Ace compilation.", std::cout);
         return EXIT_FAILURE;

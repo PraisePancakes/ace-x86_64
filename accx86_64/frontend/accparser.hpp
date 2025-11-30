@@ -17,6 +17,7 @@
 #include "statics/ro_accprec.hpp"
 #include "storage.hpp"
 
+
 #define DISCARD(f) (void)f
 namespace acc {
 
@@ -89,6 +90,7 @@ class [[nodiscard]] acc_parser
         if (match_any(TK_BANG, TK_STAR)) {
             auto op = this->peek_prev();
             auto expr = parse_expr();
+            
             return new acc::node::UnaryExpr{.op = op, .expr = expr};
         }
         return parse_primary_expression();
@@ -132,7 +134,9 @@ class [[nodiscard]] acc_parser
                 try {
                     auto* func_info = m_env->get<acc::node::FuncStmt*>(id);
                     while (!match_it(TK_PAREN_R)) {
-                        // replace all undeduced variables within func_info
+                        // ensure types are interchangeable (cast check)
+
+                        //  replace all undeduced variables within func_info
                     }
                     // evaluate and return func_info->body with newly replaced args.
                 } catch (std::runtime_error& err) {

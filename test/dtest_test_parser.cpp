@@ -51,7 +51,8 @@ TEST_CASE("Parser Analysis") {
         CHECK(acc::interp::expr_eval{}.as<int>(blx->expr.value()) == 4);
     }
 
-#define COMPLEX_PARSE_TEST_WITH_ERR false
+#define COMPLEX_PARSE_TEST_WITH_ERR true
+    // ./testing -tc=*Parser* -sc=*complex* --no-capture
 #if COMPLEX_PARSE_TEST_WITH_ERR
     SUBCASE("complex ast print ( with errors )") {
         acc::acc_lexer lxr(R"(
@@ -83,7 +84,8 @@ TEST_CASE("Parser Analysis") {
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
         auto v = prs.parse();
-        prs.print_ast();
+        acc::output::ast_printer printer(std::cout);
+        printer.dump(v->get_items());
     }
 #endif
 

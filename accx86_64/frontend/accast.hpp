@@ -30,7 +30,7 @@ struct FuncStmt;
 
 }  // namespace node
 
-// TO DO parser should return ownership of these nodes. It is not the parsers job to free this memory!!!!
+// TO DO parser should transfer ownership of these nodes. It is not the parsers job to free this memory..
 // template <typename T>
 // using uptr = std::unique_ptr<T>;
 // using ExprOwningVariant = std::variant<uptr<node::BinaryExpr>,
