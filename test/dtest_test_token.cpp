@@ -89,18 +89,20 @@ TEST_CASE("Token Analysis") {
         CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LT) == "<");
         CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_GT) == ">");
         CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_SEMI) == ";");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_BANG_EQ) == "xF3ul");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_STRICT_EQ) == "xF4ul");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_GT_EQ) == "xF5ul");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LT_EQ) == "xF6ul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_BANG_EQ) == "xF1ul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_STRICT_EQ) == "xF2ul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_GT_EQ) == "xF3ul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LT_EQ) == "xF4ul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_BOOL) == "xF5ul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_CHAR) == "xF6ul");
         CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_SHORT) == "xF7ul");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_LONG) == "xF8ul");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_CHAR) == "xF9ul");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_DOUBLE) == "xFAul");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_STRING) == "xFBul");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_IDENTIFIER) == "xFCul");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_FLOAT) == "xFDul");
-        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_INT) == "xFEul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_INT) == "xF8ul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_LONG) == "xF9ul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_LONG_LONG) == "xFAul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_DOUBLE) == "xFBul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_FLOAT) == "xFCul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_LITERAL_STRING) == "xFDul");
+        CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_IDENTIFIER) == "xFEul");
         CHECK(acc::output::token_printer::to_literal(acc::GLOBAL_TOKENS::TK_UNKNOWN) == "xFFul");
     }
 }

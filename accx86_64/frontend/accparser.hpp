@@ -8,6 +8,7 @@
 
 #include "../traits/acc_matchable.hpp"
 #include "../traits/token_trait.hpp"
+#include "../utils/acclog.hpp"
 #include "../utils/visitor.hpp"
 #include "accast.hpp"
 #include "accenv.hpp"
@@ -16,7 +17,7 @@
 #include "printers/ast_printer.hpp"
 #include "statics/ro_accprec.hpp"
 #include "storage.hpp"
-
+#include "typesys/types.hpp"
 
 #define DISCARD(f) (void)f
 namespace acc {
@@ -79,18 +80,18 @@ class [[nodiscard]] acc_parser
         if (match_it(TK_PAREN_L)) {
             in_params = false;
             auto expr = parse_expr();
-            if (!match_it(TK_PAREN_R)) throw acc::parser_error(this->peek(), "missing ')'");
+            if (!match_it(TK_PAREN_R)) throw acc::exceptions::parser_error(this->peek(), "missing ')'");
             return new acc::node::GroupingExpr{.expr = expr};
         }
 
-        throw acc::parser_error(this->peek(), " unknown primary literal ");
+        throw acc::exceptions::parser_error(this->peek(), " unknown primary literal ");
     }
 
     acc::ExprVariant parse_unary_expression() {
         if (match_any(TK_BANG, TK_STAR)) {
             auto op = this->peek_prev();
             auto expr = parse_expr();
-            
+
             return new acc::node::UnaryExpr{.op = op, .expr = expr};
         }
         return parse_primary_expression();
@@ -98,7 +99,7 @@ class [[nodiscard]] acc_parser
 
     acc::ExprVariant parse_variable_expression() const {
         const auto id_tok = this->peek_prev();
-        return new acc::node::VariableExpr{.name = id_tok, .deduced = std::monostate{}};
+        return new acc::node::VariableExpr{.type = m_env->get<acc::node::DeclarationStmt*>(id_tok.word)->type, .name = id_tok, .deduced_value = std::monostate{}};
     };
 
     // anything to do with an identifier in an expression e.g a = 4 or a() or anything gets resolved here
@@ -107,11 +108,11 @@ class [[nodiscard]] acc_parser
             const auto id_tok = this->peek_prev();
             const std::string id = this->peek_prev().word;
 
-            if (!this->m_env->resolve(id)) throw parser_error(id_tok, " unresolved identifier at ");
+            if (!this->m_env->resolve(id)) throw exceptions::parser_error(id_tok, " unresolved identifier at ");
 
             if (match_it(TK_EQUALS)) {
                 if (acc::node::DeclarationStmt::has_const(this->m_env->get<acc::node::DeclarationStmt*>(id)->cv_qual_flags)) {
-                    throw parser_error(id_tok, " assignment to const-qualified lvalue with ");
+                    throw exceptions::parser_error(id_tok, " assignment to const-qualified lvalue with ");
                 }
                 auto expr = parse_expr();
 
@@ -132,19 +133,23 @@ class [[nodiscard]] acc_parser
             // check if function call here to evaluate else return parse_variable_expression();
             if (match_it(TK_PAREN_L)) {
                 try {
+                    in_params = true;
                     auto* func_info = m_env->get<acc::node::FuncStmt*>(id);
+                    std::vector<ExprVariant> args;
                     while (!match_it(TK_PAREN_R)) {
-                        // ensure types are interchangeable (cast check)
-
-                        //  replace all undeduced variables within func_info
+                        args.push_back(parse_expr());
                     }
-                    // evaluate and return func_info->body with newly replaced args.
+                    if (args.size() != func_info->params.size()) {
+                        throw exceptions::parser_error(id_tok, "wrong number of arguments ( " + std::to_string(args.size()) + ", should be " + std::to_string(func_info->params.size()));
+                    }
+                    return new acc::node::CallExpr{.args = args, .procedure = func_info};
+
                 } catch (std::runtime_error& err) {
-                    throw parser_error(id_tok, " failed to resolve function with id ");
+                    throw exceptions::parser_error(id_tok, " failed to resolve function with id ");
                 };
             };
             /*
-             id's that cannot be deduced because its in an unevaluated context such as a function definition
+             id's in which its value cannot be deduced because its in an unevaluated context such as a function definition
              e.g: int f(int h, int y) { int z = h + y; };
              we dont know what h and y are therefore we just make them variables to be deduced at call site.
             */
@@ -175,11 +180,11 @@ class [[nodiscard]] acc_parser
 
     acc::StmtVariant parse_expression_statement() {
         auto* expr = new acc::node::ExpressionStmt{.expr = parse_expr()};
-        if (!match_it(TK_SEMI)) throw acc::parser_error(peek_prev(), "missing semi ';' ");
+        if (!match_it(TK_SEMI)) throw acc::exceptions::parser_error(peek_prev(), "missing semi ';' ");
         return expr;
     }
 
-    void report_error(const acc::parser_error& error) const noexcept {
+    void report_error(const acc::exceptions::parser_error& error) const noexcept {
         std::stringstream msg;
         msg << error.what
             << "'" << error.token.word << "'"
@@ -217,13 +222,13 @@ class [[nodiscard]] acc_parser
             while (match_any("mut", "volatile")) {
                 if (this->peek_prev().word == "mut") {
                     if (!acc::node::DeclarationStmt::has_const(cv_sig)) {
-                        throw acc::parser_error(this->peek_prev(), "duplicate mut qualifier");
+                        throw acc::exceptions::parser_error(this->peek_prev(), "duplicate mut qualifier");
                     }
                     acc::node::DeclarationStmt::remove_const(cv_sig);
                 }
                 if (this->peek_prev().word == "volatile") {
                     if (acc::node::DeclarationStmt::has_volatile(cv_sig)) {
-                        throw acc::parser_error(this->peek_prev(), "duplicate volatile qualifier");
+                        throw acc::exceptions::parser_error(this->peek_prev(), "duplicate volatile qualifier");
                     }
                     acc::node::DeclarationStmt::set_volatile(cv_sig);
                 }
@@ -240,11 +245,11 @@ class [[nodiscard]] acc_parser
                                                                           .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)
                                                                                        ? std::optional<acc::ExprVariant>(parse_expr())
                                                                                        : std::optional<acc::ExprVariant>(std::nullopt))};
-        if (!match_it(TK_SEMI) && !in_params) throw acc::parser_error(peek_prev(), "Missing semi ';' ");
+        if (!match_it(TK_SEMI) && !in_params) throw acc::exceptions::parser_error(peek_prev(), "Missing semi ';' ");
 
         /* DEBUG INFO */
         if (m_env->resolve(decl->name.word) == m_env) {
-            throw acc::parser_error(decl->name, "scope resolved an ambiguous identifier ");
+            throw acc::exceptions::parser_error(decl->name, "scope resolved an ambiguous identifier ");
         }
 
         m_env->set(decl->name.word, decl);
@@ -267,9 +272,9 @@ class [[nodiscard]] acc_parser
     acc::StmtVariant parse_iteration() {
         if (peek_prev().word == "while") {
             return new acc::node::WhileStmt{.condition = [this]() -> acc::ExprVariant {
-                                                if (!match_it(TK_PAREN_L)) throw acc::parser_error(peek(), " missing opening '(' for while condition ");
+                                                if (!match_it(TK_PAREN_L)) throw acc::exceptions::parser_error(peek(), " missing opening '(' for while condition ");
                                                 auto cond = parse_expr();
-                                                if (!match_it(TK_PAREN_R)) throw acc::parser_error(peek(), " missing closing ')' for while condition ");
+                                                if (!match_it(TK_PAREN_R)) throw acc::exceptions::parser_error(peek(), " missing closing ')' for while condition ");
                                                 return cond;
                                             }(),
                                             .body = parse_statement()};
@@ -278,18 +283,18 @@ class [[nodiscard]] acc_parser
         if (peek_prev().word == "for") {
             return new acc::node::ForStmt{.init = [this]() -> acc::StmtVariant {
                                               if (!match_it(TK_PAREN_L))
-                                                  throw acc::parser_error(peek(), " missing opening '(' for 'for' conditional list ");
+                                                  throw acc::exceptions::parser_error(peek(), " missing opening '(' for 'for' conditional list ");
                                               return parse_identifier_statement();
                                           }(),
                                           .condition = parse_expression_statement(),
                                           .expr = [this]() -> acc::ExprVariant {
                                               auto expr = parse_expr();
-                                              if (!match_it(TK_PAREN_R)) throw acc::parser_error(peek(), " missing closing ')' for 'for' conditional list ");
+                                              if (!match_it(TK_PAREN_R)) throw acc::exceptions::parser_error(peek(), " missing closing ')' for 'for' conditional list ");
                                               return expr;
                                           }(),
                                           .body = parse_statement()};
         }
-        throw acc::parser_error(peek_prev(), " error parsing iteration statement ");
+        throw acc::exceptions::parser_error(peek_prev(), " error parsing iteration statement ");
     };
 
     acc::StmtVariant parse_function_declaration() {
@@ -303,7 +308,7 @@ class [[nodiscard]] acc_parser
                                                    DISCARD(advance());
                                                    params.push_back(std::get<acc::node::DeclarationStmt*>(this->parse_variable_declaration()));
                                                    if (!match_it(TK_COMMA) && peek().type != TK_PAREN_R)
-                                                       throw acc::parser_error(peek(), "missing param seperator ',' ");
+                                                       throw acc::exceptions::parser_error(peek(), "missing param seperator ',' ");
                                                }
                                            }
                                            return params;
@@ -354,7 +359,7 @@ class [[nodiscard]] acc_parser
         while (!is_end() && !match_it(TK_CURL_R)) {
             try {
                 new_env->get_items().push_back(parse_statement());
-            } catch (acc::parser_error const& err) {
+            } catch (acc::exceptions::parser_error const& err) {
                 report_error(err);
                 panic();
             };

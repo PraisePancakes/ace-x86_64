@@ -57,15 +57,15 @@ const static std::unordered_map<std::variant<std::string, char>, std::uint64_t> 
     {"<=", MAKE_TKREP(TK_LT_EQ, FLAG_DELIM_PAIR, FLAG_BINARY_OP)},
 
     // --- Internal single-byte lexeme class markers ---
-    {(char)0xF7ull, MAKE_TKREP(TK_LITERAL_SHORT, FLAG_NULL)},
-    {(char)0xF8ull, MAKE_TKREP(TK_LITERAL_LONG, FLAG_NULL)},
-    {(char)0xF9ull, MAKE_TKREP(TK_LITERAL_CHAR, FLAG_NULL)},
-    {(char)0xFAull, MAKE_TKREP(TK_LITERAL_DOUBLE, FLAG_NULL)},
-    {(char)0xFBull, MAKE_TKREP(TK_LITERAL_STRING, FLAG_NULL)},
-    {(char)0xFCull, MAKE_TKREP(TK_IDENTIFIER, FLAG_NULL)},
+    {(char)0xF7ull, MAKE_TKREP(TK_LITERAL_BOOL, FLAG_NULL)},
+    {(char)0xF8ull, MAKE_TKREP(TK_LITERAL_CHAR, FLAG_NULL)},
+    {(char)0xF9ull, MAKE_TKREP(TK_LITERAL_SHORT, FLAG_NULL)},
+    {(char)0xFAull, MAKE_TKREP(TK_LITERAL_INT, FLAG_NULL)},
+    {(char)0xFBull, MAKE_TKREP(TK_LITERAL_LONG, FLAG_NULL)},
+    {(char)0xFCull, MAKE_TKREP(TK_LITERAL_LONG_LONG, FLAG_NULL)},
     {(char)0xFDull, MAKE_TKREP(TK_LITERAL_FLOAT, FLAG_NULL)},
-    {(char)0xFEull, MAKE_TKREP(TK_LITERAL_INT, FLAG_NULL)},
-    {(char)0xFFull, MAKE_TKREP(TK_UNKNOWN, FLAG_NULL)},
+    {(char)0xFEull, MAKE_TKREP(TK_LITERAL_DOUBLE, FLAG_NULL)},
+    {(char)0xFFull, MAKE_TKREP(TK_IDENTIFIER, FLAG_NULL)},
 
     // --- Reserved types ---
     {"int", MAKE_TKREP(TK_RESERVED_TYPE, FLAG_RESERVED_TYPE, FLAG_RESERVED)},

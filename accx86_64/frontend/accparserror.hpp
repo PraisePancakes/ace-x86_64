@@ -1,10 +1,9 @@
 #pragma once
 #include <iostream>
 
-#include "../utils/acclog.hpp"
 #include "acctoken.hpp"
 
-namespace acc {
+namespace acc::exceptions {
 struct parser_error : std::exception {
     acc::token token;
     std::string what;

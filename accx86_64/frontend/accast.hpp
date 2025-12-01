@@ -82,11 +82,13 @@ struct GroupingExpr {
 
 struct CallExpr {
     std::vector<ExprVariant> args;
+    FuncStmt* procedure;
 };
 
 struct VariableExpr {
+    acc::token type;
     acc::token name;
-    ExprVariant deduced;
+    ExprVariant deduced_value;
 };
 
 struct DeclarationStmt {
