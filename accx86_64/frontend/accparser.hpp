@@ -14,10 +14,10 @@
 #include "accenv.hpp"
 #include "accparserror.hpp"
 #include "acctoken.hpp"
+#include "analysis/analyzer.hpp"
 #include "printers/ast_printer.hpp"
 #include "statics/ro_accprec.hpp"
 #include "storage.hpp"
-#include "typesys/types.hpp"
 
 #define DISCARD(f) (void)f
 namespace acc {

@@ -201,7 +201,7 @@ class cli {
                     // asm_printer.dump(statements);
                 }
             } else {
-                std::cout << "FAILED";  // handle error
+                std::cout << "FAILED";  // handle dis
             }
         };
     };
