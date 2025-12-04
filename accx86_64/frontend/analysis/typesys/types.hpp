@@ -102,6 +102,14 @@ struct type_checker final {
                               [](const acc::node::VariableExpr* expr) -> INTEGRAL_TYPES {
                                   return type_checker::token_to_integral_type(expr->type.type).value();
                               },
+                              [](const acc::node::AssignmentExpr* expr) -> INTEGRAL_TYPES {
+                                  auto Torigin = token_to_integral_type(expr->type.type);
+                                  auto Texpr = type_checker::evaluate_type(expr->expr);
+                                  if (!type_checker::check_valid_integral_conversion(Torigin.value(), Texpr)) {
+                                      throw exceptions::type_error({Torigin.value(), Texpr}, " mismatched types with assignment : ");
+                                  }
+                                  return Texpr;
+                              },
                               [](std::monostate) -> INTEGRAL_TYPES { std::unreachable(); },
                           },
                           expr);

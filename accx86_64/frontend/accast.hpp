@@ -19,6 +19,7 @@ struct GroupingExpr;
 struct ComparisonExpr;
 struct CallExpr;
 struct VariableExpr;
+struct AssignmentExpr;
 
 struct IfStmt;
 struct WhileStmt;
@@ -27,6 +28,7 @@ struct ForStmt;
 struct DeclarationStmt;
 struct ExpressionStmt;
 struct FuncStmt;
+struct ReturnStmt;
 
 }  // namespace node
 
@@ -45,7 +47,8 @@ using ExprVariant = std::variant<std::monostate,
                                  node::LiteralExpr*,
                                  node::GroupingExpr*,
                                  node::CallExpr*,
-                                 node::VariableExpr*>;
+                                 node::VariableExpr*,
+                                 node::AssignmentExpr*>;
 
 using StmtVariant = std::variant<std::monostate,
                                  node::IfStmt*,
@@ -54,7 +57,8 @@ using StmtVariant = std::variant<std::monostate,
                                  node::ForStmt*,
                                  node::DeclarationStmt*,
                                  node::ExpressionStmt*,
-                                 node::FuncStmt*>;
+                                 node::FuncStmt*,
+                                 node::ReturnStmt*>;
 
 namespace node {
 // struct IfStmt;
@@ -89,6 +93,12 @@ struct VariableExpr {
     acc::token type;
     acc::token name;
     ExprVariant deduced_value;
+};
+
+struct AssignmentExpr {
+    acc::token type;
+    acc::token name;
+    ExprVariant expr;
 };
 
 struct DeclarationStmt {
@@ -143,6 +153,7 @@ struct WhileStmt {
 };
 struct BlockStmt {
     acc::environment<std::string, acc::StmtVariant>* env;
+    ReturnStmt* ret{nullptr};
 };
 struct ForStmt {
     StmtVariant init;
@@ -167,7 +178,12 @@ struct FuncStmt {
     acc::token type;
     acc::token name;
     std::vector<DeclarationStmt*> params;
-    StmtVariant body;  // arrow or block
+    BlockStmt* body;  // block
+};
+
+struct ReturnStmt {
+    acc::token keyword;
+    acc::ExprVariant expr;
 };
 
 }  // namespace node

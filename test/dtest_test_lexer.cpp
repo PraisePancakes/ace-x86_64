@@ -45,6 +45,7 @@ TEST_CASE("Lexical Division") {
         0.12
         "string_lit"
         'c'
+        :=
          
         )",
                         acc::globals::token_map);
@@ -91,6 +92,7 @@ TEST_CASE("Lexical Division") {
     CHECK(toks[37].type == acc::GLOBAL_TOKENS::TK_LITERAL_FLOAT);
     CHECK(toks[38].type == acc::GLOBAL_TOKENS::TK_LITERAL_STRING);
     CHECK(toks[39].type == acc::GLOBAL_TOKENS::TK_LITERAL_CHAR);
+    CHECK(toks[40].type == acc::GLOBAL_TOKENS::TK_ASSIGNMENT);
 }
 
 TEST_CASE("Skip Comments") {

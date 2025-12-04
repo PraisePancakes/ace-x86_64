@@ -29,6 +29,7 @@ namespace acc {
     TOKEN_DEF(TK_GT, '>')                    \
     TOKEN_DEF(TK_SEMI, ';')                  \
     TOKEN_DEF(TK_NEWLINE, '\n')              \
+    TOKEN_DEF(TK_ASSIGNMENT, 0xF0ull)        \
     TOKEN_DEF(TK_BANG_EQ, 0xF1ull)           \
     TOKEN_DEF(TK_STRICT_EQ, 0xF2ull)         \
     TOKEN_DEF(TK_GT_EQ, 0xF3ull)             \

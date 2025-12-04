@@ -84,7 +84,7 @@ class [[nodiscard]] acc_parser
             return new acc::node::GroupingExpr{.expr = expr};
         }
 
-        throw acc::exceptions::parser_error(this->peek(), " unknown primary literal ");
+        return std::monostate{};
     }
 
     acc::ExprVariant parse_unary_expression() {
@@ -110,17 +110,21 @@ class [[nodiscard]] acc_parser
 
             if (!this->m_env->resolve(id)) throw exceptions::parser_error(id_tok, " unresolved identifier at ");
 
-            if (match_it(TK_EQUALS)) {
+            if (match_it(TK_ASSIGNMENT)) {
                 if (acc::node::DeclarationStmt::has_const(this->m_env->get<acc::node::DeclarationStmt*>(id)->cv_qual_flags)) {
                     throw exceptions::parser_error(id_tok, " assignment to const-qualified lvalue with ");
                 }
                 auto expr = parse_expr();
+                auto* original = m_env->get<acc::node::DeclarationStmt*>(id);
+                original->expr = expr;
+                original->history.push_back(expr);
 
-                m_env->get<acc::node::DeclarationStmt*>(id)->expr = expr;
-                m_env->get<acc::node::DeclarationStmt*>(id)->history.push_back(expr);
-
-                return expr;
+                return new acc::node::AssignmentExpr{.type = original->type, .name = id_tok, .expr = expr};
             }
+
+            if (match_it(TK_EQUALS)) {
+                throw exceptions::parser_error(id_tok, " declaration operator used in place of assignment replace '=' with ':=' ");
+            };
 
             /*
             // id's that arent a function call being used to evaluate an expression
@@ -210,9 +214,26 @@ class [[nodiscard]] acc_parser
         return env;
     };
 
+    struct ReturnException : std::exception {
+        acc::node::ReturnStmt* ret;
+        ReturnException(acc::node::ReturnStmt* r) : ret(r) {};
+    };
+
     acc::StmtVariant parse_block() {
-        auto* block = new acc::node::BlockStmt{.env = parse()};
+        auto* block = new acc::node::BlockStmt();
+        auto* new_env = create_environment();
+        try {
+            block->env = parse(new_env);
+        } catch (const ReturnException& r) {
+            block->ret = r.ret;
+            new_env->get_items().push_back(r.ret);
+            if (!match_it(TK_CURL_R)) {
+                throw acc::exceptions::parser_error(peek_prev(), "missing closing scope '}' ");
+            }
+        }
+        block->env = new_env;
         match_it(TK_SEMI);
+
         return block;
     };
 
@@ -294,7 +315,7 @@ class [[nodiscard]] acc_parser
                                           }(),
                                           .body = parse_statement()};
         }
-        throw acc::exceptions::parser_error(peek_prev(), " error parsing iteration statement ");
+        std::unreachable();
     };
 
     acc::StmtVariant parse_function_declaration() {
@@ -313,7 +334,7 @@ class [[nodiscard]] acc_parser
                                            }
                                            return params;
                                        }(),
-                                       .body = parse_statement()};
+                                       .body = std::get<acc::node::BlockStmt*>(parse_statement())};
     };
 
     acc::StmtVariant parse_identifier_statement() {
@@ -343,6 +364,14 @@ class [[nodiscard]] acc_parser
             if (match_any("while", "for")) {
                 return parse_iteration();
             }
+
+            if (match_it("return")) {
+                auto* ret = new acc::node::ReturnStmt{.keyword = this->peek_prev(), .expr = parse_expr()};
+                if (!match_it(TK_SEMI)) {
+                    throw acc::exceptions::parser_error(peek_prev(), "Missing semi ';' ");
+                }
+                throw ReturnException{ret};
+            }
         }
         return parse_identifier_statement();
     };
@@ -352,6 +381,20 @@ class [[nodiscard]] acc_parser
         : acc::fsm_storage<std::vector<acc::token>>(toks), m_env{nullptr} {
 
           };
+
+    acc::environment<std::string, acc::StmtVariant>* parse(acc::environment<std::string, acc::StmtVariant>* env) {
+        m_env = env;
+        while (!is_end() && !match_it(TK_CURL_R)) {
+            try {
+                env->get_items().push_back(parse_statement());
+            } catch (acc::exceptions::parser_error const& err) {
+                report_error(err);
+                panic();
+            };
+        };
+        m_env = env->get_parent();
+        return env;
+    };
 
     acc::environment<std::string, acc::StmtVariant>* parse() {
         auto* new_env = create_environment();

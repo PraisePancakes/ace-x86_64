@@ -57,23 +57,23 @@ TEST_CASE("Parser Analysis") {
     SUBCASE("complex ast print ( with errors )") {
         acc::acc_lexer lxr(R"(
                int x : mut = 4;
-               x = 5;
+               x := 5;
 
                int y = 2;
-               y = 1; // ERROR : assignment to const-qual
+               y := 1; // ERROR : assignment to const-qual
 
                {    
                     int y : mut = 6;
-                    y = 8; 
+                    y := 8; 
 
                     {
                         int x = 5;
-                        x = 8;  //ERROR : assignment to const-qual
+                        x := 8;  //ERROR : assignment to const-qual
                     };
 
                     {
                         int x : mut = 19;
-                        x = 1;
+                        x := 1;
                     };
                };
 
@@ -85,6 +85,7 @@ TEST_CASE("Parser Analysis") {
         acc::acc_parser prs(ts);
         auto v = prs.parse();
         acc::output::ast_printer printer(std::cout);
+
         printer.dump(v->get_items());
     }
 #endif
@@ -154,7 +155,9 @@ TEST_CASE("Parser Analysis") {
                 int z = 4;
                 int x = 2;
                 int h(int h : mut, int y) {
-                    int z = h + y;
+                    int z : mut = h + y;
+                    z := 5;
+                    return z;
 
                 };
 
@@ -175,7 +178,7 @@ TEST_CASE("Parser Analysis") {
                 bool has_const = p1->has_const(p1->cv_qual_flags);
                 return !has_const;
             }());
-            REQUIRE(std::get<acc::node::BlockStmt*>(fstmt->body)->env->get_items().size() == 1);
+            REQUIRE(fstmt->body->env->get_items().size() == 3);
         }
     }
 }

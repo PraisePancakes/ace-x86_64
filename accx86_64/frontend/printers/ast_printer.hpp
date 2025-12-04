@@ -53,6 +53,11 @@ class ast_printer {
 
                            inker.print_yellow(vexpr->name.word);
                        },
+                       [this, &inker](const acc::node::AssignmentExpr* axpr) {
+                           inker.print_green(" [ ASSIGNMENT ] ");
+                           inker.print_yellow(axpr->name.word);
+                           print_expression(axpr->expr, inker.os);
+                       },
                        [this, &inker]([[maybe_unused]] const acc::node::CallExpr* cexpr) {
 
                        },
@@ -140,6 +145,10 @@ class ast_printer {
                            };
                            inker.print_yellow("BODY :");
                            print_statement(fstmt->body, inker.os);
+                       },
+                       [this, &inker](const acc::node::ReturnStmt* rstmt) {
+                           inker.print_green("( RETURN )");
+                           print_expression(rstmt->expr, inker.os);
                        },
                        [](std::monostate) {
 

@@ -43,7 +43,7 @@ const static std::unordered_map<std::variant<std::string, char>, std::uint64_t> 
     {'-', MAKE_TKREP(TK_DASH, FLAG_DELIM, FLAG_BINARY_OP)},
     {'.', MAKE_TKREP(TK_DOT, FLAG_DELIM)},
     {'!', MAKE_TKREP(TK_BANG, FLAG_DELIM)},
-    {'=', MAKE_TKREP(TK_EQUALS, FLAG_DELIM, FLAG_BINARY_OP)},
+    {'=', MAKE_TKREP(TK_EQUALS, FLAG_DELIM)},
     {' ', MAKE_TKREP(TK_SPACE, FLAG_DELIM)},
     {'<', MAKE_TKREP(TK_LT, FLAG_DELIM, FLAG_BINARY_OP)},
     {'>', MAKE_TKREP(TK_GT, FLAG_DELIM, FLAG_BINARY_OP)},
@@ -51,6 +51,7 @@ const static std::unordered_map<std::variant<std::string, char>, std::uint64_t> 
     {'\n', MAKE_TKREP(TK_NEWLINE, FLAG_DELIM)},
 
     // --- 2-char operators ---
+    {":=", MAKE_TKREP(TK_ASSIGNMENT, FLAG_DELIM_PAIR, FLAG_BINARY_OP)},
     {"!=", MAKE_TKREP(TK_BANG_EQ, FLAG_DELIM_PAIR, FLAG_BINARY_OP)},
     {"==", MAKE_TKREP(TK_STRICT_EQ, FLAG_DELIM_PAIR, FLAG_BINARY_OP)},
     {">=", MAKE_TKREP(TK_GT_EQ, FLAG_DELIM_PAIR, FLAG_BINARY_OP)},
