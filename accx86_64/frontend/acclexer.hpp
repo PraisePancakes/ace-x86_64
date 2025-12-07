@@ -94,7 +94,7 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
                 auto word = to_substr(this->m_start, this->m_end);
                 return token{word,
                              std::make_pair(m_x, m_y),
-                             acc::globals::lexeme_inspector::to_type(word),
+                             acc::globals::lexeme_inspector::to_kind(word),
                              word};
             }
 
@@ -114,7 +114,7 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
 
             return token{to_substr(this->m_start, this->m_end + 1),
                          std::make_pair(m_x, m_y),
-                         acc::globals::lexeme_inspector::to_type(this->advance()),
+                         acc::globals::lexeme_inspector::to_kind(this->advance()),
                          this->peek_prev()};
         };
         if (isdigit(this->peek())) {

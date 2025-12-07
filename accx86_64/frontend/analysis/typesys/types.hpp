@@ -7,19 +7,20 @@
 #include "../../accast.hpp"
 #include "integral_types.hpp"
 #include "type_error.hpp"
-namespace acc::types {  //                                                  int , char, bool, short, long, long long
-const std::array<std::array<bool, 6>, 6> integral_cast_bit_table = {
-    {/*int*/ {1, 1, 1, 1, 1},
-     /*char*/ {1, 1, 1, 1, 1},
-     /*bool*/ {1, 0, 1, 1, 0},
-     /*short*/ {1, 1, 1, 1, 1},
-     /*long*/ {1, 1, 1, 1, 1},
-     /*long long*/ {1, 1, 1, 1, 1}},
+namespace acc::types {
+const std::array<std::array<bool, 6>, 6> implicit_cast_table = {
+    //      bool , char, short, int,long, long long
+    {/*bool*/ {1, 0, 0, 1, 0, 0},
+     /*char*/ {1, 1, 1, 1, 1, 0},
+     /*short*/ {1, 1, 1, 1, 1, 0},
+     /*int*/ {1, 1, 1, 1, 1, 0},
+     /*long*/ {1, 1, 1, 1, 1, 0},
+     /*long long*/ {1, 1, 1, 1, 1, 0}},
 };
 
 struct type_checker final {
-    static bool check_valid_integral_conversion(INTEGRAL_TYPES t1, INTEGRAL_TYPES t2) noexcept {
-        return integral_cast_bit_table[std::to_underlying(t1)][std::to_underlying(t2)];
+    static bool check_valid_implicit_conversion(INTEGRAL_TYPES t1, INTEGRAL_TYPES t2) noexcept {
+        return implicit_cast_table[std::to_underlying(t1)][std::to_underlying(t2)];
     };
 
     static std::optional<INTEGRAL_TYPES> token_to_integral_type(acc::GLOBAL_TOKENS type) noexcept {
@@ -47,7 +48,7 @@ struct type_checker final {
                               [](const acc::node::BinaryExpr* expr) -> INTEGRAL_TYPES {
                                   auto Tl = type_checker::evaluate_type(expr->lhs);
                                   auto Tr = type_checker::evaluate_type(expr->rhs);
-                                  if (type_checker::check_valid_integral_conversion(Tl, Tr)) {
+                                  if (type_checker::check_valid_implicit_conversion(Tl, Tr)) {
                                       return Tl >= Tr ? Tl : Tr;
                                   }
 
@@ -55,10 +56,10 @@ struct type_checker final {
                               },
                               [](const acc::node::LiteralExpr* expr) -> INTEGRAL_TYPES {
                                   auto type = token_to_integral_type(expr->embedded.type);
+
                                   if (type.has_value()) {
                                       return type.value();
                                   }
-                                  throw exceptions::type_error({type.value()}, " undefined type : ");
                               },
                               [](const acc::node::GroupingExpr* expr) -> INTEGRAL_TYPES {
                                   return type_checker::evaluate_type(expr->expr);
@@ -70,7 +71,7 @@ struct type_checker final {
                                       auto* param = expr->procedure->params[ref_index++];
                                       auto Targ = evaluate_type(expr->args[i]);
                                       auto Tparam = type_checker::token_to_integral_type(param->type.type);
-                                      if (!type_checker::check_valid_integral_conversion(Targ, Tparam.value())) {
+                                      if (!type_checker::check_valid_implicit_conversion(Targ, Tparam.value())) {
                                           throw exceptions::type_error({Targ, Tparam.value()}, " mismatched argument and paramater types : ");
                                       };
                                   };
@@ -105,7 +106,7 @@ struct type_checker final {
                               [](const acc::node::AssignmentExpr* expr) -> INTEGRAL_TYPES {
                                   auto Torigin = token_to_integral_type(expr->type.type);
                                   auto Texpr = type_checker::evaluate_type(expr->expr);
-                                  if (!type_checker::check_valid_integral_conversion(Torigin.value(), Texpr)) {
+                                  if (!type_checker::check_valid_implicit_conversion(Torigin.value(), Texpr)) {
                                       throw exceptions::type_error({Torigin.value(), Texpr}, " mismatched types with assignment : ");
                                   }
                                   return Texpr;

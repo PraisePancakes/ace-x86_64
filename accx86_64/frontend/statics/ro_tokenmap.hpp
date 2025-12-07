@@ -88,11 +88,12 @@ const static std::unordered_map<std::variant<std::string, char>, std::uint64_t> 
 };
 
 struct lexeme_inspector {
-    [[nodiscard]] static acc::GLOBAL_TOKENS to_type(std::variant<std::string, char> key) {
+    [[nodiscard]] static acc::GLOBAL_TOKENS to_kind(std::variant<std::string, char> key) {
         return acc::GLOBAL_TOKENS(token_map.find(key)->second >> TOKEN_TYPE_SHIFTER);
     };
 
-    [[nodiscard]] static bool is_reserved(std::string keyword) noexcept {
+    [[nodiscard]] static bool
+    is_reserved(std::string keyword) noexcept {
         if (token_map.find(keyword) == token_map.end()) return false;
         return ((token_map.find(keyword)->second & acc::globals::token_flags_::FLAG_RESERVED) == acc::globals::token_flags_::FLAG_RESERVED);
     }

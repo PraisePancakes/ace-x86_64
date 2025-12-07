@@ -71,6 +71,7 @@ class [[nodiscard]] acc_parser
     acc::ExprVariant parse_primary_expression() {
         if (match_any(TK_LITERAL_INT,
                       TK_LITERAL_STRING,
+                      TK_LITERAL_CHAR,
                       TK_LITERAL_DOUBLE,
                       TK_LITERAL_FLOAT)) {
             return new acc::node::LiteralExpr{.value = this->peek_prev().value,

@@ -2,12 +2,12 @@
 #include <iostream>
 namespace acc::types {
 enum class INTEGRAL_TYPES : std::size_t {
-    BOOL = 1,
-    CHAR = 2,
-    SHORT = 3,
-    INT = 4,
-    LONG = 5,
-    LONG_LONG = 6,
+    BOOL = 0,
+    CHAR = 1,
+    SHORT = 2,
+    INT = 3,
+    LONG = 4,
+    LONG_LONG = 5,
 };
 
 }

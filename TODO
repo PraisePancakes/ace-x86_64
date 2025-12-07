@@ -1,7 +1,7 @@
 TODO implement more cli elements
 TODO reimplement parser and ast structure
 -- manage AST ownership better (RAII, smart pointers, move semantics)
-
+TODO restructure type system, create type info class to make it easily refactorable
 
 TODO add more vistors to eval
 TODO implement interpreter via eval
