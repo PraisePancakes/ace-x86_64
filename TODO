@@ -3,9 +3,6 @@ TODO reimplement parser and ast structure
 -- manage AST ownership better (RAII, smart pointers, move semantics)
 
 
-TODO implement assignment expression
-
-TODO parse function calls
 TODO add more vistors to eval
 TODO implement interpreter via eval
 TODO implement x86 asm generator (at&t-syntax, intel syntax)

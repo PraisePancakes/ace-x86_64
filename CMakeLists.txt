@@ -47,6 +47,7 @@ add_executable(testing
   test/dtest_test_parser.cpp
   test/dtest_test_token.cpp
   test/dtest_test_monadic.cpp
+  test/dtest_test_types.cpp
 )
 target_link_libraries(testing PRIVATE doctest)
 

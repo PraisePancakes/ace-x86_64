@@ -227,9 +227,6 @@ class [[nodiscard]] acc_parser
         } catch (const ReturnException& r) {
             block->ret = r.ret;
             new_env->get_items().push_back(r.ret);
-            if (!match_it(TK_CURL_R)) {
-                throw acc::exceptions::parser_error(peek_prev(), "missing closing scope '}' ");
-            }
         }
         block->env = new_env;
         match_it(TK_SEMI);
