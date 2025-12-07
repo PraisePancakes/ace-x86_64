@@ -181,4 +181,29 @@ TEST_CASE("Parser Analysis") {
             REQUIRE(fstmt->body->env->get_items().size() == 3);
         }
     }
+
+    // ./testing -tc=*Parser* -sc=*functions*-call* --no-capture
+    SUBCASE("functions-call") {
+        acc::acc_lexer lxr(R"(
+                bool f() {};
+
+                int h(int h : mut, int y) {
+                    bool x = f();
+                };
+
+            )",
+                           acc::globals::token_map);
+
+        auto ts = lxr.lex();
+        acc::acc_parser prs(ts);
+        auto v = prs.parse();
+        acc::output::ast_printer printer(std::cout);
+        printer.dump(v->get_items());
+        if (v->get_items().size() > 0) {
+            auto* fstmt = std::get<acc::node::FuncStmt*>(v->get_items()[0]);
+            REQUIRE(fstmt->type.type == acc::GLOBAL_TOKENS::TK_RESERVED_TYPE);
+            REQUIRE(fstmt->type.word == "bool");
+            REQUIRE(fstmt->body->env->get_items().size() == 0);
+        }
+    }
 }

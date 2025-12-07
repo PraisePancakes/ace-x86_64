@@ -59,7 +59,12 @@ class ast_printer {
                            print_expression(axpr->expr, inker.os);
                        },
                        [this, &inker]([[maybe_unused]] const acc::node::CallExpr* cexpr) {
-
+                           inker.print_green(" [ CALL ] ");
+                           print_statement(cexpr->procedure, inker.os);
+                           inker.print_yellow("with args :");
+                           for (const auto& arg : cexpr->args) {
+                               print_expression(arg, inker.os);
+                           }
                        },
                        [](std::monostate) {
 

@@ -126,14 +126,6 @@ class [[nodiscard]] acc_parser
                 throw exceptions::parser_error(id_tok, " declaration operator used in place of assignment replace '=' with ':=' ");
             };
 
-            /*
-            // id's that arent a function call being used to evaluate an expression
-            ie : a + 4 or 4 * 3 - z and which its value can be deduced in an evaluation context.
-            Hence why we get the expr.value() to return.
-            */
-            if (m_env->get<acc::node::DeclarationStmt*>(id)->expr.has_value())
-                return m_env->get<acc::node::DeclarationStmt*>(id)->expr.value();
-
             // check if function call here to evaluate else return parse_variable_expression();
             if (match_it(TK_PAREN_L)) {
                 try {
@@ -146,6 +138,7 @@ class [[nodiscard]] acc_parser
                     if (args.size() != func_info->params.size()) {
                         throw exceptions::parser_error(id_tok, "wrong number of arguments ( " + std::to_string(args.size()) + ", should be " + std::to_string(func_info->params.size()));
                     }
+
                     return new acc::node::CallExpr{.args = args, .procedure = func_info};
 
                 } catch (std::runtime_error& err) {
@@ -265,12 +258,12 @@ class [[nodiscard]] acc_parser
                                                                                        : std::optional<acc::ExprVariant>(std::nullopt))};
         if (!match_it(TK_SEMI) && !in_params) throw acc::exceptions::parser_error(peek_prev(), "Missing semi ';' ");
 
-        /* DEBUG INFO */
         if (m_env->resolve(decl->name.word) == m_env) {
             throw acc::exceptions::parser_error(decl->name, "scope resolved an ambiguous identifier ");
         }
 
         m_env->set(decl->name.word, decl);
+        /* DEBUG INFO */
         if (auto* ptr = m_env->resolve(decl->name.word)) {
             if (decl->expr.has_value()) {
                 ptr->get<acc::node::DeclarationStmt*>(decl->name.word)->history.push_back(decl->expr.value());
@@ -316,22 +309,24 @@ class [[nodiscard]] acc_parser
     };
 
     acc::StmtVariant parse_function_declaration() {
-        return new acc::node::FuncStmt{.type = peek_prev(),
-                                       .name = advance(),
-                                       .params = [this]() -> std::vector<acc::node::DeclarationStmt*> {
-                                           std::vector<acc::node::DeclarationStmt*> params;
-                                           if (match_it(TK_PAREN_L)) {
-                                               this->in_params = true;
-                                               while (!match_it(TK_PAREN_R)) {
-                                                   DISCARD(advance());
-                                                   params.push_back(std::get<acc::node::DeclarationStmt*>(this->parse_variable_declaration()));
-                                                   if (!match_it(TK_COMMA) && peek().type != TK_PAREN_R)
-                                                       throw acc::exceptions::parser_error(peek(), "missing param seperator ',' ");
-                                               }
-                                           }
-                                           return params;
-                                       }(),
-                                       .body = std::get<acc::node::BlockStmt*>(parse_statement())};
+        auto* f = new acc::node::FuncStmt{.type = peek_prev(),
+                                          .name = advance(),
+                                          .params = [this]() -> std::vector<acc::node::DeclarationStmt*> {
+                                              std::vector<acc::node::DeclarationStmt*> params;
+                                              if (match_it(TK_PAREN_L)) {
+                                                  this->in_params = true;
+                                                  while (!match_it(TK_PAREN_R)) {
+                                                      DISCARD(advance());
+                                                      params.push_back(std::get<acc::node::DeclarationStmt*>(this->parse_variable_declaration()));
+                                                      if (!match_it(TK_COMMA) && peek().type != TK_PAREN_R)
+                                                          throw acc::exceptions::parser_error(peek(), "missing param seperator ',' ");
+                                                  }
+                                              }
+                                              return params;
+                                          }(),
+                                          .body = std::get<acc::node::BlockStmt*>(parse_statement())};
+        m_env->set(f->name.word, f);
+        return f;
     };
 
     acc::StmtVariant parse_identifier_statement() {
