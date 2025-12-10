@@ -9,6 +9,7 @@
 #include "statics/ro_tokenmap.hpp"
 #include "statics/tkxmacro.hpp"
 #include "storage.hpp"
+#include "utils/lexeme_inspector.hpp"
 
 namespace acc {
 // the two basic units of a set of tokens is an identifier and a number everything else is up to the user.
@@ -18,7 +19,7 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     std::size_t m_y{0};
     std::vector<token> m_output;
     using variant_type = std::variant<std::string, char>;
-    std::unordered_map<variant_type, std::uint64_t> token_map;
+    std::unordered_map<variant_type, acc::globals::meta_info> token_map;
 
     std::string to_substr() const noexcept {
         return std::string(this->m_input.substr(this->m_start, this->m_end - this->m_start));
@@ -29,16 +30,16 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     };
 
     token lex_identifier() {
-        while (!this->is_end() && !globals::lexeme_inspector::is_delim(this->peek()) && !isspace(this->peek())) {
+        while (!this->is_end() && !acc::utils::lexeme_inspector::is_delim(this->peek()) && !isspace(this->peek())) {
             this->advance();
         }
 
         auto id = to_substr();
-        if (globals::lexeme_inspector::is_reserved(id)) {
+        if (acc::utils::lexeme_inspector::is_reserved(id)) {
             return token{
                 id,
                 std::make_pair(m_x, m_y),
-                globals::lexeme_inspector::is_type(id) ? acc::GLOBAL_TOKENS::TK_RESERVED_TYPE : TK_RESERVED,
+                acc::utils::lexeme_inspector::is_type(id) ? acc::GLOBAL_TOKENS::TK_RESERVED_TYPE : TK_RESERVED,
                 id};
         }
 
@@ -49,13 +50,13 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     };
 
     token lex_number() {
-        while (!this->is_end() && !isalpha(this->peek()) && !globals::lexeme_inspector::is_delim(this->peek())) {
+        while (!this->is_end() && !isalpha(this->peek()) && !acc::utils::lexeme_inspector::is_delim(this->peek())) {
             this->advance();
         }
 
         if (this->peek() == '.') {
             this->advance();
-            while (!this->is_end() && !isalpha(this->peek()) && !globals::lexeme_inspector::is_delim(this->peek())) {
+            while (!this->is_end() && !isalpha(this->peek()) && !acc::utils::lexeme_inspector::is_delim(this->peek())) {
                 this->advance();
             }
             return token{to_substr(),
@@ -87,14 +88,14 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     };
 
     token lex_it() {
-        if (globals::lexeme_inspector::is_delim(this->peek())) {
-            if (globals::lexeme_inspector::is_pair_delim(this->peek(), this->peek_next())) {
+        if (acc::utils::lexeme_inspector::is_delim(this->peek())) {
+            if (acc::utils::lexeme_inspector::is_pair_delim(this->peek(), this->peek_next())) {
                 advance();
                 advance();
                 auto word = to_substr(this->m_start, this->m_end);
                 return token{word,
                              std::make_pair(m_x, m_y),
-                             acc::globals::lexeme_inspector::to_kind(word),
+                             acc::utils::lexeme_inspector::to_kind(word),
                              word};
             }
 
@@ -114,7 +115,7 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
 
             return token{to_substr(this->m_start, this->m_end + 1),
                          std::make_pair(m_x, m_y),
-                         acc::globals::lexeme_inspector::to_kind(this->advance()),
+                         acc::utils::lexeme_inspector::to_kind(this->advance()),
                          this->peek_prev()};
         };
         if (isdigit(this->peek())) {
@@ -149,7 +150,7 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
     acc_lexer() {};
     acc_lexer(
         std::string_view sv,
-        const std::unordered_map<std::variant<std::string, char>, std::uint64_t>& tmap)
+        const std::unordered_map<std::variant<std::string, char>, acc::globals::meta_info>& tmap)
         : acc::fsm_storage<std::string_view>(sv),
           token_map(tmap) {};
     [[nodiscard]] const std::vector<token>& view_tokens() const noexcept {

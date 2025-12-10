@@ -1,39 +1,26 @@
 #pragma once
 #include "../accenv.hpp"
-#include "typesys/integral_types.hpp"
+#include "../utils/type_inspector.hpp"
+#include "typesys/type_checker.hpp"
+#include "typesys/type_error.hpp"
 #include "typesys/types.hpp"
 namespace acc {
 class analyzer {
     using environment_t = acc::environment<std::string, acc::StmtVariant>;
     environment_t* env;
-    static std::optional<acc::types::INTEGRAL_TYPES> type_word_to_integral_type(acc::token type) noexcept {
-        using acc::types::INTEGRAL_TYPES;
-        if (type.word == "int") {
-            return INTEGRAL_TYPES::INT;
-        } else if (type.word == "bool") {
-            return INTEGRAL_TYPES::BOOL;
-        } else if (type.word == "char") {
-            return INTEGRAL_TYPES::CHAR;
-        } else if (type.word == "short") {
-            return INTEGRAL_TYPES::SHORT;
-        } else if (type.word == "long") {
-            return INTEGRAL_TYPES::LONG;
-        } else if (type.word == "long long") {
-            return INTEGRAL_TYPES::LONG_LONG;
-        }
-        return std::nullopt;
-    };
+
     void analyze_types(const acc::StmtVariant variant) {
         using acc::exceptions::type_error;
-
         using acc::types::type_checker;
+        using acc::utils::type_inspector;
 
         std::visit(internal::visitor{
                        [](acc::node::DeclarationStmt* stmt) {
                            if (stmt->expr) {
-                               if (!type_checker::check_valid_implicit_conversion(type_word_to_integral_type(stmt->type).value(),
+                               std::cout << stmt->type.word << (int)type_inspector::to_type(stmt->type).value();
+                               if (!type_checker::check_valid_implicit_conversion(type_inspector::to_type(stmt->type).value(),
                                                                                   type_checker::evaluate_type(stmt->expr.value()))) {
-                                   throw type_error({type_word_to_integral_type(stmt->type).value(),
+                                   throw type_error({type_inspector::to_type(stmt->type).value(),
                                                      type_checker::evaluate_type(stmt->expr.value())},
                                                     "incompatible types ");
                                }
@@ -54,7 +41,7 @@ class analyzer {
                        },
                        [this](const acc::node::FuncStmt* stmt) {
                            analyze_types(stmt->body);
-                           auto Tfunc = type_checker::token_to_integral_type(stmt->type.type);
+                           auto Tfunc = type_inspector::to_type(stmt->type);
                            auto Tret = type_checker::evaluate_type(stmt->body->ret->expr);
                            if (!type_checker::check_valid_implicit_conversion(Tfunc.value(), Tret)) {
                                throw type_error({Tfunc.value(), Tret}, "mismatch return types between function declaration and definition. ");

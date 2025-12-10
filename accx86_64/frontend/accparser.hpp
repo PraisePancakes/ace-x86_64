@@ -18,6 +18,7 @@
 #include "printers/ast_printer.hpp"
 #include "statics/ro_accprec.hpp"
 #include "storage.hpp"
+#include "utils/lexeme_inspector.hpp"
 
 #define DISCARD(f) (void)f
 namespace acc {
@@ -163,7 +164,7 @@ class [[nodiscard]] acc_parser
         while (true) {
             auto op = peek();
 
-            if (!acc::globals::lexeme_inspector::is_binary_op(op, in_params) || globals::prec_map.at(op.type) < min_prec) {
+            if (!acc::utils::lexeme_inspector::is_binary_op(op, in_params) || globals::prec_map.at(op.type) < min_prec) {
                 break;
             }
 
