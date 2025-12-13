@@ -331,6 +331,8 @@ class [[nodiscard]] acc_parser
         return f;
     };
 
+    acc::StmtVariant parse_type() {};
+
     acc::StmtVariant parse_identifier_statement() {
         if (match_it(TK_RESERVED_TYPE)) {
             if (peek_next().type == TK_PAREN_L) {
@@ -365,6 +367,10 @@ class [[nodiscard]] acc_parser
                     throw acc::exceptions::parser_error(peek_prev(), "Missing semi ';' ");
                 }
                 throw ReturnException{ret};
+            }
+
+            if (match_it("type")) {
+                return parse_type();
             }
         }
         return parse_identifier_statement();

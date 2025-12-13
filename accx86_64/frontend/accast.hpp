@@ -58,7 +58,8 @@ using StmtVariant = std::variant<std::monostate,
                                  node::DeclarationStmt*,
                                  node::ExpressionStmt*,
                                  node::FuncStmt*,
-                                 node::ReturnStmt*>;
+                                 node::ReturnStmt*,
+                                 node::TypeStmt*>;
 
 namespace node {
 // struct IfStmt;
@@ -184,6 +185,12 @@ struct FuncStmt {
 struct ReturnStmt {
     acc::token keyword;
     acc::ExprVariant expr;
+};
+
+struct TypeStmt {
+    std::vector<acc::node::DeclarationStmt*> members;
+    FuncStmt* constructor;
+    FuncStmt* destructor;
 };
 
 }  // namespace node

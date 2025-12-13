@@ -120,6 +120,6 @@ const static std::unordered_map<std::variant<std::string, char>, meta_info>
         {"while", METAFY_TKREP(MAKE_FLAG_REP(TK_RESERVED, FLAG_RESERVED))},
         {"for", METAFY_TKREP(MAKE_FLAG_REP(TK_RESERVED, FLAG_RESERVED))},
         {"volatile", METAFY_TKREP(MAKE_FLAG_REP(TK_RESERVED, FLAG_RESERVED))},
-    };
+        {"type", METAFY_TKREP(MAKE_FLAG_REP(TK_RESERVED, FLAG_RESERVED))}};
 
 }  // namespace acc::globals

@@ -86,7 +86,7 @@ struct type_checker final {
                                   }
                               },
                               [](const acc::node::VariableExpr* expr) -> TYPES {
-                                                                    return type_inspector::to_type(expr->type).value();
+                                  return type_inspector::to_type(expr->type).value();
                               },
                               [](const acc::node::AssignmentExpr* expr) -> TYPES {
                                   auto Torigin = type_inspector::to_type(expr->type);
