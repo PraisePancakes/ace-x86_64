@@ -62,7 +62,7 @@ class [[nodiscard]] acc_parser
     template <traits::acc_matchable... Ts>
     bool match_seq(Ts&&... types) {
         auto old = this->m_end;
-        if ((!match_it(types) && ...)) {
+        if ((!match_it(std::forward<Ts>(types)) || ...)) {
             this->m_end = old;
             return false;
         };
@@ -128,25 +128,6 @@ class [[nodiscard]] acc_parser
                 throw exceptions::parser_error(id_tok, " declaration operator used in place of assignment replace '=' with ':=' ");
             };
 
-            // check if function call here to evaluate else return parse_variable_expression();
-            if (match_it(TK_PAREN_L)) {
-                try {
-                    in_params = true;
-                    auto* func_info = m_env->get<acc::node::FuncStmt*>(id);
-                    std::vector<ExprVariant> args;
-                    while (!match_it(TK_PAREN_R)) {
-                        args.push_back(parse_expr());
-                    }
-                    if (args.size() != func_info->params.size()) {
-                        throw exceptions::parser_error(id_tok, "wrong number of arguments ( " + std::to_string(args.size()) + ", should be " + std::to_string(func_info->params.size()));
-                    }
-
-                    return new acc::node::CallExpr{.args = args, .procedure = func_info};
-
-                } catch (std::runtime_error& err) {
-                    throw exceptions::parser_error(id_tok, " failed to resolve function with id ");
-                };
-            };
             /*
              id's in which its value cannot be deduced because its in an unevaluated context such as a function definition
              e.g: int f(int h, int y) { int z = h + y; };
@@ -157,10 +138,35 @@ class [[nodiscard]] acc_parser
 
         return parse_unary_expression();
     }
+    // check if function call here to evaluate else return parse_variable_expression();
+    acc::ExprVariant parse_call() {
+        const auto id_tok = peek();
+        const std::string id = id_tok.word;
+        if (match_seq(TK_IDENTIFIER, TK_PAREN_L)) {
+            try {
+                in_params = true;
+                auto* func_info = m_env->get<acc::node::FuncStmt*>(id);
+                std::vector<ExprVariant> args;
+                while (!match_it(TK_PAREN_R)) {
+                    args.push_back(parse_expr());
+                }
+                if (args.size() != func_info->params.size()) {
+                    throw exceptions::parser_error(id_tok, "wrong number of arguments ( " + std::to_string(args.size()) + ", should be " + std::to_string(func_info->params.size()));
+                }
+
+                return new acc::node::CallExpr{.args = args, .procedure = func_info};
+
+            } catch (std::runtime_error& err) {
+                throw exceptions::parser_error(id_tok, " failed to resolve function with id ");
+            };
+        };
+
+        return parse_id_expression();
+    };
 
     // 1  *  2 + 3
     acc::ExprVariant parse_expr(std::size_t min_prec = 0) {
-        auto lhs_atom = parse_id_expression();
+        auto lhs_atom = parse_call();
         while (true) {
             auto op = peek();
 
@@ -351,7 +357,7 @@ class [[nodiscard]] acc_parser
     acc::StmtVariant parse_type() {
         auto* type = new acc::node::TypeStmt{
             .type_name = advance(),
-            .environment = std::get<acc::node::BlockStmt*>(parse_block())};
+            .environment = std::get<acc::node::BlockStmt*>(parse_statement())};
 
         m_env->set(type->type_name.word, type);
         return type;
