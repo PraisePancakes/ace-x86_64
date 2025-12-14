@@ -47,6 +47,9 @@ class analyzer {
                                throw type_error({Tfunc.value(), Tret}, "mismatch return types between function declaration and definition. ");
                            }
                        },
+                       [this](const acc::node::TypeStmt* stmt) {
+
+                       },
                        /*kept here only to silence */ [](auto) {}},
                    variant);
     };

@@ -249,15 +249,24 @@ class [[nodiscard]] acc_parser
         }
         return cv_sig;
     };
-
+    // int public x = 4;
     acc::StmtVariant parse_variable_declaration() {
-        acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{.type = peek_prev(),
-                                                                          .name = advance(),
-                                                                          .cv_qual_flags = get_cv_sig(),
-                                                                          .history = {},
-                                                                          .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)
-                                                                                       ? std::optional<acc::ExprVariant>(parse_expr())
-                                                                                       : std::optional<acc::ExprVariant>(std::nullopt))};
+        acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{
+            .type = peek_prev(),
+            .access_specifier = [this]() -> std::optional<bool> {
+                if (this->match_it("public")) {
+                    return acc::node::PUBLIC;
+                } else if (this->match_it("private")) {
+                    return acc::node::PRIVATE;
+                }
+                return std::nullopt;
+            }(),
+            .name = advance(),
+            .cv_qual_flags = get_cv_sig(),
+            .history = {},
+            .expr = (match_it(acc::GLOBAL_TOKENS::TK_EQUALS)
+                         ? std::optional<acc::ExprVariant>(parse_expr())
+                         : std::optional<acc::ExprVariant>(std::nullopt))};
         if (!match_it(TK_SEMI) && !in_params) throw acc::exceptions::parser_error(peek_prev(), "Missing semi ';' ");
 
         if (m_env->resolve(decl->name.word) == m_env) {
@@ -312,6 +321,14 @@ class [[nodiscard]] acc_parser
 
     acc::StmtVariant parse_function_declaration() {
         auto* f = new acc::node::FuncStmt{.type = peek_prev(),
+                                          .access_specifier = [this]() -> std::optional<bool> {
+                                              if (this->match_it("public")) {
+                                                  return acc::node::PUBLIC;
+                                              } else if (this->match_it("private")) {
+                                                  return acc::node::PRIVATE;
+                                              }
+                                              return std::nullopt;
+                                          }(),
                                           .name = advance(),
                                           .params = [this]() -> std::vector<acc::node::DeclarationStmt*> {
                                               std::vector<acc::node::DeclarationStmt*> params;
@@ -331,7 +348,15 @@ class [[nodiscard]] acc_parser
         return f;
     };
 
-    acc::StmtVariant parse_type() {};
+    acc::StmtVariant parse_type() {
+        auto* type = new acc::node::TypeStmt{
+            .type_name = advance(),
+            .environment = std::get<acc::node::BlockStmt*>(parse_block())};
+
+        m_env->set(type->type_name.word, type);
+        return type;
+
+    };  // namespace acc
 
     acc::StmtVariant parse_identifier_statement() {
         if (match_it(TK_RESERVED_TYPE)) {

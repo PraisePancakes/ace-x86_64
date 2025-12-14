@@ -155,6 +155,9 @@ class ast_printer {
                            inker.print_green("( RETURN )");
                            print_expression(rstmt->expr, inker.os);
                        },
+                       [this, &inker](const acc::node::TypeStmt* stmt) {
+
+                       },
                        [](std::monostate) {
 
                        }},

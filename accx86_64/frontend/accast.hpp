@@ -29,6 +29,7 @@ struct DeclarationStmt;
 struct ExpressionStmt;
 struct FuncStmt;
 struct ReturnStmt;
+struct TypeStmt;
 
 }  // namespace node
 
@@ -62,6 +63,8 @@ using StmtVariant = std::variant<std::monostate,
                                  node::TypeStmt*>;
 
 namespace node {
+constexpr static bool PRIVATE = true;
+constexpr static bool PUBLIC = false;
 // struct IfStmt;
 // struct ThenStmt;
 // struct WhileStmt;
@@ -104,7 +107,9 @@ struct AssignmentExpr {
 
 struct DeclarationStmt {
     acc::token type;
+    std::optional<bool> access_specifier{0};  // true private, false public
     acc::token name;
+
     // const by default
     std::byte cv_qual_flags{0};  // 0000 0000 -lsb = const : lsb << 1 = volatile
 
@@ -177,6 +182,7 @@ struct ForStmt {
 
 struct FuncStmt {
     acc::token type;
+    std::optional<bool> access_specifier{0};  // true private, false public
     acc::token name;
     std::vector<DeclarationStmt*> params;
     BlockStmt* body;  // block
@@ -188,9 +194,8 @@ struct ReturnStmt {
 };
 
 struct TypeStmt {
-    std::vector<acc::node::DeclarationStmt*> members;
-    FuncStmt* constructor;
-    FuncStmt* destructor;
+    acc::token type_name;
+    acc::node::BlockStmt* environment;
 };
 
 }  // namespace node
