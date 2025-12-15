@@ -150,7 +150,8 @@ class ast_printer {
                                print_statement(p, inker.os);
                            };
                            inker.print_yellow("BODY :");
-                           print_statement(fstmt->body, inker.os);
+                           if (fstmt->body)
+                               print_statement(fstmt->body, inker.os);
                        },
                        [this, &inker](const acc::node::ReturnStmt* rstmt) {
                            inker.print_green("( RETURN )");

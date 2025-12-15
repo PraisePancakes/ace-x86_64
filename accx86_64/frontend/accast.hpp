@@ -182,10 +182,10 @@ struct ForStmt {
 
 struct FuncStmt {
     acc::token type;
-    std::optional<bool> access_specifier{0};  // true private, false public
     acc::token name;
     std::vector<DeclarationStmt*> params;
-    BlockStmt* body;  // block
+    std::optional<bool> access_specifier;  // true private, false public
+    BlockStmt* body;                       // block
 };
 
 struct ReturnStmt {

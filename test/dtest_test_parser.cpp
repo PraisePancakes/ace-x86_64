@@ -210,8 +210,14 @@ TEST_CASE("Parser Analysis") {
     // ./testing -tc=*Parser* -sc=*type* --no-capture
     SUBCASE("type") {
         acc::acc_lexer lxr(R"(
-               type f {
-                int public x : mut = 4;
+               int y = 2;
+               type Foo {
+                int public x : mut = y;
+                Foo(int x) {};
+               };
+
+               int x() {
+                    Foo g = Foo(2);
                };
 
             )",
@@ -219,6 +225,7 @@ TEST_CASE("Parser Analysis") {
 
         auto ts = lxr.lex();
         acc::acc_parser prs(ts);
+
         auto v = prs.parse();
         acc::output::ast_printer printer(std::cout);
         printer.dump(v->get_items());

@@ -138,7 +138,7 @@ class [[nodiscard]] acc_parser
 
         return parse_unary_expression();
     }
-    // check if function call here to evaluate else return parse_variable_expression();
+    // check if function call here to evaluate else return parse_id_expression();
     acc::ExprVariant parse_call() {
         const auto id_tok = peek();
         const std::string id = id_tok.word;
@@ -223,6 +223,9 @@ class [[nodiscard]] acc_parser
     acc::StmtVariant parse_block() {
         auto* block = new acc::node::BlockStmt();
         auto* new_env = create_environment();
+        if (type_context)
+            new_env->in_type = true;
+
         try {
             block->env = parse(new_env);
         } catch (const ReturnException& r) {
@@ -231,7 +234,7 @@ class [[nodiscard]] acc_parser
         }
         block->env = new_env;
         match_it(TK_SEMI);
-
+        type_context = false;
         return block;
     };
 
@@ -259,14 +262,15 @@ class [[nodiscard]] acc_parser
     acc::StmtVariant parse_variable_declaration() {
         acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{
             .type = peek_prev(),
-            .access_specifier = [this]() -> std::optional<bool> {
+            .access_specifier = (m_env->in_type ? ([this]() -> std::optional<bool> {
                 if (this->match_it("public")) {
                     return acc::node::PUBLIC;
                 } else if (this->match_it("private")) {
                     return acc::node::PRIVATE;
                 }
-                return std::nullopt;
-            }(),
+                return acc::node::PUBLIC;
+            }())
+                                                : std::nullopt),
             .name = advance(),
             .cv_qual_flags = get_cv_sig(),
             .history = {},
@@ -275,7 +279,7 @@ class [[nodiscard]] acc_parser
                          : std::optional<acc::ExprVariant>(std::nullopt))};
         if (!match_it(TK_SEMI) && !in_params) throw acc::exceptions::parser_error(peek_prev(), "Missing semi ';' ");
 
-        if (m_env->resolve(decl->name.word) == m_env) {
+        if (!in_params && m_env->resolve(decl->name.word) == m_env) {
             throw acc::exceptions::parser_error(decl->name, "scope resolved an ambiguous identifier ");
         }
 
@@ -326,15 +330,7 @@ class [[nodiscard]] acc_parser
     };
 
     acc::StmtVariant parse_function_declaration() {
-        auto* f = new acc::node::FuncStmt{.type = peek_prev(),
-                                          .access_specifier = [this]() -> std::optional<bool> {
-                                              if (this->match_it("public")) {
-                                                  return acc::node::PUBLIC;
-                                              } else if (this->match_it("private")) {
-                                                  return acc::node::PRIVATE;
-                                              }
-                                              return std::nullopt;
-                                          }(),
+        auto* f = new acc::node::FuncStmt{.type = (m_env->in_type ? peek() : peek_prev()),
                                           .name = advance(),
                                           .params = [this]() -> std::vector<acc::node::DeclarationStmt*> {
                                               std::vector<acc::node::DeclarationStmt*> params;
@@ -349,17 +345,46 @@ class [[nodiscard]] acc_parser
                                               }
                                               return params;
                                           }(),
+                                          .access_specifier = (m_env->in_type ? ([this]() -> std::optional<bool> {
+                                              if (this->match_it("public")) {
+                                                  return acc::node::PUBLIC;
+                                              } else if (this->match_it("private")) {
+                                                  return acc::node::PRIVATE;
+                                              }
+                                              return acc::node::PUBLIC;
+                                          }())
+                                                                              : std::nullopt),
                                           .body = std::get<acc::node::BlockStmt*>(parse_statement())};
+
+        if (m_env->resolve(f->name.word) == m_env) {
+            throw acc::exceptions::parser_error(f->name, "scope resolved an ambiguous identifier ");
+        }
         m_env->set(f->name.word, f);
         return f;
     };
 
     acc::StmtVariant parse_type() {
+        type_context = true;
+        m_env->set_type(peek().word);
         auto* type = new acc::node::TypeStmt{
             .type_name = advance(),
             .environment = std::get<acc::node::BlockStmt*>(parse_statement())};
+        if (m_env->resolve(type->type_name.word) == m_env) {
+            throw acc::exceptions::parser_error(type->type_name, "scope resolved an ambiguous identifier ");
+        }
+        try {
+            auto constructor = type->environment->env->get<acc::node::FuncStmt*>(type->type_name.word);
 
-        m_env->set(type->type_name.word, type);
+            m_env->set(constructor->name.word, constructor);
+        } catch ([[maybe_unused]] std::exception const&) {
+            m_env->set(type->type_name.word, new acc::node::FuncStmt{
+                                                 .type = type->type_name,
+                                                 .name = type->type_name,
+                                                 .params = {},
+                                                 .access_specifier = acc::node::PUBLIC,
+                                                 .body = nullptr});
+        }
+
         return type;
 
     };  // namespace acc
@@ -375,9 +400,17 @@ class [[nodiscard]] acc_parser
             return parse_variable_declaration();
         }
 
+        if (m_env->has_type(peek().word)) {
+            if (peek_next().type == TK_PAREN_L) {
+                return parse_function_declaration();
+            }
+            DISCARD(advance());
+            return parse_variable_declaration();
+        }
+
         return parse_expression_statement();
     }
-
+    bool type_context = false;
     acc::StmtVariant parse_statement() {
         if (match_it(TK_CURL_L)) {
             return parse_block();
