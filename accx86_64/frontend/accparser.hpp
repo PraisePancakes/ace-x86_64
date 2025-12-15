@@ -356,7 +356,7 @@ class [[nodiscard]] acc_parser
                                                                               : std::nullopt),
                                           .body = std::get<acc::node::BlockStmt*>(parse_statement())};
 
-        if (m_env->resolve(f->name.word) == m_env) {
+        if (m_env->resolve(f->name.word) == m_env && !in_params) {
             throw acc::exceptions::parser_error(f->name, "scope resolved an ambiguous identifier ");
         }
         m_env->set(f->name.word, f);

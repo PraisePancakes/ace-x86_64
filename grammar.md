@@ -6,6 +6,8 @@
               | <decl> ";"
               | <expr> ";"
               | <func>
+              | <class>
+
 <block> ::= "{" { <statement> } "}"
 <if> ::= "if" <expression> <statement> |  "if" <expression> <statement>  "else" <statement> 
 
@@ -13,11 +15,19 @@
 
 <for> ::= "for" "(" [ <expr> ] ";" [ <expression> ] ";" [ <expr> ] ")" <statement>
 
-<func> ::= <type> <identifier> "(" [ <param_list> ] ")" ( <block> | "=>" "return" <expr> )
+<func> ::= <type> <access_specifier> <identifier> "(" [ <param_list> ] ")"  ( <block> | "=>" "return" <expr> )
+
+<class> ::= "type" <identifier> "{" { <class_member> } "}"
+
+<class_member> ::= <decl> ";"
+                 | <func>
+                 | <constructor>
+
+<constructor> ::= <identifier> "(" [ <param_list> ] ")" <block>
 
 <param_list> ::= <identifier> { "," <identifier> }
 
-<decl> ::= <type> <identifier> [":" <qual> ] [ "=" <expression> ]
+<decl> ::= <type> <access_specifier> <identifier> [":" <qual> ] [ "=" <expression> ]
 <type> ::= "int" | "float" | "double" | "long" | "long long" | "unsigned" | "char" | "bool"
 <qual> ::= "mut" | "volatile" | "mut" "volatile" | "volatile" "mut"
 

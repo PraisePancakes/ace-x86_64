@@ -188,7 +188,8 @@ TEST_CASE("Parser Analysis") {
                 bool f() {};
 
                 int h(int h : mut, int y) {
-                    bool x = f();
+                    int z = h;
+                    bool g = f();
                 };
 
             )",
@@ -214,6 +215,7 @@ TEST_CASE("Parser Analysis") {
                type Foo {
                 int public x : mut = y;
                 Foo(int x) {};
+                int test() private {};
                };
 
                int x() {
