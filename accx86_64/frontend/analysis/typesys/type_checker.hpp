@@ -26,7 +26,7 @@ struct type_checker final {
 
     // this will be one of the many conversion strategies, we must add floating point conversions as well as polymorphic conversions etc...
 
-    static TYPES evaluate_type(const ExprVariant expr) noexcept {
+    static TYPES evaluate_type(const ExprVariant expr) {
         using acc::utils::type_inspector;
 
         return std::visit(internal::visitor{
@@ -45,6 +45,7 @@ struct type_checker final {
                                   if (type.has_value()) {
                                       return type.value();
                                   }
+                                  throw exceptions::type_error({type.value()}, " conversion not allowed : ");
                               },
                               [](const acc::node::GroupingExpr* expr) -> TYPES {
                                   return type_checker::evaluate_type(expr->expr);
@@ -84,6 +85,8 @@ struct type_checker final {
                                       default:
                                           break;
                                   }
+
+                                  throw exceptions::type_error({type_inspector::to_type(expr->op).value()}, " unsupported unary type operation : ");
                               },
                               [](const acc::node::VariableExpr* expr) -> TYPES {
                                   return type_inspector::to_type(expr->type).value();

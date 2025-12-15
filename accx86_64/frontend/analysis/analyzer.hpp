@@ -17,7 +17,6 @@ class analyzer {
         std::visit(internal::visitor{
                        [](acc::node::DeclarationStmt* stmt) {
                            if (stmt->expr) {
-                               std::cout << stmt->type.word << (int)type_inspector::to_type(stmt->type).value();
                                if (!type_checker::check_valid_implicit_conversion(type_inspector::to_type(stmt->type).value(),
                                                                                   type_checker::evaluate_type(stmt->expr.value()))) {
                                    throw type_error({type_inspector::to_type(stmt->type).value(),
@@ -32,12 +31,8 @@ class analyzer {
                        [this](const acc::node::ForStmt* stmt) {
                            analyze_types(stmt->init);
                            analyze_types(stmt->condition);
-
+                           type_checker::evaluate_type(stmt->expr);
                            analyze_types(stmt->body);
-                       },
-                       [this](const acc::node::WhileStmt* stmt) {
-                           analyze_types(stmt->body);
-                           type_checker::evaluate_type(stmt->condition);
                        },
                        [this](const acc::node::FuncStmt* stmt) {
                            analyze_types(stmt->body);
@@ -48,9 +43,37 @@ class analyzer {
                            }
                        },
                        [this](const acc::node::TypeStmt* stmt) {
-
+                           analyze_types(stmt->environment);
                        },
-                       /*kept here only to silence */ [](auto) {}},
+                       [this](const acc::node::BlockStmt* stmt) {
+                           for (const auto& item : stmt->env->get_items()) {
+                               analyze_types(item);
+                           }
+                           if (stmt->ret) {
+                               analyze_types(stmt->ret);
+                           }
+                       },
+                       [this](const acc::node::IfStmt* stmt) {
+                           auto condition_type = type_checker::evaluate_type(stmt->condition);
+                           if (!type_checker::check_valid_implicit_conversion(condition_type, types::TYPES::BOOL)) {
+                               throw type_error({condition_type, types::TYPES::BOOL}, " conditional failed to deduce to a boolean type ");
+                           }
+                           analyze_types(stmt->then);
+                           if (stmt->else_.has_value()) {
+                               analyze_types(stmt->else_.value());
+                           }
+                       },
+                       [this](const acc::node::WhileStmt* stmt) {
+                           auto condition_type = type_checker::evaluate_type(stmt->condition);
+                           if (!type_checker::check_valid_implicit_conversion(condition_type, types::TYPES::BOOL)) {
+                               throw type_error({condition_type, types::TYPES::BOOL}, " conditional failed to deduce to a boolean type ");
+                           }
+                           analyze_types(stmt->body);
+                       },
+                       [this](const acc::node::ReturnStmt* stmt) {
+                           type_checker::evaluate_type(stmt->expr);
+                       },
+                       [](std::monostate) { std::unreachable(); }},
                    variant);
     };
 

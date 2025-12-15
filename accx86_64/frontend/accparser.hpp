@@ -293,9 +293,9 @@ class [[nodiscard]] acc_parser
 
     acc::StmtVariant parse_conditional() {
         return new acc::node::IfStmt{.condition = parse_expr(),
-                                     .then = parse_statement(),
-                                     .else_ = (match_it("else") ? std::optional<StmtVariant>(parse_statement())
-                                                                : std::optional<StmtVariant>(std::nullopt))};
+                                     .then = std::get<acc::node::BlockStmt*>(parse_statement()),
+                                     .else_ = (match_it("else") ? std::optional<acc::node::BlockStmt*>(std::get<acc::node::BlockStmt*>(parse_statement()))
+                                                                : std::optional<acc::node::BlockStmt*>(std::nullopt))};
     };
     acc::StmtVariant parse_iteration() {
         if (peek_prev().word == "while") {

@@ -94,6 +94,7 @@ class ast_printer {
 
                            inker.print_green("( DECLARATION )");
                            inker.print_yellow("TYPE : ", declstmt->type.word);
+                           inker.print_yellow("SPECIFIERS : [ ", (declstmt->access_specifier.has_value() ? (declstmt->access_specifier.value() ? "private" : "public") : " "), " ]");
                            inker.print_yellow("QUALIFIERS : [ ", (has_const ? "const" : " "), " ", (has_volatile ? "volatile" : " "), "]");
                            inker.print_yellow("ID : ", declstmt->name.word);
                            inker.print_yellow("HISTORY : [");
@@ -156,7 +157,9 @@ class ast_printer {
                            print_expression(rstmt->expr, inker.os);
                        },
                        [this, &inker](const acc::node::TypeStmt* stmt) {
-
+                           inker.print_green("( TYPE )");
+                           acc::output::token_printer::write_token(inker.os, stmt->type_name);
+                           print_statement(stmt->environment, inker.os);
                        },
                        [](std::monostate) {
 

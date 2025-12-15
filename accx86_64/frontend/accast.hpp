@@ -145,8 +145,8 @@ struct DeclarationStmt {
 
 struct IfStmt {
     ExprVariant condition;
-    StmtVariant then;
-    std::optional<StmtVariant> else_;
+    acc::node::BlockStmt* then;
+    std::optional<acc::node::BlockStmt*> else_;
 };
 
 struct ExpressionStmt {

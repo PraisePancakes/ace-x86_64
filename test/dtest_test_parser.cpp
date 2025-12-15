@@ -206,4 +206,21 @@ TEST_CASE("Parser Analysis") {
             REQUIRE(fstmt->body->env->get_items().size() == 0);
         }
     }
+
+    // ./testing -tc=*Parser* -sc=*type* --no-capture
+    SUBCASE("type") {
+        acc::acc_lexer lxr(R"(
+               type f {
+                int public x : mut = 4;
+               };
+
+            )",
+                           acc::globals::token_map);
+
+        auto ts = lxr.lex();
+        acc::acc_parser prs(ts);
+        auto v = prs.parse();
+        acc::output::ast_printer printer(std::cout);
+        printer.dump(v->get_items());
+    }
 }
