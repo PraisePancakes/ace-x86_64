@@ -5,27 +5,32 @@ namespace acc::utils {
 
 struct inker {
     template <typename... Args>
-    void print_green(Args&&... args) noexcept {
+    inker& print_green(Args&&... args) noexcept {
         (((os << acc::ansi::foreground_green << args << acc::ansi::reset), ...) << "\n");
+        return *this;
     }
     template <typename... Args>
-    void print_yellow(Args&&... args) noexcept {
+    inker& print_yellow(Args&&... args) noexcept {
         (((os << acc::ansi::foreground_yellow << args << acc::ansi::reset), ...) << std::endl);
+        return *this;
     }
     template <typename... Args>
-    void print_red(Args&&... args) noexcept {
+    inker& print_red(Args&&... args) noexcept {
         (((os << acc::ansi::foreground_light_red << args << acc::ansi::reset), ...) << std::endl);
+        return *this;
     }
 
     template <typename... Args>
-    void print_blue(Args&&... args) noexcept {
+    inker& print_blue(Args&&... args) noexcept {
         (((os << acc::ansi::foreground_blue << args << acc::ansi::reset), ...) << std::endl);
+        return *this;
     }
 
-    void print_depth(std::size_t N, const char c) const noexcept {
+    inker& print_depth(std::size_t N, const char c) noexcept {
         while (N--) {
-            std::cout << c;
+            os << c;
         }
+        return *this;
     }
 
     std::ostream& os;

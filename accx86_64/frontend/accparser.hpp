@@ -369,14 +369,14 @@ class [[nodiscard]] acc_parser
         auto* type = new acc::node::TypeStmt{
             .type_name = advance(),
             .environment = std::get<acc::node::BlockStmt*>(parse_statement())};
-        if (m_env->resolve(type->type_name.word) == m_env) {
+        if (m_env->resolve(type->type_name.word) == m_env && !in_params) {
             throw acc::exceptions::parser_error(type->type_name, "scope resolved an ambiguous identifier ");
         }
         try {
             auto constructor = type->environment->env->get<acc::node::FuncStmt*>(type->type_name.word);
 
             m_env->set(constructor->name.word, constructor);
-        } catch ([[maybe_unused]] std::exception const&) {
+        } catch ([[maybe_unused]] std::exception const& err) {
             m_env->set(type->type_name.word, new acc::node::FuncStmt{
                                                  .type = type->type_name,
                                                  .name = type->type_name,

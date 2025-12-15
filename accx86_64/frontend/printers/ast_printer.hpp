@@ -93,9 +93,9 @@ class ast_printer {
                            bool has_volatile = declstmt->has_volatile(declstmt->cv_qual_flags);
 
                            inker.print_green("( DECLARATION )");
-                           inker.print_yellow("TYPE : ", declstmt->type.word);
-                           inker.print_yellow("SPECIFIERS : [ ", (declstmt->access_specifier.has_value() ? (declstmt->access_specifier.value() ? "private" : "public") : " "), " ]");
-                           inker.print_yellow("QUALIFIERS : [ ", (has_const ? "const" : " "), " ", (has_volatile ? "volatile" : " "), "]");
+                           inker.print_yellow("TYPE : ").print_blue(declstmt->type.word);
+                           inker.print_yellow("SPECIFIERS : [ ").print_blue((declstmt->access_specifier.has_value() ? (declstmt->access_specifier.value() ? "private" : "public") : " ")).print_yellow(" ]");
+                           inker.print_yellow("QUALIFIERS : [ ").print_blue((has_const ? "const" : " "), " ", (has_volatile ? "volatile" : " ")).print_yellow("]");
                            inker.print_yellow("ID : ", declstmt->name.word);
                            inker.print_yellow("HISTORY : [");
                            for (const auto& v : declstmt->history) {
@@ -124,9 +124,12 @@ class ast_printer {
                        [this, &inker](const acc::node::BlockStmt* bstmt) {
                            inker.print_green("( BLOCK )");
                            inker.print_yellow("BODY :");
-                           for (const auto& s : bstmt->env->get_items()) {
-                               this->print_statement(s, inker.os);
-                           }
+                           if (bstmt->env && bstmt->env->get_items().size()) {
+                               for (const auto& s : bstmt->env->get_items()) {
+                                   this->print_statement(s, inker.os);
+                               }
+                           } else
+                               inker.print_yellow("NULL");
                        },
                        [this, &inker](const acc::node::ForStmt* cxpr) {
                            inker.print_green("( FOR )");
@@ -149,9 +152,16 @@ class ast_printer {
                            for (auto& p : fstmt->params) {
                                print_statement(p, inker.os);
                            };
+
+                           inker.print_yellow("ACCESS SPECIFIER : ");
+                           if (fstmt->access_specifier.has_value())
+                               inker.print_blue(fstmt->access_specifier.value() == acc::node::PUBLIC ? "public" : "private");
+
                            inker.print_yellow("BODY :");
                            if (fstmt->body)
                                print_statement(fstmt->body, inker.os);
+                           else
+                               inker.print_blue("NULL");
                        },
                        [this, &inker](const acc::node::ReturnStmt* rstmt) {
                            inker.print_green("( RETURN )");
