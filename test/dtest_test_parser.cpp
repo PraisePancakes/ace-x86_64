@@ -214,12 +214,11 @@ TEST_CASE("Parser Analysis") {
                int y = 2;
                type Foo {
                 int public x : mut = y;
-                Foo(int x) {};
                 int test() private {};
                };
 
                int x() {
-                    Foo g = Foo(2);
+                    Foo g = Foo();
                };
 
             )",

@@ -146,6 +146,7 @@ class [[nodiscard]] acc_parser
             try {
                 in_params = true;
                 auto* func_info = m_env->get<acc::node::FuncStmt*>(id);
+
                 std::vector<ExprVariant> args;
                 while (!match_it(TK_PAREN_R)) {
                     args.push_back(parse_expr());
@@ -153,7 +154,6 @@ class [[nodiscard]] acc_parser
                 if (args.size() != func_info->params.size()) {
                     throw exceptions::parser_error(id_tok, "wrong number of arguments ( " + std::to_string(args.size()) + ", should be " + std::to_string(func_info->params.size()));
                 }
-
                 return new acc::node::CallExpr{.args = args, .procedure = func_info};
 
             } catch (std::runtime_error& err) {

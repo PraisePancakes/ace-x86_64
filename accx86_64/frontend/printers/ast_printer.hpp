@@ -192,7 +192,10 @@ class ast_printer {
                                               m_depth -= 5;
 
                                               // body
-                                              print_statement(stmt->body, inker.os);
+                                              if (stmt->body)
+                                                  print_statement(stmt->body, inker.os);
+                                              else
+                                                  inker.print_depth(m_depth, ' ').print_red("NULL");
 
                                               m_depth -= 5;
                                           },
