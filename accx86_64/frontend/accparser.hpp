@@ -363,6 +363,7 @@ class [[nodiscard]] acc_parser
         auto type = advance();
         m_env->set_type(type.word);
         std::unordered_map<std::string, acc::StmtVariant> members;
+        auto* env = create_environment();
         if (match_it(TK_CURL_L)) {
             while (!match_it(TK_CURL_R)) {
                 if (peek().word == type.word && peek_next().type == TK_PAREN_L) {
@@ -386,32 +387,14 @@ class [[nodiscard]] acc_parser
                                                                                      .params = params,
                                                                                      .access_specifier = access_specifier,
                                                                                      .body = block}));
-                } else if (match_it(TK_RESERVED_TYPE)) {
-                    if (peek_next().type == TK_PAREN_L) {
-                        // parse function
-                        auto func = std::get<acc::node::FuncStmt*>(parse_function_declaration());
-                        members.insert(std::make_pair(func->name.word, func));
-                    } else {
-                        // parse var
-                        auto decl = std::get<acc::node::DeclarationStmt*>(parse_variable_declaration());
-                        members.insert(std::make_pair(decl->name.word, decl));
-                    }
-                } else if (m_env->has_type(peek().word)) {
-                    if (peek_next().type == TK_PAREN_L) {
-                        auto fdecl = std::get<acc::node::FuncStmt*>(parse_function_declaration());
-                        members.insert(std::make_pair(fdecl->name.word, fdecl));
-                    } else {
-                        DISCARD(advance());
-                        auto decl = std::get<acc::node::DeclarationStmt*>(parse_variable_declaration());
-                        members.insert(std::make_pair(decl->name.word, decl));
-                    }
+                } else {
+                    env->get_items().push_back(parse_identifier_statement());
                 }
             }
         }
-
+        m_env = env->get_parent();
         match_it(TK_SEMI);
         auto tp = new acc::node::TypeStmt{.type_name = type, .members = members};
-
         try {
             auto constructor = tp->members.at(tp->type_name.word);
             m_env->set(tp->type_name.word, constructor);
