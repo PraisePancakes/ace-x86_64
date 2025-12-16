@@ -43,7 +43,7 @@ class analyzer {
                            }
                        },
                        [this](const acc::node::TypeStmt* stmt) {
-                           analyze_types(stmt->environment);
+
                        },
                        [this](const acc::node::BlockStmt* stmt) {
                            for (const auto& item : stmt->env->get_items()) {

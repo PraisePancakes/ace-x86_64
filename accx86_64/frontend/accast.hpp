@@ -16,7 +16,6 @@ struct LiteralExpr;
 struct BinaryExpr;
 struct UnaryExpr;
 struct GroupingExpr;
-struct ComparisonExpr;
 struct CallExpr;
 struct VariableExpr;
 struct AssignmentExpr;
@@ -96,7 +95,7 @@ struct CallExpr {
 struct VariableExpr {
     acc::token type;
     acc::token name;
-    ExprVariant deduced_value;
+    std::optional<ExprVariant> evaluated{std::nullopt};
 };
 
 struct AssignmentExpr {
@@ -195,7 +194,7 @@ struct ReturnStmt {
 
 struct TypeStmt {
     acc::token type_name;
-    acc::node::BlockStmt* environment;
+    std::unordered_map<std::string, acc::StmtVariant> members;
 };
 
 }  // namespace node

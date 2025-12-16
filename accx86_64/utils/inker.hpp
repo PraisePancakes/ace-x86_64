@@ -11,18 +11,18 @@ struct inker {
     }
     template <typename... Args>
     inker& print_yellow(Args&&... args) noexcept {
-        (((os << acc::ansi::foreground_yellow << args << acc::ansi::reset), ...) << std::endl);
+        (((os << acc::ansi::foreground_yellow << args << acc::ansi::reset), ...) << "\n");
         return *this;
     }
     template <typename... Args>
     inker& print_red(Args&&... args) noexcept {
-        (((os << acc::ansi::foreground_light_red << args << acc::ansi::reset), ...) << std::endl);
+        (((os << acc::ansi::foreground_light_red << args << acc::ansi::reset), ...) << "\n");
         return *this;
     }
 
     template <typename... Args>
     inker& print_blue(Args&&... args) noexcept {
-        (((os << acc::ansi::foreground_blue << args << acc::ansi::reset), ...) << std::endl);
+        (((os << acc::ansi::foreground_blue << args << acc::ansi::reset), ...) << "\n");
         return *this;
     }
 
