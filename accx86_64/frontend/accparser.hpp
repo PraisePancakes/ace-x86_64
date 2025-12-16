@@ -362,8 +362,7 @@ class [[nodiscard]] acc_parser
     acc::StmtVariant parse_type() {
         auto type = advance();
         m_env->set_type(type.word);
-        std::unordered_map<std::string, acc::StmtVariant> members;
-        auto* env = create_environment();
+        auto* members = create_environment();
         if (match_it(TK_CURL_L)) {
             while (!match_it(TK_CURL_R)) {
                 if (peek().word == type.word && peek_next().type == TK_PAREN_L) {
@@ -382,21 +381,21 @@ class [[nodiscard]] acc_parser
                     auto access_specifier = this->match_it("public") ? acc::node::PUBLIC : acc::node::PRIVATE;
 
                     auto* block = std::get<acc::node::BlockStmt*>(parse_statement());
-                    members.insert(std::make_pair(type.word, new acc::node::FuncStmt{.type = type,
-                                                                                     .name = type,
-                                                                                     .params = params,
-                                                                                     .access_specifier = access_specifier,
-                                                                                     .body = block}));
+                    members->set(type.word, new acc::node::FuncStmt{.type = type,
+                                                                    .name = type,
+                                                                    .params = params,
+                                                                    .access_specifier = access_specifier,
+                                                                    .body = block});
                 } else {
-                    env->get_items().push_back(parse_identifier_statement());
+                    members->get_items().push_back(parse_identifier_statement());
                 }
             }
         }
-        m_env = env->get_parent();
+        m_env = members->get_parent();
         match_it(TK_SEMI);
         auto tp = new acc::node::TypeStmt{.type_name = type, .members = members};
         try {
-            auto constructor = tp->members.at(tp->type_name.word);
+            auto constructor = tp->members->get<acc::node::FuncStmt*>(tp->type_name.word);
             m_env->set(tp->type_name.word, constructor);
         } catch ([[maybe_unused]] std::exception const& err) {
             m_env->set(tp->type_name.word, new acc::node::FuncStmt{

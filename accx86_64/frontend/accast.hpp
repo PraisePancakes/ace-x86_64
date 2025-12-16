@@ -194,7 +194,7 @@ struct ReturnStmt {
 
 struct TypeStmt {
     acc::token type_name;
-    std::unordered_map<std::string, acc::StmtVariant> members;
+    acc::environment<std::string, acc::StmtVariant>* members;
 };
 
 }  // namespace node

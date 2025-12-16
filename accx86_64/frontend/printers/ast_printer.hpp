@@ -216,8 +216,8 @@ class ast_printer {
 
                                               inker.print_depth(m_depth, ' ').print_green(stmt->type_name.word);
 
-                                              for (auto const& m : stmt->members) {
-                                                  print_statement(m.second, inker.os);
+                                              for (auto const& m : stmt->members->get_items()) {
+                                                  print_statement(m, inker.os);
                                               };
 
                                               m_depth -= 5;
