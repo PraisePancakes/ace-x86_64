@@ -101,7 +101,9 @@ class [[nodiscard]] acc_parser
 
     acc::ExprVariant parse_variable_expression() const {
         const auto id_tok = this->peek_prev();
-        return new acc::node::VariableExpr{.type = m_env->get<acc::node::DeclarationStmt*>(id_tok.word)->type, .name = id_tok, .evaluated = std::nullopt};
+        return new acc::node::VariableExpr{.type = m_env->get<acc::node::DeclarationStmt*>(id_tok.word)->type,
+                                           .name = id_tok,
+                                           .evaluated = ((m_env->resolve(id_tok.word)) ? m_env->get<acc::node::DeclarationStmt*>(id_tok.word)->expr : std::nullopt)};
     };
 
     // anything to do with an identifier in an expression e.g a = 4 or a() or anything gets resolved here
@@ -146,6 +148,9 @@ class [[nodiscard]] acc_parser
             try {
                 in_params = true;
                 auto* func_info = m_env->get<acc::node::FuncStmt*>(id);
+                if (func_info->access_specifier == acc::node::PRIVATE) {
+                    throw exceptions::parser_error(func_info->name, " call to private function ");
+                }
 
                 std::vector<ExprVariant> args;
                 while (!match_it(TK_PAREN_R)) {
@@ -362,7 +367,7 @@ class [[nodiscard]] acc_parser
     acc::StmtVariant parse_type() {
         auto type = advance();
         m_env->set_type(type.word);
-        auto* members = create_environment();
+        auto* member_environment = create_environment();
         if (match_it(TK_CURL_L)) {
             while (!match_it(TK_CURL_R)) {
                 if (peek().word == type.word && peek_next().type == TK_PAREN_L) {
@@ -378,26 +383,36 @@ class [[nodiscard]] acc_parser
                                 throw acc::exceptions::parser_error(peek(), "missing param seperator ',' ");
                         }
                     }
-                    auto access_specifier = this->match_it("public") ? acc::node::PUBLIC : acc::node::PRIVATE;
+                    auto access_specifier = [this]() -> std::optional<bool> {
+                        if (this->match_it("public")) {
+                            return acc::node::PUBLIC;
+                        } else if (this->match_it("private")) {
+                            return acc::node::PRIVATE;
+                        }
+                        return acc::node::PUBLIC;
+                    }();
 
                     auto* block = std::get<acc::node::BlockStmt*>(parse_statement());
-                    members->set(type.word, new acc::node::FuncStmt{.type = type,
-                                                                    .name = type,
-                                                                    .params = params,
-                                                                    .access_specifier = access_specifier,
-                                                                    .body = block});
+                    member_environment->set(type.word, new acc::node::FuncStmt{.type = type,
+                                                                               .name = type,
+                                                                               .params = params,
+                                                                               .access_specifier = access_specifier,
+                                                                               .body = block});
                 } else {
-                    members->get_items().push_back(parse_identifier_statement());
+                    member_environment->get_items().push_back(parse_identifier_statement());
                 }
             }
         }
-        m_env = members->get_parent();
+        m_env = member_environment->get_parent();
         match_it(TK_SEMI);
-        auto tp = new acc::node::TypeStmt{.type_name = type, .members = members};
+        auto tp = new acc::node::TypeStmt{.type_name = type, .members = member_environment};
         try {
+            // this will throw if no constructor has been found
             auto constructor = tp->members->get<acc::node::FuncStmt*>(tp->type_name.word);
-            m_env->set(tp->type_name.word, constructor);
+            m_env->set(tp->type_name.word, constructor);  // set in public environment (parent of class environment)
+
         } catch ([[maybe_unused]] std::exception const& err) {
+            // generate default constructor if one constructor is not found
             m_env->set(tp->type_name.word, new acc::node::FuncStmt{
                                                .type = tp->type_name,
                                                .name = tp->type_name,

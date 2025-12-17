@@ -12,7 +12,6 @@ class environment {
     std::unordered_set<Key> types;            // type registrar
 
    public:
-    bool in_type = false;
     environment() : m_parent{nullptr}, m_symbols{}, m_items{} {};
     environment* resolve(Key key) {
         if (m_symbols.contains(key)) {

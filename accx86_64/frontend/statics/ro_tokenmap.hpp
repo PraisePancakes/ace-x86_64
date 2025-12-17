@@ -9,8 +9,8 @@
 #include "tkxmacro.hpp"
 
 namespace acc::globals {
-constexpr std::uint8_t TOKEN_TYPE_SHIFTER = 5;
-enum token_flags_ : std::uint8_t {
+constexpr std::uint64_t TOKEN_TYPE_SHIFTER = 5;
+enum token_flags_ : std::uint64_t {
     FLAG_NULL = 0,
     FLAG_DELIM = 1 << 0,
     FLAG_RESERVED = 1 << 1,
@@ -21,25 +21,24 @@ enum token_flags_ : std::uint8_t {
 
 template <typename... TOKEN_FLAGS>
     requires((std::is_enum_v<TOKEN_FLAGS> &&
-              std::is_same_v<std::underlying_type_t<TOKEN_FLAGS>, std::uint8_t>) &&
+              std::is_same_v<std::underlying_type_t<TOKEN_FLAGS>, std::uint64_t>) &&
              ...)
-auto MAKE_FLAG_REP(acc::GLOBAL_TOKENS Type, TOKEN_FLAGS... args) noexcept {
-    return (Type << TOKEN_TYPE_SHIFTER) | (args | ...);
+constexpr std::uint64_t MAKE_FLAG_REP(acc::GLOBAL_TOKENS type, TOKEN_FLAGS... args) noexcept {
+    return (static_cast<std::uint64_t>(type) << TOKEN_TYPE_SHIFTER) | (static_cast<std::uint64_t>(args) | ...);
 };
 
 struct meta_info {
     std::uint64_t flags;
-    std::uint64_t type;
     std::optional<acc::types::TYPES> deduced_type;
 };
 
 inline meta_info METAFY_TKREP(std::uint64_t flags) {
     return meta_info{
-        .flags = flags, .type = flags >> TOKEN_TYPE_SHIFTER, .deduced_type = std::nullopt};
+        .flags = flags, .deduced_type = std::nullopt};
 };
 
 inline meta_info METAFY_TKREP(std::uint64_t flags, std::optional<acc::types::TYPES> deduced_type) {
-    return meta_info{.flags = flags, .type = flags >> TOKEN_TYPE_SHIFTER, .deduced_type = deduced_type};
+    return meta_info{.flags = flags, .deduced_type = deduced_type};
 };
 // METAFY_TKREP(MAKE_FLAG_REP(TK_QUOTE_DOUBLE, FLAG_DELIM))
 const static std::unordered_map<std::variant<std::string, char>, meta_info>

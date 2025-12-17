@@ -13,10 +13,7 @@
 #include "accx86_64/frontend/acclexer.hpp"
 #include "accx86_64/utils/acclog.hpp"
 #define ARGV_DEBUG false
-int f(int f) {
-    int x = f;
-    return x;
-}
+
 // int x : mut = 4;
 auto main(int argc, char** argv) -> int {
     if (argc <= 1) {

@@ -53,10 +53,11 @@ class token_printer {
     };
     std::ostream& os;
     token_printer(std::ostream& os) : os(os) {};
+
     void dump(const std::vector<acc::token>& toks) {
         for (auto tk : toks) {
             write_token(os, tk);
         }
     };
 };
-}  // namespace acc
+}  // namespace acc::output

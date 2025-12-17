@@ -43,7 +43,9 @@ class analyzer {
                            }
                        },
                        [this](const acc::node::TypeStmt* stmt) {
-
+                           for (auto const& s : stmt->members->get_items()) {
+                               analyze_types(s);
+                           }
                        },
                        [this](const acc::node::BlockStmt* stmt) {
                            for (const auto& item : stmt->env->get_items()) {
@@ -81,7 +83,7 @@ class analyzer {
         std::stringstream msg;
         msg << error.what << " with types being \n";
         for (auto const& t : error.inconvertible_types) {
-            msg << std::to_underlying(t) << " , " << std::endl;
+            msg << acc::utils::type_inspector::to_string(t) << " , " << std::endl;
         }
 
         acc::logger::instance().send(acc::logger::LEVEL::ERROR, msg.str());
