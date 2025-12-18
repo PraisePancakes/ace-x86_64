@@ -145,8 +145,10 @@ class ast_printer {
 
                                               if (acc::node::DeclarationStmt::has_const(stmt->cv_qual_flags))
                                                   inker.print_depth(m_depth, ' ').print_blue("const");
-                                              if (acc::node::DeclarationStmt::has_volatile(stmt->cv_qual_flags))
+                                              else if (acc::node::DeclarationStmt::has_volatile(stmt->cv_qual_flags))
                                                   inker.print_depth(m_depth, ' ').print_blue("volatile");
+                                              else
+                                                  inker.print_depth(m_depth, ' ').print_blue("mutable");
 
                                               inker.print_depth(m_depth, ' ').print_green(acc::utils::type_inspector::to_string(stmt->type));
 

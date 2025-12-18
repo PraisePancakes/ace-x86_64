@@ -9,7 +9,7 @@ TEST_CASE("Parser Analysis") {
     // ./testing -tc=*Parser* -sc=*Parse*-Declaration* --no-capture
     SUBCASE("Parse-Declaration") {
         acc::acc_lexer lxr(R"(
-                int x : mut = 4;
+                int**** x : mut = 4;
             )",
                            acc::globals::token_map);
         auto ts = lxr.lex();
