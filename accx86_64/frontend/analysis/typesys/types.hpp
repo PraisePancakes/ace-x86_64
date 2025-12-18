@@ -9,7 +9,8 @@ enum class TYPES : std::uint64_t {
     LONG = 4,
     LONG_LONG = 5,
     FLOAT = 6,
-    DOUBLE = 7
+    DOUBLE = 7,
+    CLASS = 8
 };
 
 }

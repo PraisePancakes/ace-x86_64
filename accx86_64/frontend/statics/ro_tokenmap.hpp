@@ -77,6 +77,7 @@ const static std::unordered_map<std::variant<std::string, char>, meta_info>
         {"<=", METAFY_TKREP(MAKE_FLAG_REP(TK_LT_EQ, FLAG_DELIM_PAIR, FLAG_BINARY_OP))},
 
         // --- Internal single-byte literal classes ---
+        {(char)0xF6ull, METAFY_TKREP(MAKE_FLAG_REP(TK_IDENTIFIER, FLAG_NULL), acc::types::TYPES::CLASS)},
         {(char)0xF7ull, METAFY_TKREP(MAKE_FLAG_REP(TK_LITERAL_BOOL, FLAG_NULL),
                                      acc::types::TYPES::BOOL)},
         {(char)0xF8ull, METAFY_TKREP(MAKE_FLAG_REP(TK_LITERAL_CHAR, FLAG_NULL),

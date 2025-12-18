@@ -62,6 +62,22 @@ using StmtVariant = std::variant<std::monostate,
                                  node::TypeStmt*>;
 
 namespace node {
+
+namespace info {
+struct type_info;
+
+struct Pointer {
+    type_info* pointee{nullptr};
+};
+struct Array {
+    int len;
+    type_info* element{nullptr};
+};
+struct type_info {
+    std::variant<std::pair<acc::types::TYPES, std::string>, info::Pointer, info::Array> type;
+};
+}  // namespace info
+
 constexpr static bool PRIVATE = true;
 constexpr static bool PUBLIC = false;
 // struct IfStmt;
@@ -93,19 +109,19 @@ struct CallExpr {
 };
 
 struct VariableExpr {
-    acc::token type;
+    info::type_info* type{nullptr};
     acc::token name;
     std::optional<ExprVariant> evaluated{std::nullopt};
 };
 
 struct AssignmentExpr {
-    acc::token type;
+    info::type_info* type{nullptr};
     acc::token name;
     ExprVariant expr;
 };
 
 struct DeclarationStmt {
-    acc::token type;
+    info::type_info* type{nullptr};
     std::optional<bool> access_specifier{0};  // true private, false public
     acc::token name;
 
@@ -180,7 +196,7 @@ struct ForStmt {
 */
 
 struct FuncStmt {
-    acc::token type;
+    info::type_info* type{nullptr};
     acc::token name;
     std::vector<DeclarationStmt*> params;
     std::optional<bool> access_specifier;  // true private, false public

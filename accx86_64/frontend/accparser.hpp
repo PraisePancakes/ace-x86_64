@@ -261,10 +261,23 @@ class [[nodiscard]] acc_parser
         }
         return cv_sig;
     };
+
+    acc::node::info::type_info* parse_type_info(acc::token base) {
+        acc::node::info::type_info* info = new acc::node::info::type_info();
+        info->type = std::make_pair(acc::utils::type_inspector::to_type(base).first.value(), base.word);
+        if (match_it(TK_STAR)) {
+            info->type = acc::node::info::Pointer{.pointee = parse_type_info(base)};
+        } else if (match_it(TK_BRACE_L)) {
+            int len = std::get<int>(advance().value);
+            if (!match_it(TK_BRACE_R)) throw acc::exceptions::parser_error(peek(), "missing ']' to complete array type.");
+            info->type = acc::node::info::Array{.len = len, .element = parse_type_info(base)};
+        }
+        return info;
+    };
     // int public x = 4;
     acc::StmtVariant parse_variable_declaration() {
         acc::node::DeclarationStmt* decl = new acc::node::DeclarationStmt{
-            .type = peek_prev(),
+            .type = parse_type_info(peek_prev()),
             .access_specifier = [this]() -> std::optional<bool> {
                 if (this->match_it("public")) {
                     return acc::node::PUBLIC;
@@ -332,7 +345,7 @@ class [[nodiscard]] acc_parser
     };
 
     acc::StmtVariant parse_function_declaration() {
-        auto* f = new acc::node::FuncStmt{.type = peek_prev(),
+        auto* f = new acc::node::FuncStmt{.type = parse_type_info(peek_prev()),
                                           .name = advance(),
                                           .params = [this]() -> std::vector<acc::node::DeclarationStmt*> {
                                               std::vector<acc::node::DeclarationStmt*> params;
@@ -365,12 +378,12 @@ class [[nodiscard]] acc_parser
     };
 
     acc::StmtVariant parse_type() {
-        auto type = advance();
-        m_env->set_type(type.word);
+        auto type_name = advance();
+        m_env->set_type(type_name.word);
         auto* member_environment = create_environment();
         if (match_it(TK_CURL_L)) {
             while (!match_it(TK_CURL_R)) {
-                if (peek().word == type.word && peek_next().type == TK_PAREN_L) {
+                if (peek().word == type_name.word && peek_next().type == TK_PAREN_L) {
                     // constructor
                     DISCARD(advance());
                     std::vector<acc::node::DeclarationStmt*> params;
@@ -393,11 +406,11 @@ class [[nodiscard]] acc_parser
                     }();
 
                     auto* block = std::get<acc::node::BlockStmt*>(parse_statement());
-                    member_environment->set(type.word, new acc::node::FuncStmt{.type = type,
-                                                                               .name = type,
-                                                                               .params = params,
-                                                                               .access_specifier = access_specifier,
-                                                                               .body = block});
+                    member_environment->set(type_name.word, new acc::node::FuncStmt{.type = new acc::node::info::type_info{.type = std::make_pair(acc::types::TYPES::CLASS, type_name.word)},
+                                                                                    .name = type_name,
+                                                                                    .params = params,
+                                                                                    .access_specifier = access_specifier,
+                                                                                    .body = block});
                 } else {
                     member_environment->get_items().push_back(parse_identifier_statement());
                 }
@@ -405,7 +418,7 @@ class [[nodiscard]] acc_parser
         }
         m_env = member_environment->get_parent();
         match_it(TK_SEMI);
-        auto tp = new acc::node::TypeStmt{.type_name = type, .members = member_environment};
+        auto tp = new acc::node::TypeStmt{.type_name = type_name, .members = member_environment};
         try {
             // this will throw if no constructor has been found
             auto constructor = tp->members->get<acc::node::FuncStmt*>(tp->type_name.word);
@@ -414,7 +427,7 @@ class [[nodiscard]] acc_parser
         } catch ([[maybe_unused]] std::exception const& err) {
             // generate default constructor if one constructor is not found
             m_env->set(tp->type_name.word, new acc::node::FuncStmt{
-                                               .type = tp->type_name,
+                                               .type = new acc::node::info::type_info{.type = std::make_pair(acc::types::TYPES::CLASS, type_name.word)},
                                                .name = tp->type_name,
                                                .params = {},
                                                .access_specifier = acc::node::PUBLIC,

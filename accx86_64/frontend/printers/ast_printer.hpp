@@ -148,7 +148,8 @@ class ast_printer {
                                               if (acc::node::DeclarationStmt::has_volatile(stmt->cv_qual_flags))
                                                   inker.print_depth(m_depth, ' ').print_blue("volatile");
 
-                                              inker.print_depth(m_depth, ' ').print_green(stmt->type.word);
+                                              inker.print_depth(m_depth, ' ').print_green(acc::utils::type_inspector::to_string(stmt->type));
+
                                               inker.print_depth(m_depth, ' ').print_green(stmt->name.word);
 
                                               if (stmt->expr.has_value()) {
@@ -175,7 +176,7 @@ class ast_printer {
                                               }
 
                                               // signature
-                                              inker.print_depth(m_depth, ' ').print_green(stmt->type.word);
+                                              inker.print_depth(m_depth, ' ').print_green(acc::utils::type_inspector::to_string(stmt->type));
                                               inker.print_depth(m_depth, ' ').print_green(stmt->name.word);
 
                                               // parameters
