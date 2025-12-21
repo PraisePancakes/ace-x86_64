@@ -8,6 +8,7 @@
 
 #include "accenv.hpp"
 #include "acctoken.hpp"
+#include "analysis/typesys/type_conversions.hpp"
 
 namespace acc {
 // forwards
@@ -20,11 +21,11 @@ struct CallExpr;
 struct VariableExpr;
 struct AssignmentExpr;
 
+struct DeclarationStmt;
 struct IfStmt;
 struct WhileStmt;
 struct BlockStmt;
 struct ForStmt;
-struct DeclarationStmt;
 struct ExpressionStmt;
 struct FuncStmt;
 struct ReturnStmt;
@@ -65,6 +66,8 @@ namespace node {
 
 namespace info {
 struct type_info;
+struct Pointer;
+struct Array;
 
 struct Pointer {
     type_info* pointee{nullptr};
@@ -76,6 +79,19 @@ struct Array {
 struct type_info {
     std::variant<std::pair<acc::types::TYPES, std::string>, info::Pointer, info::Array> type;
 };
+
+inline bool operator==(const Pointer& lhs, const Pointer& rhs) {
+    return (lhs.pointee && rhs.pointee) && (lhs.pointee->type == rhs.pointee->type);
+};
+
+inline bool operator==(const Array& lhs, const Array& rhs) {
+    return (lhs.len == rhs.len) && (lhs.element && rhs.element) && (lhs.element->type == rhs.element->type);
+};
+
+inline bool operator==(const std::pair<acc::types::TYPES, std::string>& lhs, const std::pair<acc::types::TYPES, std::string>& rhs) {
+    return lhs.first == rhs.first || lhs.second == rhs.second || (types::check_valid_implicit_conversion(lhs.first, rhs.first));
+};
+
 }  // namespace info
 
 constexpr static bool PRIVATE = true;
