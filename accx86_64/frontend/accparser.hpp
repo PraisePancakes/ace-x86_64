@@ -70,13 +70,17 @@ class [[nodiscard]] acc_parser
     }
 
     acc::ExprVariant parse_primary_expression() {
+        const auto type = acc::utils::type_inspector::to_type(peek());
         if (match_any(TK_LITERAL_INT,
                       TK_LITERAL_STRING,
                       TK_LITERAL_CHAR,
                       TK_LITERAL_DOUBLE,
                       TK_LITERAL_FLOAT)) {
-            return new acc::node::LiteralExpr{.value = this->peek_prev().value,
-                                              .embedded = this->peek_prev()};
+            return new acc::node::LiteralExpr{
+                .type = new acc::node::info::type_info{.type = std::make_pair(type.first.value(),
+                                                                              peek_prev())},
+                .value = this->peek_prev().value,
+                .embedded = this->peek_prev()};
         };
 
         if (match_it(TK_PAREN_L)) {
@@ -157,7 +161,17 @@ class [[nodiscard]] acc_parser
                     args.push_back(parse_expr());
                 }
                 if (args.size() != func_info->params.size()) {
-                    throw exceptions::parser_error(id_tok, "wrong number of arguments ( " + std::to_string(args.size()) + ", should be " + std::to_string(func_info->params.size()));
+                    if (args.size() < func_info->params.size()) {
+                        auto back = func_info->params.back()->expr;
+                        // check for default param to push to the call expr args list.
+                        if (!back.has_value()) {
+                            throw exceptions::parser_error(id_tok, "too few arguments ( " + std::to_string(args.size()) + ", should be " + std::to_string(func_info->params.size()));
+                        };
+                        args.push_back(back.value());
+                    } else {
+                        // too many arguments
+                        throw exceptions::parser_error(id_tok, "too many arguments ( " + std::to_string(args.size()) + ", should be " + std::to_string(func_info->params.size()));
+                    }
                 }
                 return new acc::node::CallExpr{.args = args, .procedure = func_info};
 
@@ -264,7 +278,7 @@ class [[nodiscard]] acc_parser
 
     acc::node::info::type_info* parse_type_info(acc::token base) {
         acc::node::info::type_info* info = new acc::node::info::type_info();
-        info->type = std::make_pair(acc::utils::type_inspector::to_type(base).first.value(), base.word);
+        info->type = std::make_pair(acc::utils::type_inspector::to_type(base).first.value(), base);
         if (match_it(TK_STAR)) {
             info->type = acc::node::info::Pointer{.pointee = parse_type_info(base)};
         } else if (match_it(TK_BRACE_L)) {
@@ -406,7 +420,7 @@ class [[nodiscard]] acc_parser
                     }();
 
                     auto* block = std::get<acc::node::BlockStmt*>(parse_statement());
-                    member_environment->set(type_name.word, new acc::node::FuncStmt{.type = new acc::node::info::type_info{.type = std::make_pair(acc::types::TYPES::CLASS, type_name.word)},
+                    member_environment->set(type_name.word, new acc::node::FuncStmt{.type = new acc::node::info::type_info{.type = std::make_pair(acc::types::TYPES::CLASS, type_name)},
                                                                                     .name = type_name,
                                                                                     .params = params,
                                                                                     .access_specifier = access_specifier,
@@ -427,7 +441,7 @@ class [[nodiscard]] acc_parser
         } catch ([[maybe_unused]] std::exception const& err) {
             // generate default constructor if one constructor is not found
             m_env->set(tp->type_name.word, new acc::node::FuncStmt{
-                                               .type = new acc::node::info::type_info{.type = std::make_pair(acc::types::TYPES::CLASS, type_name.word)},
+                                               .type = new acc::node::info::type_info{.type = std::make_pair(acc::types::TYPES::CLASS, type_name)},
                                                .name = tp->type_name,
                                                .params = {},
                                                .access_specifier = acc::node::PUBLIC,

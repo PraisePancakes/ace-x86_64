@@ -77,7 +77,7 @@ struct Array {
     type_info* element{nullptr};
 };
 struct type_info {
-    std::variant<std::pair<acc::types::TYPES, std::string>, info::Pointer, info::Array> type;
+    std::variant<std::pair<acc::types::TYPES, acc::token>, info::Pointer, info::Array> type;
 };
 
 inline bool operator==(const Pointer& lhs, const Pointer& rhs) {
@@ -88,8 +88,11 @@ inline bool operator==(const Array& lhs, const Array& rhs) {
     return (lhs.len == rhs.len) && (lhs.element && rhs.element) && (lhs.element->type == rhs.element->type);
 };
 
-inline bool operator==(const std::pair<acc::types::TYPES, std::string>& lhs, const std::pair<acc::types::TYPES, std::string>& rhs) {
-    return lhs.first == rhs.first || lhs.second == rhs.second || (types::check_valid_implicit_conversion(lhs.first, rhs.first));
+inline bool operator==(const std::pair<acc::types::TYPES, acc::token>& lhs, const std::pair<acc::types::TYPES, acc::token>& rhs) {
+    if (lhs.first == acc::types::TYPES::CLASS) {
+        return lhs.second.word == rhs.second.word;
+    }
+    return lhs.first == rhs.first || (types::check_valid_implicit_conversion(lhs.first, rhs.first));
 };
 
 }  // namespace info
@@ -102,6 +105,7 @@ constexpr static bool PUBLIC = false;
 // struct BlockStmt;
 
 struct LiteralExpr {
+    info::type_info* type{nullptr};
     token::value_type value;
     acc::token embedded;
 };

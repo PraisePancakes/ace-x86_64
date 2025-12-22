@@ -10,7 +10,7 @@
 namespace acc::utils {
 class type_inspector {
    public:
-    [[nodiscard]] static std::pair<std::optional<acc::types::TYPES>, std::string> to_type(acc::token key) {
+    [[nodiscard]] static std::pair<std::optional<acc::types::TYPES>, acc::token> to_type(acc::token key) {
         auto it = std::find_if(acc::globals::token_map.begin(), acc::globals::token_map.end(), [&key](auto p) {
             if (key.type == TK_RESERVED_TYPE) {
                 return (key.word == std::visit(internal::visitor{
@@ -20,7 +20,7 @@ class type_inspector {
             }
             return (key.type == (p.second.flags >> acc::globals::TOKEN_TYPE_SHIFTER));
         });
-        return std::make_pair(it->second.deduced_type, key.word);
+        return std::make_pair(it->second.deduced_type, key);
     };
 
     [[nodiscard]] static std::string to_string(std::optional<acc::types::TYPES> key) {
@@ -46,8 +46,8 @@ class type_inspector {
     [[nodiscard]] static std::string to_string(acc::node::info::type_info* base, std::string str = "") {
         if (base) {
             std::visit(internal::visitor{
-                           [&str](const std::pair<types::TYPES, std::string> type) {
-                               str += type.second;
+                           [&str](const std::pair<types::TYPES, acc::token> type) {
+                               str += type.second.word;
                            },
                            [&str](const acc::node::info::Pointer type) {
                                if (type.pointee) {

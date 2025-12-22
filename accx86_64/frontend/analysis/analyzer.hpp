@@ -13,15 +13,7 @@ class analyzer {
         using acc::types::type_checker;
         std::visit(internal::visitor{
                        [](const acc::node::DeclarationStmt* stmt) {
-                           if (stmt->type) {
-                               auto* variable_type_info = stmt->type;
-                               if (stmt->expr.has_value()) {
-                                   auto* expression_type_info = type_checker::evaluate_type(stmt->expr.value());
-                                   if(variable_type_info != expression_type_info) {
-                                    
-                                   }
-                               }
-                           }
+                        
                        },
                        [](const acc::node::IfStmt* stmt) {},
                        [](const acc::node::WhileStmt* stmt) {},

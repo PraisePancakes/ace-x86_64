@@ -19,7 +19,10 @@ struct [[nodiscard]] token final {
     token(const std::string& word, token_type_t type, value_type val) : word(word), location(0, 0), type(type), value(val) {};
     token(const std::string& word, std::pair<int, int> l, token_type_t type, value_type val) : word(word), location(l), type(type), value(val) {};
     token(const std::string& word, int x, int y, token_type_t type, value_type val) : word(word), location(std::make_pair(x, y)), type(type), value(val) {};
-
+    
+    friend bool operator==(const token& lhs, const token& rhs) {
+        return lhs.type == rhs.type;
+    }
     ~token() = default;
 };
 }  // namespace acc
