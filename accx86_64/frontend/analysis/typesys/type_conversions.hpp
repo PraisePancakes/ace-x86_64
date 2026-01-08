@@ -8,7 +8,7 @@ namespace acc::types {
 const std::array<std::array<bool, 6>, 6> implicit_cast_table = {
     //      bool , char, short, int,long, long long
     {/*bool*/ {1, 0, 0, 1, 0, 0},
-     /*char*/ {1, 1, 1, 1, 1, 0},
+     /*char*/ {0, 1, 1, 1, 1, 0},
      /*short*/ {1, 1, 1, 1, 1, 0},
      /*int*/ {1, 1, 1, 1, 1, 0},
      /*long*/ {1, 1, 1, 1, 1, 0},

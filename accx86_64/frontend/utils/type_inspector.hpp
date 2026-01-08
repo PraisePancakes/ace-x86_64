@@ -47,7 +47,7 @@ class type_inspector {
         if (base) {
             std::visit(internal::visitor{
                            [&str](const std::pair<types::TYPES, acc::token> type) {
-                               str += type.second.word;
+                               str += to_string(type.first);
                            },
                            [&str](const acc::node::info::Pointer type) {
                                if (type.pointee) {

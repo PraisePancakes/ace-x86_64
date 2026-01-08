@@ -7,13 +7,16 @@
 namespace acc {
 class analyzer {
     using environment_t = acc::environment<std::string, acc::StmtVariant>;
-    environment_t* env;
 
     void analyze_types(const acc::StmtVariant variant) {
         using acc::types::type_checker;
         std::visit(internal::visitor{
                        [](const acc::node::DeclarationStmt* stmt) {
-                        
+                           if (stmt->expr.has_value()) {
+                               auto* Teval = type_checker::evaluate_type(stmt->expr.value());
+                               if (!type_checker::are_equal(Teval, stmt->type))
+                                   throw exceptions::type_error({Teval, stmt->type}, " right handed expression does not match declared type ");
+                           }
                        },
                        [](const acc::node::IfStmt* stmt) {},
                        [](const acc::node::WhileStmt* stmt) {},
@@ -38,8 +41,8 @@ class analyzer {
     };
 
    public:
-    analyzer(environment_t* environment) : env(environment) {};
-    void try_analyze() {
+    analyzer() {};
+    void try_analyze(environment_t* env) {
         try {
             for (const auto& i : env->get_items()) {
                 analyze_types(i);

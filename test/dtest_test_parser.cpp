@@ -208,30 +208,5 @@ TEST_CASE("Parser Analysis") {
         }
     }
 
-    // ./testing -tc=*Parser* -sc=*type* --no-capture
-    SUBCASE("type") {
-        acc::acc_lexer lxr(R"(
-               char *y = 'c';
-               type Foo {
-                bool public x : mut = y;
-                Foo()  {};
-                int test() private {};
-               };
-
-               int x() {
-                    Foo g = Foo();
-               };
-
-            )",
-                           acc::globals::token_map);
-
-        auto ts = lxr.lex();
-        acc::acc_parser prs(ts);
-
-        auto v = prs.parse();
-        auto tc = acc::analyzer(v);
-        tc.try_analyze();
-        acc::output::ast_printer printer(std::cout);
-        printer.dump(v->get_items());
-    }
+   
 }

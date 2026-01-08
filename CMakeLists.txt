@@ -54,7 +54,7 @@ target_link_libraries(testing PRIVATE doctest)
 if(MSVC)
   target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
 else()
-  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-variable -Wno-parentheses -Wno-unused-function)
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-variable -Wno-parentheses -Wno-unused-function -Wno-empty-body)
 endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)

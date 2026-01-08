@@ -71,9 +71,13 @@ struct type_checker final {
     static bool are_equal(const ExprVariant e1, const ExprVariant e2) {
         return evaluate_type(e1) == evaluate_type(e2);
     }
-
+    static bool is_convertible(acc::node::info::type_info* t1, acc::node::info::type_info* t2) {
+        return (std::holds_alternative<std::pair<acc::types::TYPES, acc::token>>(t1->type) && std::holds_alternative<std::pair<acc::types::TYPES, acc::token>>(t2->type) &&
+                (acc::types::check_valid_implicit_conversion(std::get<std::pair<acc::types::TYPES, acc::token>>(t1->type).first,
+                                                             std::get<std::pair<acc::types::TYPES, acc::token>>(t2->type).first)));
+    }
     static bool are_equal(acc::node::info::type_info* t1, acc::node::info::type_info* t2) {
-        return (t1 && t2 && (t1->type == t2->type));
+        return (t1 && t2 && ((t1->type == t2->type) || is_convertible(t1, t2)));
     };
 
     static bool is_pointer(acc::node::info::type_info* t) {

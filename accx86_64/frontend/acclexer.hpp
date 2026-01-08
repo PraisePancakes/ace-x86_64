@@ -107,7 +107,7 @@ class acc_lexer : protected acc::fsm_storage<std::basic_string_view<char>> {
                 auto c = advance();
                 if (this->peek() != '\'') throw std::runtime_error("unrecognized character");
                 advance();
-                return token{to_substr(this->m_start, this->m_end + 1),
+                return token{to_substr(this->m_start, this->m_end),
                              std::make_pair(m_x, m_y),
                              acc::GLOBAL_TOKENS::TK_LITERAL_CHAR,
                              c};
