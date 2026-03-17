@@ -2,8 +2,14 @@
 
 namespace acc::x86_64isa {
 enum class OPCODES {
-    ADD ,
-    MOV
+    ADD,
+    MOV,
+    JMP,
+    JZ,
+    CMP,
+    PUSH,
+    CALL
+
 };
 
 };

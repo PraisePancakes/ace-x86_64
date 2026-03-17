@@ -1,7 +1,7 @@
 #pragma once
 
 namespace acc::x86_64isa {
-enum class REGISTERS {
+enum class REGISTER_TYPE {
     // eax is 32-bit with ax = 16 bit, ah = 8 bit and al = 8 bit
     EAX,
     AX,
@@ -29,4 +29,5 @@ enum class REGISTERS {
     ESP,
     EBP
 };
-}
+
+}  // namespace acc::x86_64isa
